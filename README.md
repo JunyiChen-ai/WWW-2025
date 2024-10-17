@@ -7,7 +7,7 @@ This repo provides a official implementation of ExMRD as described in the paper:
 
 ## Source Code Structure
 
-```
+```bash
 data        # dir of each dataset
 - FakeSV
 - FakeTT
