@@ -6,7 +6,7 @@
 
 This repo provides the official implementation of ExMRD as described in the paper:
 
-**Following Clues, Approaching the Truth: Explainable Micro-Video Rumor Detection via Chain-of-Thought Reasoning** (WWW'25 research track)
+*Following Clues, Approaching the Truth: Explainable Micro-Video Rumor Detection via Chain-of-Thought Reasoning* **(WWW'25 research track)**
 
 
 # Source Code Structure
@@ -54,8 +54,14 @@ apt install ffmpeg
 # create env using conda
 conda create --name ExMRD python=3.12
 conda activate ExMRD
-pip install torch transformers tqdm loguru pandas torchmetrics scikit-learn colorama wandb hydra-core
+pip install -r requirements.txt
 ```
+
+## Prepare Datasets
+
+1. Get raw dataset (including videos and metadatas) from source, and save raw videos to `{dataset}/videos`.
+2. Init `{dataset}/data.jsonl` for each dataset, with each line containing a `vid`(video id) to include all video ids in full dataset.
+3. Init `{dataset}/label.jsonl` for each dataset with each line containing a `vid` and its associated `label` (1 or 0).
 
 ## Video Data Preprocessing
 
@@ -96,7 +102,7 @@ python src/main.py --config-name ExMRD_FakeTT
 python src/main.py --config-name ExMRD_FVC
 ```
 
-## Citation
+# Citation
 
 ```bib
 @inproceedings{hong2025following,

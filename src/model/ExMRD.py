@@ -123,4 +123,4 @@ class ExMRD(nn.Module):
         fea = torch.mean(fea, dim=1)
         
         output = self.classifier(fea)
-        return output,
+        return output

@@ -38,6 +38,7 @@ except KeyError:
 
 prompt = """
 Analyze video frames to generate a descriptive caption, focusing solely on key visual elements and events while ignoring any on-scree-text and subjective elements. 
+Based on these images, please infer and describe the content of the video, the main events, and the potential progression of its storyline. Keep the description concise yet comprehensive.
 """
 if 'FakeSV' in dataset:
     prompt += "Please answer in Chinese."
@@ -60,13 +61,11 @@ class MyDataset(Dataset):
     def __init__(self):
         match dataset:
             case 'FakeSV':
-                src_file = 'data/FakeSV/data_complete.jsonl'
-                src_df = pd.read_json(src_file, lines=True, dtype={'video_id': str})
-                src_df['vid'] = src_df['video_id']
+                src_file = 'data/FakeSV/data.jsonl'
+                src_df = pd.read_json(src_file, lines=True, dtype={'vid': str})
             case 'FakeTT':
                 src_file = 'data/FakeTT/data.jsonl'
-                src_df = pd.read_json(src_file, lines=True, dtype={'video_id': str})
-                src_df['vid'] = src_df['video_id']
+                src_df = pd.read_json(src_file, lines=True, dtype={'vid': str})
             case 'FVC':
                 src_file = 'data/FVC/data.jsonl'
                 src_df = pd.read_json(src_file, lines=True, dtype={'vid': str})
@@ -95,7 +94,7 @@ class MyDataset(Dataset):
 
         label = self.label_df[self.label_df['vid'] == vid]['label'].values[0]
         text = ''
-        return vid, text, images, label
+        return vid, text, image_list, label
 
 def customed_collate_fn(batch):
     # preprocess
@@ -104,7 +103,7 @@ def customed_collate_fn(batch):
     return vids, text, images, labels
 
 
-dataloader = DataLoader(MyDataset(), batch_size=4, collate_fn=customed_collate_fn, num_workers=2, shuffle=False)
+dataloader = DataLoader(MyDataset(), batch_size=1, collate_fn=customed_collate_fn, num_workers=2, shuffle=False)
 
 for batch in tqdm(dataloader):
     vids, texts, images, labels = batch
@@ -122,5 +121,7 @@ for batch in tqdm(dataloader):
             'ret': [output],
             'label': [label]
         })], ignore_index=True)
+    print(outputs)
+    exit()
     # save to jsonl
     save_df.to_json(save_path, lines=True, orient='records', force_ascii=False)

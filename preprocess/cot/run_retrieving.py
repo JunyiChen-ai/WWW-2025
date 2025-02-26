@@ -55,13 +55,11 @@ class MyDataset(Dataset):
     def __init__(self):
         match dataset:
             case 'FakeSV':
-                src_file = 'data/FakeSV/data_complete.jsonl'
-                src_df = pd.read_json(src_file, lines=True, dtype={'video_id': str})
-                src_df['vid'] = src_df['video_id']
+                src_file = 'data/FakeSV/data.jsonl'
+                src_df = pd.read_json(src_file, lines=True, dtype={'vid': str})
             case 'FakeTT':
                 src_file = 'data/FakeTT/data.jsonl'
-                src_df = pd.read_json(src_file, lines=True, dtype={'video_id': str})
-                src_df['vid'] = src_df['video_id']
+                src_df = pd.read_json(src_file, lines=True, dtype={'vid': str})
             case 'FVC':
                 src_file = 'data/FVC/data.jsonl'
                 src_df = pd.read_json(src_file, lines=True, dtype={'vid': str})

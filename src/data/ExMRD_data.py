@@ -11,7 +11,7 @@ class FakeSVDataset_ExMRD(FakeSVDataset):
         self.data = self._get_data(fold, split)
         
         self.lm_ocr = pd.read_json(f'data/FakeSV/CoT/{lm}/lm_text_refine.jsonl', lines=True)
-        self.caption = pd.read_json(f'data/FakeSV/CoT/{lm}/lm_vison_refine.jsonl', lines=True)
+        self.caption = pd.read_json(f'data/FakeSV/CoT/{lm}/lm_visual_refine.jsonl', lines=True)
         self.lm_comsense = pd.read_json(f'data/FakeSV/CoT/{lm}/lm_retrieve.jsonl', lines=True)
         self.lm_causal = pd.read_json(f'data/FakeSV/CoT/{lm}/lm_reason.jsonl', lines=True)
     
@@ -83,7 +83,7 @@ class FakeTTDataset_ExMRD(FakeTTDataset):
         
         self.ocr = pd.read_json('data/FakeTT/ocr.jsonl', lines=True, dtype={'vid': 'str'})
         self.lm_ocr = pd.read_json(f'data/FakeTT/CoT/{lm}/lm_text_refine.jsonl', lines=True, dtype={'vid': 'str'})
-        self.caption = pd.read_json(f'data/FakeTT/CoT/{lm}/lm_vison_refine.jsonl', lines=True, dtype={'vid': 'str'})
+        self.caption = pd.read_json(f'data/FakeTT/CoT/{lm}/lm_visual_refine.jsonl', lines=True, dtype={'vid': 'str'})
      
         self.lm_comsense = pd.read_json(f'data/FakeTT/CoT/{lm}/lm_retrieve.jsonl', lines=True, dtype={'vid': 'str'})
         self.lm_causal = pd.read_json(f'data/FakeTT/CoT/{lm}/lm_reason.jsonl', lines=True, dtype={'vid': 'str'})
@@ -154,7 +154,7 @@ class FVCDataset_ExMRD(FVCDataset):
         self.data = self._get_data(fold, split)
         
         self.lm_ocr = pd.read_json(f'data/FVC/CoT/{lm}/lm_text_refine.jsonl', lines=True, dtype={'vid': 'str'})
-        self.caption = pd.read_json(f'data/FVC/CoT/{lm}/lm_vison_refine.jsonl', lines=True, dtype={'vid': 'str'})
+        self.caption = pd.read_json(f'data/FVC/CoT/{lm}/lm_visual_refine.jsonl', lines=True, dtype={'vid': 'str'})
          
         self.lm_comsense = pd.read_json(f'data/FVC/CoT/{lm}/lm_retrieve.jsonl', lines=True, dtype={'vid': 'str'})
         self.lm_causal = pd.read_json(f'data/FVC/CoT/{lm}/lm_reason.jsonl', lines=True, dtype={'vid': 'str'})

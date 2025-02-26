@@ -117,7 +117,7 @@ def extract_text_from_video(video_path):
     return unique_texts
 
 # List of datasets to process
-datasets = ['FVC', 'FakeTT']
+datasets = ['FVC']
 
 for dataset in datasets:
     src_dir = f'data/{dataset}/videos'
