@@ -23,14 +23,15 @@ class ChatLLM():
     async def _async_chat(self, session, req: Dict):
         prompt = self.prompt.format(**req)
         # if req has image_Url
-        image = req.get('image', None)
+        images = req.get('images', None)
         content = [
             {"type": "text", "text": prompt}
         ]
-        if image:
-            content.append(
-                {'type': 'image_url', 'image_url': f'data:image/jpeg;base64,{image}'}
-            )
+        if images:
+            for image in images:
+                content.append(
+                    {'type': 'image_url', 'image_url': f'data:image/jpeg;base64,{image}'}
+                )
         data = json.dumps({
             'messages': [{'role': 'user', 'content': content}],
             'model': self.model,

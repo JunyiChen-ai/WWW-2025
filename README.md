@@ -1,11 +1,15 @@
-# ExMRD
+# <center> Following Clues, Approaching the Truth: Explainable Micro-Video Rumor Detection via Chain-of-Thought Reasoning </center>
 
-This repo provides a official implementation of ExMRD as described in the paper:
+<div align="center">
+  <img src="https://img.shields.io/badge/WWW-2025-blue" alt="Static Badge">
+</div>
 
-**Following Clues, Approaching the Truth: Explainable Micro-Video Rumor Detection via Chain-of-Thought Reasoning**
+This repo provides the official implementation of ExMRD as described in the paper:
+
+**Following Clues, Approaching the Truth: Explainable Micro-Video Rumor Detection via Chain-of-Thought Reasoning** (WWW'25 research track)
 
 
-## Source Code Structure
+# Source Code Structure
 
 ```bash
 data        # dir of each dataset
@@ -13,7 +17,7 @@ data        # dir of each dataset
 - FakeTT
 - FVC
 
-preprocess  # code to MLLM CoT process
+preprocess  # code to preprocess video and CoT preprocess
 
 src
 - config    # training config
@@ -22,13 +26,13 @@ src
 - data      # dataloader of ExMRD
 ```
 
-## Dataset
+# Dataset
 
 We provide video IDs for each dataset in both temporal and five-fold splits. Due to copyright restrictions, the raw datasets are not included. You can obtain the datasets from their respective original project sites.
 
 ### FakeSV
 
-Access the full dataset from[ICTMCG/FakeSV: Official repository for "FakeSV: A Multimodal Benchmark with Rich Social Context for Fake News Detection on Short Video Platforms", AAAI 2023.](https://github.com/ICTMCG/FakeSV).
+Access the full dataset from [ICTMCG/FakeSV: Official repository for "FakeSV: A Multimodal Benchmark with Rich Social Context for Fake News Detection on Short Video Platforms", AAAI 2023.](https://github.com/ICTMCG/FakeSV).
 
 ### FakeTT
 
@@ -38,18 +42,29 @@ Access the full dataset from [ICTMCG/FakingRecipe: Official Repository for "Faki
 
 Access the full dataset from [MKLab-ITI/fake-video-corpus: A dataset of debunked and verified user-generated videos.](https://github.com/MKLab-ITI/fake-video-corpus).
 
-# Usage
+# Start
 
-## Requirements
+## Environment Setup
 
 To set up the environment, run the following commands:
 
 ```bash
-conda create --name py312 python=3.12
+# install ffmpeg (if you are using a Debian-based OS, run the following command)
+apt install ffmpeg 
+# create env using conda
+conda create --name ExMRD python=3.12
+conda activate ExMRD
 pip install torch transformers tqdm loguru pandas torchmetrics scikit-learn colorama wandb hydra-core
 ```
 
-## Data Preprocess
+## Video Data Preprocessing
+
+Run the following command:
+```bash 
+bash run/preprocess.sh
+```
+
+Or you can manually preprocess data following these instructions:
 
 1. Sample 16 frames from each video in the dataset and store them in `{dataset}/frames_16`.
 
@@ -59,20 +74,13 @@ pip install torch transformers tqdm loguru pandas torchmetrics scikit-learn colo
 
 4. Extract visual features from each video using a pre-trained CLIP-ViT model and save to `{dataset}/fea/vit_tensor.pt`.
 
-## MLLM R^3CoT Process
+## R<sup>3</sup>CoT with MLLM Preprocessing
 
+Run the following commands:
 ```bash
-# Run textual refining
-python preprocess/run_textual_refining.py
-
-# Run visual refining
-python preprocess/run_visual_refining.py
-
-# Run retrieving
-python preprocess/run_retrieving.py
-
-# Run reasoning
-python preprocess/run_reasoning.py
+# setup .env.example, and make sure you have access to OpenAI API
+mv .env.example .env
+bash run/cot.sh
 ```
 
 ## Run
@@ -86,4 +94,16 @@ python src/main.py --config-name ExMRD_FakeTT
 
 # Run ExMRD for the FVC dataset
 python src/main.py --config-name ExMRD_FVC
+```
+
+## Citation
+
+```bib
+@inproceedings{hong2025following,
+	author = {Hong, Rongpei and Lang, Jian and Xu, Jin and Cheng, Zhangtao and Zhong, Ting and Zhou, Fan},
+	booktitle = {The {Web} {Conference} ({WWW})},
+	year = {2025},
+	organization = {ACM},
+	title = {Following Clues, Approaching the Truth: Explainable Micro-Video Rumor Detection via Chain-of-Thought Reasoning},
+}
 ```

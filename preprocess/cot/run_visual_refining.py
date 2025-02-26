@@ -1,21 +1,14 @@
-from transformers import ViTImageProcessor, ViTModel, CLIPVisionModel, CLIPImageProcessor
-from transformers import ChineseCLIPProcessor, ChineseCLIPModel, ChineseCLIPImageProcessor, ChineseCLIPVisionModel, ChineseCLIPTextModel, ChineseCLIPFeatureExtractor
-from transformers import BertModel, BertTokenizer,AutoModel, AutoTokenizer
 from torch.utils.data import Dataset, DataLoader
 import pandas as pd
-import cv2
 from PIL import Image
 from tqdm import tqdm
 import os
 import numpy as np
-import torch
-import av
 from PIL import Image
 from utils import ChatLLM
-import loguru
 from dotenv import load_dotenv
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 import argparse
+import base64
 
 
 parser = argparse.ArgumentParser()
@@ -29,7 +22,7 @@ output_dir = f'data/{dataset}/CoT/gpt-4o/'
 ocr_file = f'data/{dataset}/ocr.jsonl'
 transcript_file = f'data/{dataset}/transcript.jsonl'
 
-save_path = os.path.join(output_dir, 'lm_text_refine.jsonl')
+save_path = os.path.join(output_dir, 'lm_visual_refine.jsonl')
 
 if os.path.exists(save_path):
     save_df = pd.read_json(save_path, lines=True, dtype={'vid': str})
@@ -44,7 +37,8 @@ except KeyError:
     cur_ids = []
 
 prompt = """
-Analyze {text} to reconstruct video content, correcting errors and enhancing coherence while preserving key details."""
+Analyze video frames to generate a descriptive caption, focusing solely on key visual elements and events while ignoring any on-scree-text and subjective elements. 
+"""
 if 'FakeSV' in dataset:
     prompt += "Please answer in Chinese."
 
@@ -56,6 +50,10 @@ client = ChatLLM(
     model='gpt-4o-mini',
     temperature=0.7
 )
+
+def encode_image(image_path):
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
 
 
 class MyDataset(Dataset):
@@ -73,16 +71,12 @@ class MyDataset(Dataset):
                 src_file = 'data/FVC/data.jsonl'
                 src_df = pd.read_json(src_file, lines=True, dtype={'vid': str})
         
-        ocr_df = pd.read_json(f'data/{dataset}/ocr.jsonl', lines=True, dtype={'vid': str})
-        transcript_df = pd.read_json(f'data/{dataset}/transcript.jsonl', lines=True, dtype={'vid': str})
         label_df = pd.read_json(f'data/{dataset}/label.jsonl', lines=True, dtype={'vid': str, 'label': int})
 
         # select vid in label_df
         src_df = src_df[src_df['vid'].isin(label_df['vid'])]
         src_df = src_df[~src_df['vid'].isin(cur_ids)]
         self.data = src_df
-        self.ocr_df = ocr_df
-        self.transcript_df = transcript_df
         self.label_df = label_df
 
     def __len__(self):
@@ -92,32 +86,33 @@ class MyDataset(Dataset):
         row = self.data.iloc[index]
         vid = row['vid']
         
-        ocr = self.ocr_df[self.ocr_df['vid'] == vid]['ocr'].values[0]
-        transcript  = self.transcript_df[self.transcript_df['vid']==vid]['transcript'].values[0]
-
-        title = row['title'] if 'title' in row else ''
-        description = row['description'] if 'description' in row else ''
-        title = title + ' ' + description
+        image_list = []
         
+        for i in range(4):
+            image = f'data/{dataset}/quads_4/{vid}_quad_{i}.jpg'
+            image = encode_image(image)
+            image_list.append(image)
+
         label = self.label_df[self.label_df['vid'] == vid]['label'].values[0]
-        text = f'{title} {ocr} {transcript}'
-        return vid, text, label
+        text = ''
+        return vid, text, images, label
 
 def customed_collate_fn(batch):
     # preprocess
     # merge to one list
-    vids, text, labels = zip(*batch)
-    return vids, text, labels
+    vids, text, images, labels = zip(*batch)
+    return vids, text, images, labels
 
 
 dataloader = DataLoader(MyDataset(), batch_size=4, collate_fn=customed_collate_fn, num_workers=2, shuffle=False)
 
 for batch in tqdm(dataloader):
-    vids, texts, labels = batch
+    vids, texts, images, labels = batch
     # process inputs
     inputs = [{
         'text': text,
-    } for text in texts]
+        'images': images,
+    } for text, images in zip(texts, images)]
     # process outputs
     outputs = client.chat_batch(inputs)
     # save_dict
@@ -126,6 +121,6 @@ for batch in tqdm(dataloader):
             'vid': [vid],
             'ret': [output],
             'label': [label]
-        })])
+        })], ignore_index=True)
     # save to jsonl
     save_df.to_json(save_path, lines=True, orient='records', force_ascii=False)
