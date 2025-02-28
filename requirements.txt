@@ -15,7 +15,7 @@ pytesseract==0.3.13
 python-dotenv==1.0.1
 python_Levenshtein==0.26.1
 scikit_learn==1.6.1
-skimage==0.0
+scikit-image==0.24.0
 torch==2.6.0
 torchmetrics==1.4.2
 tqdm==4.65.2
