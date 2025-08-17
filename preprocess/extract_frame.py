@@ -34,7 +34,7 @@ def get_video_framerate(video_path):
         logging.warning(f"Failed to get video framerate {video_path}, using default value 30: {e}")
         return 30
 
-def extract_frames(video_path, output_folder, num_frames):
+def extract_frames(video_path, output_folder, num_frames, save_timestamps=True):
     duration = get_video_duration(video_path)
     if duration is None or duration <= 0:
         logging.error(f"Invalid video file or duration: {video_path}")
@@ -67,6 +67,15 @@ def extract_frames(video_path, output_folder, num_frames):
             logging.error(f"Error processing frame {i} of video {video_name}: {e}")
             logging.error(f"ffmpeg error: {e.stderr}")
 
+    # Save frame timestamps for audio alignment
+    if save_timestamps:
+        timestamp_file = os.path.join(video_output_folder, "frame_timestamps.txt")
+        with open(timestamp_file, 'w') as f:
+            for i, ts in enumerate(timestamps):
+                # Calculate end timestamp for audio segment
+                end_ts = ts + interval if i < num_frames - 1 else duration
+                f.write(f"frame_{i:03d}.jpg,{ts:.6f},{end_ts:.6f}\n")
+
     created_frames = glob.glob(os.path.join(video_output_folder, "frame_*.jpg"))
     if len(created_frames) != num_frames:
         logging.warning(f"Warning: Video {video_name} only created {len(created_frames)} frames instead of expected {num_frames} frames")
@@ -89,13 +98,13 @@ def process_dataset(dataset_name, num_frames):
     
     logging.info(f"Processing {len(video_paths)} videos from {dataset_name}")
     for video_path in tqdm(video_paths, desc=f"Processing {dataset_name}"):
-        extract_frames(video_path, output_folder, num_frames)
+        extract_frames(video_path, output_folder, num_frames, save_timestamps=True)
     
     return True
 
 def main():
     num_frames = 16
-    datasets = ["FakeSV", "FakeTT", "FVC"]
+    datasets = ["FakeSV"]  # Only process FakeSV for now
     
     processed_count = 0
     for dataset in datasets:

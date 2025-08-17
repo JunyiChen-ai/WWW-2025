@@ -85,7 +85,7 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
         case _:
             try:
         # Attempt to import the module
-                if model_name == 'ExMRD':
+                if model_name in ['ExMRD', 'ExMRD_Evidential']:
                     module = importlib.import_module("data.ExMRD_data")
                 else:
                     module = importlib.import_module("data.baseline_data")
@@ -93,8 +93,11 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
                 raise ImportError("Failed to import the 'data' module. Please ensure it exists and is in the correct path.")
 
             try:
-                # Attempt to get the dataset class
-                dataset_class = getattr(module, f'{dataset_name}Dataset_{model_name}')
+                # Attempt to get the dataset class - for ExMRD_Evidential, use ExMRD dataset
+                if model_name == 'ExMRD_Evidential':
+                    dataset_class = getattr(module, f'{dataset_name}Dataset_ExMRD')
+                else:
+                    dataset_class = getattr(module, f'{dataset_name}Dataset_{model_name}')
             except AttributeError:
                 raise ValueError(f"Dataset '{dataset_name}' not found in the 'data' module.")
 
@@ -117,7 +120,7 @@ def get_data_collator(model_name: str, dataset_name: str, **kargs):
         case _:
             try:
                 # Attempt to import the module
-                if model_name == 'ExMRD':
+                if model_name in ['ExMRD', 'ExMRD_Evidential']:
                     module = importlib.import_module("data.ExMRD_data")
                 else:
                     module = importlib.import_module("data.baseline_data")
@@ -125,8 +128,11 @@ def get_data_collator(model_name: str, dataset_name: str, **kargs):
                 raise ImportError("Failed to import the 'data' module. Please ensure it exists and is in the correct path.")
 
             try:
-                # Attempt to get the model class
-                collator_class = getattr(module, f'{dataset_name}Collator_{model_name}')
+                # Attempt to get the model class - for ExMRD_Evidential, use ExMRD collator
+                if model_name == 'ExMRD_Evidential':
+                    collator_class = getattr(module, f'{dataset_name}Collator_ExMRD')
+                else:
+                    collator_class = getattr(module, f'{dataset_name}Collator_{model_name}')
             except AttributeError:
                 raise ValueError(f"Collator '{dataset_name}' not found in the 'data' module.")
 
@@ -178,33 +184,57 @@ def get_scheduler(optimizer, **kargs):
 class BinaryClassificationMetric():
     def __init__(self, device):
         self.accuracy = Accuracy(task="multiclass", num_classes=2).to(device)
+        # Macro-averaged metrics
         self.f1_score = F1Score(task="multiclass", average='macro', num_classes=2).to(device)
         self.precision = Precision(task="multiclass", average='macro', num_classes=2).to(device)
         self.recall = Recall(task="multiclass", average='macro', num_classes=2).to(device)
+        # Per-class metrics (average=None returns per-class values)
+        self.f1_score_per_class = F1Score(task="multiclass", average=None, num_classes=2).to(device)
+        self.precision_per_class = Precision(task="multiclass", average=None, num_classes=2).to(device)
+        self.recall_per_class = Recall(task="multiclass", average=None, num_classes=2).to(device)
         
     def _reset(self):
         self.accuracy.reset()
         self.f1_score.reset()
         self.precision.reset() 
         self.recall.reset()
+        self.f1_score_per_class.reset()
+        self.precision_per_class.reset()
+        self.recall_per_class.reset()
     
     def update(self, preds, labels):
         self.accuracy.update(preds, labels)
         self.f1_score.update(preds, labels)
         self.precision.update(preds, labels)
         self.recall.update(preds, labels)
+        self.f1_score_per_class.update(preds, labels)
+        self.precision_per_class.update(preds, labels)
+        self.recall_per_class.update(preds, labels)
     
     def compute(self):
         acc = self.accuracy.compute()
         macro_f1 = self.f1_score.compute()
         prec = self.precision.compute()
         rec = self.recall.compute()
+        
+        # Per-class metrics
+        f1_per_class = self.f1_score_per_class.compute()
+        prec_per_class = self.precision_per_class.compute()
+        rec_per_class = self.recall_per_class.compute()
+        
         self._reset()
         return {
             'acc': acc.item(),
             'f1': macro_f1.item(),
             'prec': prec.item(),
-            'rec': rec.item()
+            'rec': rec.item(),
+            # Per-class metrics for label 0 (Real/真/辟谣) and label 1 (Fake/假)
+            'f1_real': f1_per_class[0].item(),
+            'f1_fake': f1_per_class[1].item(),
+            'prec_real': prec_per_class[0].item(),
+            'prec_fake': prec_per_class[1].item(),
+            'rec_real': rec_per_class[0].item(),
+            'rec_fake': rec_per_class[1].item()
         }
                 
 class BinaryClassificationMetric_Sklearn:

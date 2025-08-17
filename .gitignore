@@ -1,4 +1,16 @@
-__pycache__
-.env
-outputs
-log
+# ExMRD_ours Large Files
+
+# PyTorch model files (*.pth) - too large for GitHub
+*.pth
+
+# PyTorch tensor files - too large for GitHub  
+*.pt
+
+# Large data directories - raw media files
+data/FakeSV/audios/
+data/FakeSV/videos/
+data/*/fea/
+log/*/
+
+# Other large files
+*.tensor_backup

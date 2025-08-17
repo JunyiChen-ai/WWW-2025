@@ -47,14 +47,14 @@ def robust_frame_extraction(video_path, num_frames):
 
 class VideoDataset(Dataset):
     def __init__(self, src_file, video_dir):
-        self.data = pd.read_json(src_file, lines=True, dtype={'vid': str})
+        self.data = pd.read_json(src_file, lines=True, dtype={'video_id': str})
         self.video_dir = video_dir
     
     def __len__(self):
         return len(self.data)
 
     def __getitem__(self, index):
-        vid = self.data.iloc[index]['vid']
+        vid = self.data.iloc[index]['video_id']
         video_path = os.path.join(self.video_dir, f'{vid}.mp4')
         pil_images = robust_frame_extraction(video_path, NUM_FRAMES)
         return vid, pil_images
@@ -74,24 +74,24 @@ def process_dataset(dataset_name):
     # Dataset-specific configurations
     configs = {
         "FakeSV": {
-            "src_file": f"data/{dataset_name}/data.jsonl",
-            "output_dir": f"data/{dataset_name}",
+            "src_file": f"data/{dataset_name}/data_complete.jsonl",
+            "output_dir": f"data/{dataset_name}/fea",
             "video_dir": f"data/{dataset_name}/videos",
             "model_id": "OFA-Sys/chinese-clip-vit-large-patch14",
             "use_chinese_clip": True,
             "output_file": "vit_tensor.pt"
         },
         "FakeTT": {
-            "src_file": f"data/{dataset_name}/data.jsonl",
-            "output_dir": f"data/{dataset_name}",
+            "src_file": f"data/{dataset_name}/data_complete.jsonl",
+            "output_dir": f"data/{dataset_name}/fea",
             "video_dir": f"data/{dataset_name}/videos",
             "model_id": "openai/clip-vit-large-patch14",
             "use_chinese_clip": False,
             "output_file": "vit_tensor.pt"
         },
         "FVC": {
-            "src_file": f"data/{dataset_name}/data.jsonl",
-            "output_dir": f"data/{dataset_name}",
+            "src_file": f"data/{dataset_name}/data_complete.jsonl",
+            "output_dir": f"data/{dataset_name}/fea",
             "video_dir": f"data/{dataset_name}/videos",
             "model_id": "openai/clip-vit-large-patch14",
             "use_chinese_clip": False,

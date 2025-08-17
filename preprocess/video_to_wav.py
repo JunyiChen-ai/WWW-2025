@@ -2,7 +2,7 @@ import os
 import subprocess
 from tqdm import tqdm
 
-def convert_mp4_to_wav(input_folder, output_folder):
+def convert_mp4_to_wav(input_folder, output_folder, suffix="_full"):
     # Ensure output folder exists
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
@@ -16,7 +16,7 @@ def convert_mp4_to_wav(input_folder, output_folder):
     # Create progress bar using tqdm
     for filename in tqdm(mp4_files, desc="Conversion progress"):
         input_path = os.path.join(input_folder, filename)
-        output_filename = os.path.splitext(filename)[0] + '.wav'
+        output_filename = os.path.splitext(filename)[0] + suffix + '.wav'
         output_path = os.path.join(output_folder, output_filename)
         
         # Check if already converted
@@ -48,8 +48,8 @@ def convert_mp4_to_wav(input_folder, output_folder):
     else:
         print("\nAll files have been successfully converted!")
 
-# Iterate through datasets: FakeSV, FakeTT, and FVC
-datasets = ["FakeSV", "FakeTT", "FVC"]
+# Process only FakeSV dataset
+datasets = ["FakeSV"]
 
 for dataset in datasets:
     print(f"\nProcessing {dataset} dataset...")
@@ -61,7 +61,7 @@ for dataset in datasets:
         print(f"Input folder for {dataset} does not exist. Skipping...")
         continue
         
-    convert_mp4_to_wav(input_folder, output_folder)
+    convert_mp4_to_wav(input_folder, output_folder, suffix="_full")
     print(f"{dataset} conversion complete!")
 
 print("\nAll datasets processed!")

@@ -2,11 +2,20 @@ train:
 
 data:
   tokenizer_name: "OFA-Sys/chinese-clip-vit-large-patch14"
+  include_piyao: true  # Whether to include '辟谣' (rumor debunking) labels, mapped to real (0)
+  ablation_no_cot: false  # Ablation study: remove CoT text features, use only video features
+  ablation_no_vision: false  # Ablation study: remove visual features, use only text features
 para:
   hid_dim: 256
   dropout: 0.3
   text_encoder: "OFA-Sys/chinese-clip-vit-large-patch14"
   num_frozen_layers: 4
+  # Cross-modal transformer parameters
+  cross_modal: true  # Toggle transformer fusion (default: false for backward compatibility)
+  cross_modal_layers: 4
+  cross_modal_heads: 8
+  cross_modal_dim_ff: 1024
+  cross_modal_dropout: 0.1
 opt:
   name: AdamW
   lr: 5e-5

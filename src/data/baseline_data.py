@@ -5,14 +5,25 @@ from PIL import Image
 
 
 class FakeSVDataset(Dataset):
-    def __init__(self):
+    def __init__(self, include_piyao=False, **kwargs):
         super(FakeSVDataset, self).__init__()
+        self.include_piyao = include_piyao
     
     def _get_complete_data(self):
-        data_complete = pd.read_json('./data/FakeSV/data_complete.jsonl', orient='records', dtype=False, lines=True)
-        replace_values = {'辟谣': 2, '假': 1, '真':0}
-        data_complete['label'] = data_complete['annotation'].replace(replace_values)
-        data_complete = data_complete[data_complete['label']!=2]
+        # Always use original dataset which contains '辟谣' labels
+        data_complete = pd.read_json('./data/FakeSV/data_complete_orig.jsonl', orient='records', dtype=False, lines=True)
+        
+        if self.include_piyao:
+            # Map '辟谣' (rumor debunking) to real/true (0), since it represents fact-checking content
+            replace_values = {'辟谣': 0, '假': 1, '真':0}
+            data_complete['label'] = data_complete['annotation'].replace(replace_values)
+            # Use all data including '辟谣' entries (mapped to 0)
+        else:
+            # Filter out '辟谣' entries - map to 2 then remove
+            replace_values = {'辟谣': 2, '假': 1, '真':0}
+            data_complete['label'] = data_complete['annotation'].replace(replace_values)
+            data_complete = data_complete[data_complete['label']!=2]
+        
         data_complete['event'], _ = pd.factorize(data_complete['keywords'])
         return data_complete
     

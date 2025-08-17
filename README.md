@@ -93,7 +93,7 @@ bash run/cot.sh
 
 ```bash
 # Run ExMRD for the FakeSV dataset
-python src/main.py --config-name ExMRD_FakeSV
+python src/main.py --config-name ExMRD_Evidential_FakeSV
 
 # Run ExMRD for the FakeTT dataset
 python src/main.py --config-name ExMRD_FakeTT

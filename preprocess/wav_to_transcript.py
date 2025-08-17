@@ -45,8 +45,8 @@ class AudioDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        video_id = row['vid']
-        audio_file = os.path.join(self.audio_dir, f"{video_id}.wav")
+        video_id = row['video_id']
+        audio_file = os.path.join(self.audio_dir, f"{video_id}_full.wav")
         return {"vid": video_id, "audio_file": audio_file}
 
 # Modified process_batch function
@@ -73,8 +73,8 @@ def process_batch(batch, pipe):
 
 # Main processing function
 def process_dataset(dataset_name):
-    src_file = f'data/{dataset_name}/data.jsonl'
-    src_df = pd.read_json(src_file, lines=True, dtype={'vid': str})
+    src_file = f'data/{dataset_name}/data_complete.jsonl'
+    src_df = pd.read_json(src_file, lines=True, dtype={'video_id': str})
 
     dst_file = f'data/{dataset_name}/transcript.jsonl'
 
@@ -87,7 +87,7 @@ def process_dataset(dataset_name):
     cur_ids = set(dst_df['vid'].values) if len(dst_df) > 0 else set()
 
     # Filter already processed data
-    src_df = src_df[~src_df['vid'].isin(cur_ids)]
+    src_df = src_df[~src_df['video_id'].isin(cur_ids)]
 
     # Create Dataset and DataLoader
     dataset = AudioDataset(src_df, f'data/{dataset_name}/audios')
