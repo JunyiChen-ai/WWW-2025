@@ -31,32 +31,56 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class FullDatasetRetrieval:
-    def __init__(self, model_name: str = "OFA-Sys/chinese-clip-vit-large-patch14", filter_k: int = None, use_pool: bool = False):
+    def __init__(self, dataset: str = "FakeSV", model_name: str = None, filter_k: int = None, 
+                 use_pool: bool = False, txt_only: bool = False, no_audio: bool = False):
         """
         Initialize full dataset retrieval system
         
         Args:
-            model_name: Hugging Face model name for text embedding
+            dataset: Dataset name (e.g., 'FakeSV', 'FakeTT')
+            model_name: Hugging Face model name for text embedding (auto-selected if None)
             filter_k: Number of most similar training samples to remove per test sample (None for no filtering)
             use_pool: Use pooled features instead of frame-level similarity calculation
+            txt_only: Use only text modality (skip visual/audio)
+            no_audio: Skip audio processing (keep text + visual)
         """
+        self.dataset = dataset
+        
+        # Auto-select model if not provided
+        if model_name is None:
+            model_name = self.get_default_model(dataset)
+        
         self.model_name = model_name
         self.model_short_name = model_name.split("/")[-1]
         self.filter_k = filter_k
         self.use_pool = use_pool
+        self.txt_only = txt_only
+        self.no_audio = no_audio
         
-        # Data paths
-        self.entity_dir = Path("data/FakeSV/entity_claims")
-        self.output_dir = Path("text_similarity_results")
+        # Dataset-specific paths
+        self.data_dir = Path(f"data/{dataset}")
+        self.entity_dir = self.data_dir / "entity_claims" if dataset == "FakeSV" else self.data_dir
+        self.output_dir = self.data_dir / "text_similarity_results"
         self.output_dir.mkdir(exist_ok=True)
         
-        logger.info(f"Initializing full dataset retrieval with model: {model_name}")
+        logger.info(f"Initializing {dataset} dataset retrieval with model: {model_name}")
         if filter_k is not None:
             logger.info(f"Will filter top-{filter_k} similar training samples per test sample")
-        if use_pool:
+        if txt_only:
+            logger.info("Text-only mode: skipping visual and audio processing")
+        elif no_audio:
+            logger.info("No-audio mode: processing text + visual only")
+        elif use_pool:
             logger.info("Using pooled features for visual/audio similarity (fast mode)")
         else:
             logger.info("Using frame-level similarity for visual/audio (detailed mode)")
+    
+    def get_default_model(self, dataset: str) -> str:
+        """Get default text encoding model based on dataset"""
+        if dataset.lower() == 'fakesv':
+            return 'OFA-Sys/chinese-clip-vit-large-patch14'  # Chinese model
+        else:
+            return 'zer0int/LongCLIP-GmP-ViT-L-14'  # English model for FakeTT and others
         
     def load_model(self):
         """Load the embedding model"""
@@ -89,19 +113,41 @@ class FullDatasetRetrieval:
             for i in tqdm(range(0, len(texts), batch_size), desc=f"Encoding with {self.model_short_name}"):
                 batch_texts = texts[i:i+batch_size]
                 
-                # Tokenize
+                # Tokenize - LongCLIP supports longer sequences, standard CLIP is 77
+                if 'longclip' in self.model_name.lower():
+                    max_len = 248  # LongCLIP supports longer sequences
+                elif 'clip' in self.model_name.lower():
+                    max_len = 77   # Standard CLIP token limit
+                else:
+                    max_len = 512  # Other models
                 inputs = self.tokenizer(
                     batch_texts, 
                     padding=True, 
                     truncation=True, 
-                    max_length=512,
+                    max_length=max_len,
                     return_tensors="pt"
                 )
+                
+                # Debug: Show tokenized content for first batch
+                if i == 0 and len(batch_texts) > 0:
+                    decoded_first = self.tokenizer.decode(inputs['input_ids'][0], skip_special_tokens=True)
+                    logger.info(f"DEBUG: First tokenized text after truncation:\n       Original length: {len(batch_texts[0])} chars\n       After tokenization: {len(decoded_first)} chars\n       Content: {decoded_first}")
                 inputs = {k: v.to(self.device) for k, v in inputs.items()}
                 
                 # Get embeddings
                 if 'chinese-clip' in self.model_name.lower():
                     # For Chinese-CLIP, use text_model
+                    outputs = self.model.text_model(**inputs)
+                    embeddings = outputs.last_hidden_state[:, 0]  # CLS token
+                elif 'longclip' in self.model_name.lower():
+                    # For LongCLIP, use text_model
+                    outputs = self.model.text_model(**inputs)
+                    # Use mean pooling instead of CLS token
+                    last_hidden_state = outputs.last_hidden_state
+                    embeddings = last_hidden_state.mean(dim=1)  # Mean pooling over sequence
+                    # embeddings = self.model.get_text_features(**inputs)
+                elif 'openai/clip' in self.model_name.lower() or 'clip-vit' in self.model_name.lower():
+                    # For OpenAI CLIP, use text_model (same as Chinese-CLIP)
                     outputs = self.model.text_model(**inputs)
                     embeddings = outputs.last_hidden_state[:, 0]  # CLS token
                 else:
@@ -119,22 +165,45 @@ class FullDatasetRetrieval:
         return embeddings
     
     def load_entity_data(self):
-        """Load entity claims data"""
-        # Load true video extractions
-        true_file = self.entity_dir / "video_extractions.jsonl"
-        self.true_data = []
-        with open(true_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                self.true_data.append(json.loads(line))
-        logger.info(f"Loaded {len(self.true_data)} true video extractions")
-        
-        # Load fake video descriptions
-        fake_file = self.entity_dir / "fake_video_descriptions.jsonl"
-        self.fake_data = []
-        with open(fake_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                self.fake_data.append(json.loads(line))
-        logger.info(f"Loaded {len(self.fake_data)} fake video descriptions")
+        """Load entity/video data based on dataset"""
+        if self.dataset == "FakeSV":
+            # Load FakeSV data structure
+            # Load true video extractions
+            true_file = self.entity_dir / "video_extractions.jsonl"
+            self.true_data = []
+            with open(true_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    self.true_data.append(json.loads(line))
+            logger.info(f"Loaded {len(self.true_data)} true video extractions")
+            
+            # Load fake video descriptions
+            fake_file = self.entity_dir / "fake_video_descriptions.jsonl"
+            self.fake_data = []
+            with open(fake_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    self.fake_data.append(json.loads(line))
+            logger.info(f"Loaded {len(self.fake_data)} fake video descriptions")
+        else:
+            # Load other dataset format (e.g., FakeTT)
+            llm_file = self.entity_dir / "llm_video_descriptions.jsonl"
+            
+            if llm_file.exists():
+                # Load LLM-generated descriptions
+                all_data = []
+                with open(llm_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        if line.strip():
+                            all_data.append(json.loads(line))
+                logger.info(f"Loaded {len(all_data)} video descriptions")
+                
+                # Separate by annotation
+                self.true_data = [item for item in all_data if item.get('annotation') in ['real', '真']]
+                self.fake_data = [item for item in all_data if item.get('annotation') in ['fake', '假']]
+                logger.info(f"Separated into {len(self.true_data)} true and {len(self.fake_data)} fake videos")
+            else:
+                logger.error(f"Data file not found: {llm_file}")
+                self.true_data = []
+                self.fake_data = []
         
         # Load original data for timestamps
         self.load_original_timestamps()
@@ -143,63 +212,98 @@ class FullDatasetRetrieval:
         """Load original data to get publish timestamps"""
         from datetime import datetime
         
-        # Load original data
-        orig_file = Path("data/FakeSV/data_complete.jsonl")
+        # Dataset-specific original data files
+        if self.dataset == "FakeSV":
+            orig_file = self.data_dir / "data_complete.jsonl"
+            publish_time_field = 'publish_time_norm'
+        else:
+            # For FakeTT and other datasets
+            orig_file = self.data_dir / "data.json"
+            publish_time_field = 'publish_time'
+        
         self.timestamp_lookup = {}
         
-        with open(orig_file, 'r', encoding='utf-8') as f:
-            for line in f:
-                item = json.loads(line)
-                video_id = item.get('video_id')
-                publish_time = item.get('publish_time_norm')
-                
-                if video_id and publish_time:
-                    # Convert timestamp to readable format
-                    if len(str(publish_time)) > 10:  # Milliseconds
-                        timestamp = datetime.fromtimestamp(publish_time / 1000.0)
-                    else:  # Seconds
-                        timestamp = datetime.fromtimestamp(publish_time)
-                    
-                    self.timestamp_lookup[video_id] = {
-                        'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                        'raw_timestamp': publish_time
-                    }
-        
-        logger.info(f"Loaded timestamps for {len(self.timestamp_lookup)} videos")
+        if orig_file.exists():
+            with open(orig_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        item = json.loads(line)
+                        video_id = item.get('video_id')
+                        publish_time = item.get(publish_time_field)
+                        
+                        if video_id and publish_time:
+                            try:
+                                # Convert timestamp to readable format
+                                if len(str(publish_time)) > 10:  # Milliseconds
+                                    timestamp = datetime.fromtimestamp(publish_time / 1000.0)
+                                else:  # Seconds
+                                    timestamp = datetime.fromtimestamp(publish_time)
+                                
+                                self.timestamp_lookup[video_id] = {
+                                    'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                                    'raw_timestamp': publish_time
+                                }
+                            except (ValueError, OSError):
+                                # Handle invalid timestamps
+                                self.timestamp_lookup[video_id] = {
+                                    'timestamp': 'Unknown',
+                                    'raw_timestamp': publish_time
+                                }
+            
+            logger.info(f"Loaded timestamps for {len(self.timestamp_lookup)} videos")
+        else:
+            logger.warning(f"Original data file not found: {orig_file}")
     
     def load_multimodal_features(self):
-        """Load visual and audio features with optimization"""
-        feature_dir = Path("data/FakeSV/fea")
+        """Load visual and audio features with optimization (conditional based on mode)"""
+        if self.txt_only:
+            logger.info("Text-only mode: skipping multimodal feature loading")
+            self.visual_features = {}
+            self.audio_features = {}
+            self.visual_features_normalized = {}
+            self.audio_features_normalized = {}
+            return
         
-        # Load visual features
-        vit_file = feature_dir / "vit_tensor.pt"
-        if vit_file.exists():
-            self.visual_features = torch.load(vit_file, map_location='cpu')
-            logger.info(f"Loaded visual features for {len(self.visual_features)} videos")
+        feature_dir = self.data_dir / "fea"
+        
+        # Load visual features (unless text-only)
+        if not self.txt_only:
+            vit_file = feature_dir / "vit_tensor.pt"
+            if vit_file.exists():
+                self.visual_features = torch.load(vit_file, map_location='cpu')
+                logger.info(f"Loaded visual features for {len(self.visual_features)} videos")
+            else:
+                self.visual_features = {}
+                logger.warning(f"Visual features file not found: {vit_file}")
         else:
             self.visual_features = {}
-            logger.warning(f"Visual features file not found: {vit_file}")
         
-        # Load audio features  
-        audio_file = feature_dir / "audio_features_frames.pt"
-        if audio_file.exists():
-            self.audio_features = torch.load(audio_file, map_location='cpu')
-            logger.info(f"Loaded audio features for {len(self.audio_features)} videos")
+        # Load audio features (unless text-only or no-audio)
+        if not self.txt_only and not self.no_audio:
+            audio_file = feature_dir / "audio_features_frames.pt"
+            if audio_file.exists():
+                self.audio_features = torch.load(audio_file, map_location='cpu')
+                logger.info(f"Loaded audio features for {len(self.audio_features)} videos")
+            else:
+                self.audio_features = {}
+                logger.warning(f"Audio features file not found: {audio_file}")
         else:
             self.audio_features = {}
-            logger.warning(f"Audio features file not found: {audio_file}")
+            if self.no_audio:
+                logger.info("No-audio mode: skipping audio feature loading")
         
         # Convert to numpy and ensure float32 for efficiency
-        logger.info("Converting and optimizing features...")
-        for video_id in self.visual_features:
-            features = self.visual_features[video_id].numpy().astype(np.float32)
-            # Ensure contiguous memory layout for faster access
-            self.visual_features[video_id] = np.ascontiguousarray(features)
-        
-        for video_id in self.audio_features:
-            features = self.audio_features[video_id].numpy().astype(np.float32)
-            # Ensure contiguous memory layout for faster access
-            self.audio_features[video_id] = np.ascontiguousarray(features)
+        if self.visual_features or self.audio_features:
+            logger.info("Converting and optimizing features...")
+            for video_id in self.visual_features:
+                features = self.visual_features[video_id].numpy().astype(np.float32)
+                # Ensure contiguous memory layout for faster access
+                self.visual_features[video_id] = np.ascontiguousarray(features)
+            
+            for video_id in self.audio_features:
+                features = self.audio_features[video_id].numpy().astype(np.float32)
+                # Ensure contiguous memory layout for faster access
+                self.audio_features[video_id] = np.ascontiguousarray(features)
         
         # Initialize caches for normalized features
         self.visual_features_normalized = {}
@@ -231,65 +335,132 @@ class FullDatasetRetrieval:
     
     def precompute_bank_features(self, memory_true_data: List[Dict], memory_fake_data: List[Dict], 
                                 true_embeddings: np.ndarray, fake_embeddings: np.ndarray):
-        """Pre-compute and cache normalized memory bank features"""
+        """Pre-compute and cache normalized memory bank features (mode-dependent)"""
         logger.info("Pre-computing normalized memory bank features...")
         
         # Pre-compute true bank features
-        self.true_bank_features = {'T': [], 'V': [], 'A': []}
+        self.true_bank_features = {'T': []}
+        if not self.txt_only:
+            self.true_bank_features['V'] = []
+            if not self.no_audio:
+                self.true_bank_features['A'] = []
+        
         self.true_available_indices = []
         
         for i, memory_item in enumerate(memory_true_data):
             video_id = memory_item['video_id']
-            visual_features = self.get_normalized_features(video_id, 'V')
-            audio_features = self.get_normalized_features(video_id, 'A')
             
-            if visual_features is not None and audio_features is not None:
-                self.true_bank_features['V'].append(visual_features)
-                self.true_bank_features['A'].append(audio_features)
+            if self.txt_only:
+                # Text-only mode: include all samples
                 self.true_available_indices.append(i)
+            else:
+                # Multimodal mode: require visual features
+                visual_features = self.get_normalized_features(video_id, 'V')
+                audio_features = self.get_normalized_features(video_id, 'A') if not self.no_audio else np.array([])
+                
+                # Check required features are available
+                has_required = visual_features is not None and (self.no_audio or audio_features is not None)
+                
+                if has_required:
+                    self.true_bank_features['V'].append(visual_features)
+                    if not self.no_audio:
+                        self.true_bank_features['A'].append(audio_features)
+                    self.true_available_indices.append(i)
         
-        if len(self.true_bank_features['V']) > 0:
+        if len(self.true_available_indices) > 0:
             # Stack into arrays (already normalized from cache)
             self.true_bank_features['T'] = true_embeddings[self.true_available_indices]
-            self.true_bank_features['V'] = np.stack(self.true_bank_features['V'], axis=0)
-            self.true_bank_features['A'] = np.stack(self.true_bank_features['A'], axis=0)  
+            if not self.txt_only:
+                self.true_bank_features['V'] = np.stack(self.true_bank_features['V'], axis=0)
+                if not self.no_audio:
+                    self.true_bank_features['A'] = np.stack(self.true_bank_features['A'], axis=0)
             
-            logger.info(f"Pre-computed true bank features: {self.true_bank_features['V'].shape}")
+            logger.info(f"Pre-computed true bank features: text shape: {self.true_bank_features['T'].shape}")
+            if not self.txt_only:
+                logger.info(f"                                  visual shape: {self.true_bank_features['V'].shape}")
+                if not self.no_audio:
+                    logger.info(f"                                  audio shape: {self.true_bank_features['A'].shape}")
         
         # Pre-compute fake bank features
-        self.fake_bank_features = {'T': [], 'V': [], 'A': []}
+        self.fake_bank_features = {'T': []}
+        if not self.txt_only:
+            self.fake_bank_features['V'] = []
+            if not self.no_audio:
+                self.fake_bank_features['A'] = []
+        
         self.fake_available_indices = []
         
         for i, memory_item in enumerate(memory_fake_data):
             video_id = memory_item['video_id']
-            visual_features = self.get_normalized_features(video_id, 'V')
-            audio_features = self.get_normalized_features(video_id, 'A')
             
-            if visual_features is not None and audio_features is not None:
-                self.fake_bank_features['V'].append(visual_features)
-                self.fake_bank_features['A'].append(audio_features)
+            if self.txt_only:
+                # Text-only mode: include all samples
                 self.fake_available_indices.append(i)
+            else:
+                # Multimodal mode: require visual features
+                visual_features = self.get_normalized_features(video_id, 'V')
+                audio_features = self.get_normalized_features(video_id, 'A') if not self.no_audio else np.array([])
+                
+                # Check required features are available
+                has_required = visual_features is not None and (self.no_audio or audio_features is not None)
+                
+                if has_required:
+                    self.fake_bank_features['V'].append(visual_features)
+                    if not self.no_audio:
+                        self.fake_bank_features['A'].append(audio_features)
+                    self.fake_available_indices.append(i)
         
-        if len(self.fake_bank_features['V']) > 0:
+        if len(self.fake_available_indices) > 0:
             # Stack into arrays (already normalized from cache)
             self.fake_bank_features['T'] = fake_embeddings[self.fake_available_indices]
-            self.fake_bank_features['V'] = np.stack(self.fake_bank_features['V'], axis=0)
-            self.fake_bank_features['A'] = np.stack(self.fake_bank_features['A'], axis=0)
+            if not self.txt_only:
+                self.fake_bank_features['V'] = np.stack(self.fake_bank_features['V'], axis=0)
+                if not self.no_audio:
+                    self.fake_bank_features['A'] = np.stack(self.fake_bank_features['A'], axis=0)
             
-            logger.info(f"Pre-computed fake bank features: {self.fake_bank_features['V'].shape}")
+            logger.info(f"Pre-computed fake bank features: text shape: {self.fake_bank_features['T'].shape}")
+            if not self.txt_only:
+                logger.info(f"                                  visual shape: {self.fake_bank_features['V'].shape}")
+                if not self.no_audio:
+                    logger.info(f"                                  audio shape: {self.fake_bank_features['A'].shape}")
         
         logger.info("Bank features pre-computation complete")
         
     def get_temporal_splits(self):
-        """Get temporal split video IDs"""
-        vid_dir = Path("data/FakeSV/vids")
-        
-        splits = {}
-        for split in ['train', 'valid', 'test']:
-            split_file = vid_dir / f"vid_time3_{split}.txt"
-            with open(split_file, 'r') as f:
-                splits[split] = set(line.strip() for line in f)
-            logger.info(f"{split.capitalize()} split: {len(splits[split])} videos")
+        """Get temporal split video IDs (dataset-specific)"""
+        if self.dataset == "FakeSV":
+            # FakeSV has predefined splits
+            vid_dir = self.data_dir / "vids"
+            
+            splits = {}
+            for split in ['train', 'valid', 'test']:
+                split_file = vid_dir / f"vid_time3_{split}.txt"
+                if split_file.exists():
+                    with open(split_file, 'r') as f:
+                        splits[split] = set(line.strip() for line in f)
+                    logger.info(f"{split.capitalize()} split: {len(splits[split])} videos")
+                else:
+                    splits[split] = set()
+                    logger.warning(f"Split file not found: {split_file}")
+        else:
+            # For other datasets (like FakeTT), create simple splits based on available data
+            all_video_ids = set()
+            for item in self.true_data + self.fake_data:
+                all_video_ids.add(item['video_id'])
+            
+            # Simple 70/15/15 split for non-FakeSV datasets
+            video_list = sorted(list(all_video_ids))
+            n_total = len(video_list)
+            n_train = int(0.7 * n_total)
+            n_valid = int(0.15 * n_total)
+            
+            splits = {
+                'train': set(video_list[:n_train]),
+                'valid': set(video_list[n_train:n_train + n_valid]),
+                'test': set(video_list[n_train + n_valid:])
+            }
+            
+            logger.info(f"Created splits for {self.dataset}: Train: {len(splits['train'])}, Valid: {len(splits['valid'])}, Test: {len(splits['test'])}")
         
         return splits
     
@@ -365,6 +536,7 @@ class FullDatasetRetrieval:
                                   eps: float = 1e-12) -> np.ndarray:
         """
         Multimodal fusion using sample-adaptive gating (optimized version)
+        Supports text-only mode for simplified similarity computation
         
         Args:
             q: Query features {'T': text_emb, 'V': visual_frames, 'A': audio_frames}
@@ -373,6 +545,12 @@ class FullDatasetRetrieval:
         Returns:
             Fused scores for all samples in bank
         """
+        # For text-only mode, return simple cosine similarity
+        if self.txt_only:
+            q_text = self.l2_normalize(q['T'])
+            bank_text = self.l2_normalize(bank['T'], axis=1)
+            return np.dot(bank_text, q_text)
+        
         # Step 1: L2 normalize features (assume they come from cache and are already normalized)
         q_norm = {}
         bank_norm = {}
@@ -453,9 +631,11 @@ class FullDatasetRetrieval:
         for video_id in memory_bank_video_ids:
             if video_id in entity_lookup:
                 item = entity_lookup[video_id]
-                if item.get('annotation') == '真':
+                # Handle both Chinese and English annotations
+                annotation = item.get('annotation', '').lower()
+                if annotation in ['真', 'real']:
                     self.memory_true_data.append(item)
-                elif item.get('annotation') == '假':
+                elif annotation in ['假', 'fake']:
                     self.memory_fake_data.append(item)
         
         # Prepare all query samples (filtered train + valid + test)
@@ -482,14 +662,25 @@ class FullDatasetRetrieval:
         logger.info(f"Query set: {len(self.query_data)} videos")
         
     def create_text_representation(self, item: Dict) -> str:
-        """Create text representation for embedding"""
-        # Use title, keywords, description, and temporal evolution
+        """Create text representation for embedding (dataset-flexible)"""
         parts = []
-        for field in ['title', 'keywords', 'description', 'temporal_evolution']:
-            if field in item and item[field]:
+        
+        # Handle title/description field
+        title = item.get('title', '') or item.get('description', '')
+        if title:
+            parts.append(str(title))
+        
+        # Handle keywords vs event field (FakeTT uses 'event', FakeSV uses 'keywords')
+        keywords_or_event = item.get('keywords', '') or item.get('event', '')
+        if keywords_or_event:
+            parts.append(str(keywords_or_event))
+        
+        # Add description and temporal_evolution
+        for field in ['description', 'temporal_evolution']:
+            if field in item and item[field] and field != 'title':  # Avoid duplicate if title == description
                 parts.append(str(item[field]))
         
-        # Add entity claims if available
+        # Add entity_claims only if available (FakeSV has this, FakeTT doesn't)
         if 'entity_claims' in item and item['entity_claims']:
             claims_text = []
             for entity, claims in item['entity_claims'].items():
@@ -498,7 +689,24 @@ class FullDatasetRetrieval:
             if claims_text:
                 parts.append(" ".join(claims_text))
         
-        return " ".join(parts)
+        text_repr = " ".join(parts)
+        if not text_repr.strip():
+            # Fallback if no text found
+            text_repr = item.get('video_id', 'unknown')
+            logger.warning(f"No text content found for video {item.get('video_id')}, using ID as fallback")
+        
+        # Debug: print first few text representations to check content
+        if hasattr(self, '_debug_count'):
+            self._debug_count += 1
+        else:
+            self._debug_count = 1
+        
+        if self._debug_count <= 3:
+            logger.info(f"DEBUG: Text representation {self._debug_count} (video_id: {item.get('video_id', 'unknown')}):")
+            logger.info(f"       Content (first 200 chars): {text_repr[:200]}...")
+            logger.info(f"       Total length: {len(text_repr)} characters")
+        
+        return text_repr
     
     def filter_training_set(self, splits: Dict[str, Set[str]]) -> Set[str]:
         """
@@ -576,9 +784,14 @@ class FullDatasetRetrieval:
         logger.info(f"Filtered training set: {len(final_filtered_train_ids)} samples "
                    f"(original: {len(splits['train'])})")
         
-        # Save filtered training IDs to file
-        vid_dir = Path("data/FakeSV/vids")
-        filtered_file = vid_dir / f"vid_time3_train_k{self.filter_k}.txt"
+        # Save filtered training IDs to file (dataset-specific)
+        if self.dataset == "FakeSV":
+            vid_dir = self.data_dir / "vids"
+            filtered_file = vid_dir / f"vid_time3_train_k{self.filter_k}.txt"
+        else:
+            # For other datasets, save in the dataset directory
+            filtered_file = self.data_dir / f"train_filtered_k{self.filter_k}.txt"
+        
         with open(filtered_file, 'w') as f:
             for vid_id in sorted(final_filtered_train_ids):
                 f.write(f"{vid_id}\n")
@@ -623,20 +836,22 @@ class FullDatasetRetrieval:
             query_video_id = query_item['video_id']
             query_split = self.query_splits.get(query_video_id, 'unknown')
             
-            # Skip if multimodal features not available for query
-            visual_features = self.get_normalized_features(query_video_id, 'V')
-            audio_features = self.get_normalized_features(query_video_id, 'A')
+            # Prepare query features based on mode
+            query_features = {'T': batch_embeddings[i]}  # Always include text
             
-            if visual_features is None or audio_features is None:
-                logger.warning(f"Missing multimodal features for query {query_video_id}, skipping")
-                continue
+            if not self.txt_only:
+                # Skip if multimodal features not available for query
+                visual_features = self.get_normalized_features(query_video_id, 'V')
+                audio_features = self.get_normalized_features(query_video_id, 'A') if not self.no_audio else None
                 
-            # Prepare query features (already normalized from cache)
-            query_features = {
-                'T': batch_embeddings[i],  # Text embedding from batch
-                'V': visual_features,       # Normalized visual features
-                'A': audio_features        # Normalized audio features  
-            }
+                if visual_features is None or (not self.no_audio and audio_features is None):
+                    logger.warning(f"Missing multimodal features for query {query_video_id}, skipping")
+                    continue
+                    
+                # Add multimodal features
+                query_features['V'] = visual_features
+                if not self.no_audio and audio_features is not None:
+                    query_features['A'] = audio_features
             
             # Process true and fake candidates in parallel using optimized method
             true_candidate, fake_candidate = self._find_best_candidates_parallel(
@@ -649,7 +864,7 @@ class FullDatasetRetrieval:
                     'annotation': query_item.get('annotation', ''),
                     'split': query_split,
                     'title': query_item.get('title', ''),
-                    'keywords': query_item.get('keywords', ''),
+                    'keywords': query_item.get('keywords', '') or query_item.get('event', ''),
                     'description': query_item.get('description', ''),
                     'temporal_evolution': query_item.get('temporal_evolution', ''),
                     'entity_claims': query_item.get('entity_claims', {}),
@@ -691,8 +906,18 @@ class FullDatasetRetrieval:
                            query_video_id: str, bank_features: Dict[str, np.ndarray], available_indices: List[int],
                            memory_data: List[Dict], candidate_type: str):
         """Find best candidate from a specific bank (true or fake)"""
-        if 'V' not in bank_features or bank_features['V'] is None or len(bank_features['V']) == 0:
+        # Check if bank has any features
+        if len(available_indices) == 0:
             return None
+        
+        # For text-only mode, only check text features
+        if self.txt_only:
+            if 'T' not in bank_features or len(bank_features['T']) == 0:
+                return None
+        else:
+            # For multimodal mode, check visual features (audio is optional based on no_audio flag)
+            if 'V' not in bank_features or bank_features['V'] is None or len(bank_features['V']) == 0:
+                return None
         
         # Handle self-exclusion for train/valid
         exclude_indices = set()
@@ -706,11 +931,12 @@ class FullDatasetRetrieval:
             keep_indices = [j for j in range(len(available_indices)) if j not in exclude_indices]
             if not keep_indices:
                 return None
-            filtered_bank = {
-                'T': bank_features['T'][keep_indices],
-                'V': bank_features['V'][keep_indices],
-                'A': bank_features['A'][keep_indices]
-            }
+            filtered_bank = {'T': bank_features['T'][keep_indices]}
+            # Only include V and A if they exist in bank_features
+            if 'V' in bank_features:
+                filtered_bank['V'] = bank_features['V'][keep_indices]
+            if 'A' in bank_features:
+                filtered_bank['A'] = bank_features['A'][keep_indices]
             filtered_indices = [available_indices[j] for j in keep_indices]
         else:
             filtered_bank = bank_features
@@ -724,8 +950,17 @@ class FullDatasetRetrieval:
         # Compute individual modality similarities for output
         text_sim = float(np.dot(self.l2_normalize(filtered_bank['T'][best_idx]), 
                                self.l2_normalize(query_features['T'])))
-        visual_sim = self.compute_frame_similarity(query_features['V'], filtered_bank['V'][best_idx])
-        audio_sim = self.compute_frame_similarity(query_features['A'], filtered_bank['A'][best_idx])
+        
+        # Compute visual/audio similarities only if available
+        if 'V' in query_features and 'V' in filtered_bank:
+            visual_sim = self.compute_frame_similarity(query_features['V'], filtered_bank['V'][best_idx])
+        else:
+            visual_sim = 0.0
+            
+        if 'A' in query_features and 'A' in filtered_bank:
+            audio_sim = self.compute_frame_similarity(query_features['A'], filtered_bank['A'][best_idx])
+        else:
+            audio_sim = 0.0
         
         best_item = memory_data[memory_idx]
         candidate = {
@@ -736,7 +971,7 @@ class FullDatasetRetrieval:
             'audio_similarity': audio_sim,
             'annotation': best_item['annotation'],
             'title': best_item.get('title', ''),
-            'keywords': best_item.get('keywords', ''),
+            'keywords': best_item.get('keywords', '') or best_item.get('event', ''),
             'description': best_item.get('description', ''),
             'temporal_evolution': best_item.get('temporal_evolution', ''),
             'entity_claims': best_item.get('entity_claims', {}),
@@ -930,15 +1165,31 @@ if __name__ == "__main__":
     import argparse
     
     parser = argparse.ArgumentParser(description='Generate full dataset retrieval results')
-    parser.add_argument('--model', type=str, 
-                       default='OFA-Sys/chinese-clip-vit-large-patch14',
-                       help='Hugging Face model name for text embedding')
+    parser.add_argument('--dataset', type=str, default='FakeSV',
+                       help='Dataset name (default: FakeSV). Examples: FakeSV, FakeTT')
+    parser.add_argument('--model', type=str, default=None,
+                       help='Hugging Face model name for text embedding (auto-selected based on dataset if not provided)')
     parser.add_argument('--filter-k', type=int, default=None,
                        help='Number of most similar training samples to remove per test sample')
     parser.add_argument('--use-pool', action='store_true',
                        help='Use pooled features instead of frame-level similarity (faster)')
+    parser.add_argument('--txt-only', action='store_true',
+                       help='Use text-only mode (skip visual and audio processing)')
+    parser.add_argument('--no-audio', action='store_true',
+                       help='Skip audio processing (keep text + visual)')
     
     args = parser.parse_args()
     
-    retriever = FullDatasetRetrieval(model_name=args.model, filter_k=args.filter_k, use_pool=args.use_pool)
+    # Validate argument combinations
+    if args.txt_only and args.no_audio:
+        logger.warning("Both --txt-only and --no-audio specified. --txt-only takes precedence.")
+    
+    retriever = FullDatasetRetrieval(
+        dataset=args.dataset,
+        model_name=args.model, 
+        filter_k=args.filter_k, 
+        use_pool=args.use_pool,
+        txt_only=args.txt_only,
+        no_audio=args.no_audio
+    )
     retriever.run_retrieval()

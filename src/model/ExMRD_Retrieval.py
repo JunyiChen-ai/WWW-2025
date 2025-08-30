@@ -149,7 +149,7 @@ class BERT_FT(nn.Module):
         
         # Load only text model to save memory and parameters
         self.bert = AutoModel.from_pretrained(bert_name).text_model
-        
+        print(f"Loaded language model from {bert_name}")
         # Comprehensive freezing strategy
         trainable_params = 0
         total_params = 0

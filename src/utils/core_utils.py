@@ -106,8 +106,18 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
                 raise ValueError(f"Dataset '{dataset_name}' not found in the 'data' module.")
 
             try:
+                # Filter out parameters that don't belong to dataset constructor
+                # These parameters are used by collator or are dataset-specific
+                dataset_params_blacklist = ['tokenizer_name']
+                
+                # Add dataset-specific parameter filtering
+                if dataset_name == 'FakeTT':
+                    # FakeTT dataset doesn't support these FakeSV-specific parameters
+                    dataset_params_blacklist.extend(['include_piyao'])
+                    
+                filtered_kargs = {k: v for k, v in kargs.items() if k not in dataset_params_blacklist}
                 # Attempt to instantiate the dataset
-                dataset = dataset_class(**kargs)
+                dataset = dataset_class(**filtered_kargs)
             except TypeError as e:
                 raise TypeError(f"Error instantiating dataset '{dataset_name}': {str(e)}. Please check the provided arguments.")
 
