@@ -1,0 +1,952 @@
+{
+  "pairwise_agreements": {
+    "data": [
+      [
+        1.0,
+        0.8874538745387454,
+        0.9243542435424354,
+        0.8376383763837638,
+        0.9206642066420664,
+        0.8376383763837638,
+        0.8597785977859779,
+        0.8062730627306273,
+        0.922509225092251,
+        0.8431734317343174,
+        0.8560885608856088,
+        0.8062730627306273
+      ],
+      [
+        0.8874538745387454,
+        1.0,
+        0.8376383763837638,
+        0.9206642066420664,
+        0.8523985239852399,
+        0.9206642066420664,
+        0.8136531365313653,
+        0.8634686346863468,
+        0.8505535055350554,
+        0.9077490774907749,
+        0.8062730627306273,
+        0.8450184501845018
+      ],
+      [
+        0.9243542435424354,
+        0.8376383763837638,
+        1.0,
+        0.8874538745387454,
+        0.8671586715867159,
+        0.8062730627306273,
+        0.9243542435424354,
+        0.8487084870848709,
+        0.8690036900369004,
+        0.8081180811808119,
+        0.9206642066420664,
+        0.8523985239852399
+      ],
+      [
+        0.8376383763837638,
+        0.9206642066420664,
+        0.8874538745387454,
+        1.0,
+        0.8173431734317343,
+        0.8708487084870848,
+        0.8634686346863468,
+        0.9280442804428044,
+        0.8191881918819188,
+        0.8579335793357934,
+        0.8597785977859779,
+        0.9169741697416974
+      ],
+      [
+        0.9206642066420664,
+        0.8523985239852399,
+        0.8671586715867159,
+        0.8173431734317343,
+        1.0,
+        0.8948339483394834,
+        0.9243542435424354,
+        0.8560885608856088,
+        0.9428044280442804,
+        0.8523985239852399,
+        0.8800738007380073,
+        0.8191881918819188
+      ],
+      [
+        0.8376383763837638,
+        0.9206642066420664,
+        0.8062730627306273,
+        0.8708487084870848,
+        0.8948339483394834,
+        1.0,
+        0.8560885608856088,
+        0.9317343173431735,
+        0.8450184501845018,
+        0.9243542435424354,
+        0.8118081180811808,
+        0.8690036900369004
+      ],
+      [
+        0.8597785977859779,
+        0.8136531365313653,
+        0.9243542435424354,
+        0.8634686346863468,
+        0.9243542435424354,
+        0.8560885608856088,
+        1.0,
+        0.9059040590405905,
+        0.8856088560885609,
+        0.8210332103321033,
+        0.9446494464944649,
+        0.8690036900369004
+      ],
+      [
+        0.8062730627306273,
+        0.8634686346863468,
+        0.8487084870848709,
+        0.9280442804428044,
+        0.8560885608856088,
+        0.9317343173431735,
+        0.9059040590405905,
+        1.0,
+        0.8210332103321033,
+        0.8745387453874539,
+        0.8616236162361623,
+        0.933579335793358
+      ],
+      [
+        0.922509225092251,
+        0.8505535055350554,
+        0.8690036900369004,
+        0.8191881918819188,
+        0.9428044280442804,
+        0.8450184501845018,
+        0.8856088560885609,
+        0.8210332103321033,
+        1.0,
+        0.8948339483394834,
+        0.9261992619926199,
+        0.8542435424354243
+      ],
+      [
+        0.8431734317343174,
+        0.9077490774907749,
+        0.8081180811808119,
+        0.8579335793357934,
+        0.8523985239852399,
+        0.9243542435424354,
+        0.8210332103321033,
+        0.8745387453874539,
+        0.8948339483394834,
+        1.0,
+        0.8542435424354243,
+        0.9261992619926199
+      ],
+      [
+        0.8560885608856088,
+        0.8062730627306273,
+        0.9206642066420664,
+        0.8597785977859779,
+        0.8800738007380073,
+        0.8118081180811808,
+        0.9446494464944649,
+        0.8616236162361623,
+        0.9261992619926199,
+        0.8542435424354243,
+        1.0,
+        0.9059040590405905
+      ],
+      [
+        0.8062730627306273,
+        0.8450184501845018,
+        0.8523985239852399,
+        0.9169741697416974,
+        0.8191881918819188,
+        0.8690036900369004,
+        0.8690036900369004,
+        0.933579335793358,
+        0.8542435424354243,
+        0.9261992619926199,
+        0.9059040590405905,
+        1.0
+      ]
+    ],
+    "combination_names": [
+      "title_only+visual_frame_max+audio_frame_max",
+      "title_only+visual_frame_max+audio_pooled",
+      "title_only+visual_pooled+audio_frame_max",
+      "title_only+visual_pooled+audio_pooled",
+      "title_keywords+visual_frame_max+audio_frame_max",
+      "title_keywords+visual_frame_max+audio_pooled",
+      "title_keywords+visual_pooled+audio_frame_max",
+      "title_keywords+visual_pooled+audio_pooled",
+      "full_text+visual_frame_max+audio_frame_max",
+      "full_text+visual_frame_max+audio_pooled",
+      "full_text+visual_pooled+audio_frame_max",
+      "full_text+visual_pooled+audio_pooled"
+    ],
+    "summary_stats": {
+      "mean_agreement": 0.8715755339371576,
+      "max_agreement": 0.9446494464944649,
+      "min_agreement": 0.8062730627306273,
+      "std_agreement": 0.0407031851798719
+    }
+  },
+  "consensus_patterns": {
+    "summary": {
+      "full_consensus": 385,
+      "majority_consensus": 118,
+      "no_consensus": 39,
+      "total_samples": 542
+    },
+    "details": [
+      {
+        "video_id": "7017259392332549390",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7042975772717436167",
+        "ground_truth": "真",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 4,
+          "true": 8
+        },
+        "agreement_ratio": 0.6666666666666666
+      },
+      {
+        "video_id": "7025218023657114910",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7056718049017204004",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7029478371427912973",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7043725834615606564",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7037720351664590120",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7025167215913667851",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "3xvs9yq5ssbq394",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7038857031654182148",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7050683268659727646",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7041921581278416158",
+        "ground_truth": "假",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 9,
+          "true": 3
+        },
+        "agreement_ratio": 0.75
+      },
+      {
+        "video_id": "7047824234395045156",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7035041510471093508",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7049723441108241679",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7018372776943766823",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7033779180982603049",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7047470404633480462",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7029969757415673119",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7018783925770128655",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7027490498361265443",
+        "ground_truth": "真",
+        "consensus_level": "no_consensus",
+        "vote_distribution": {
+          "fake": 6,
+          "true": 6
+        },
+        "agreement_ratio": 0.5
+      },
+      {
+        "video_id": "3xjp7rzxfjd5wes",
+        "ground_truth": "真",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 2,
+          "true": 10
+        },
+        "agreement_ratio": 0.8333333333333334
+      },
+      {
+        "video_id": "7038198919838387493",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7035424396676320515",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "3x38ctqewjb8hmu",
+        "ground_truth": "真",
+        "consensus_level": "no_consensus",
+        "vote_distribution": {
+          "fake": 6,
+          "true": 6
+        },
+        "agreement_ratio": 0.5
+      },
+      {
+        "video_id": "7043748758198258975",
+        "ground_truth": "真",
+        "consensus_level": "no_consensus",
+        "vote_distribution": {
+          "fake": 6,
+          "true": 6
+        },
+        "agreement_ratio": 0.5
+      },
+      {
+        "video_id": "3xt56hysgxmysde",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7043720289464749325",
+        "ground_truth": "真",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 4,
+          "true": 8
+        },
+        "agreement_ratio": 0.6666666666666666
+      },
+      {
+        "video_id": "3xizkej8sh2m5ue",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "3x6d7bq2f8dc95u",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7046936640991792418",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7020439365021224195",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7053608466006510880",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "3xmydr5rp66gfpm",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7042982526268362015",
+        "ground_truth": "真",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 10,
+          "true": 2
+        },
+        "agreement_ratio": 0.8333333333333334
+      },
+      {
+        "video_id": "7029482339818392863",
+        "ground_truth": "假",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 10,
+          "true": 2
+        },
+        "agreement_ratio": 0.8333333333333334
+      },
+      {
+        "video_id": "7027945823648435488",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7031153752790830374",
+        "ground_truth": "假",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 8,
+          "true": 4
+        },
+        "agreement_ratio": 0.6666666666666666
+      },
+      {
+        "video_id": "7023193130031713575",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7034682911441915136",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7030359137842154752",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7045955588488006944",
+        "ground_truth": "假",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 4,
+          "true": 8
+        },
+        "agreement_ratio": 0.6666666666666666
+      },
+      {
+        "video_id": "7057098924561108262",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7040780207178927372",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7054459665228303657",
+        "ground_truth": "假",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 9,
+          "true": 3
+        },
+        "agreement_ratio": 0.75
+      },
+      {
+        "video_id": "7034683697068592424",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 0,
+          "true": 12
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "3x6kgc2skkeys7m",
+        "ground_truth": "假",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      },
+      {
+        "video_id": "7023059343138442511",
+        "ground_truth": "假",
+        "consensus_level": "no_consensus",
+        "vote_distribution": {
+          "fake": 6,
+          "true": 6
+        },
+        "agreement_ratio": 0.5
+      },
+      {
+        "video_id": "7034062611872238856",
+        "ground_truth": "真",
+        "consensus_level": "majority_consensus",
+        "vote_distribution": {
+          "fake": 4,
+          "true": 8
+        },
+        "agreement_ratio": 0.6666666666666666
+      },
+      {
+        "video_id": "3x56fqqqan35vtk",
+        "ground_truth": "真",
+        "consensus_level": "full_consensus",
+        "vote_distribution": {
+          "fake": 12,
+          "true": 0
+        },
+        "agreement_ratio": 1.0
+      }
+    ]
+  },
+  "complementarity_analysis": {
+    "matrix": {
+      "title_only+visual_frame_max+audio_frame_max": {
+        "title_only+visual_frame_max+audio_pooled": 0.05904059040590406,
+        "title_only+visual_pooled+audio_frame_max": 0.033210332103321034,
+        "title_only+visual_pooled+audio_pooled": 0.07564575645756458,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.027675276752767528,
+        "title_keywords+visual_frame_max+audio_pooled": 0.07195571955719557,
+        "title_keywords+visual_pooled+audio_frame_max": 0.04797047970479705,
+        "title_keywords+visual_pooled+audio_pooled": 0.07564575645756458,
+        "full_text+visual_frame_max+audio_frame_max": 0.012915129151291513,
+        "full_text+visual_frame_max+audio_pooled": 0.05166051660516605,
+        "full_text+visual_pooled+audio_frame_max": 0.04428044280442804,
+        "full_text+visual_pooled+audio_pooled": 0.06642066420664207
+      },
+      "title_only+visual_frame_max+audio_pooled": {
+        "title_only+visual_frame_max+audio_frame_max": 0.05350553505535055,
+        "title_only+visual_pooled+audio_frame_max": 0.07380073800738007,
+        "title_only+visual_pooled+audio_pooled": 0.03136531365313653,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.05904059040590406,
+        "title_keywords+visual_frame_max+audio_pooled": 0.027675276752767528,
+        "title_keywords+visual_pooled+audio_frame_max": 0.06826568265682657,
+        "title_keywords+visual_pooled+audio_pooled": 0.04428044280442804,
+        "full_text+visual_frame_max+audio_frame_max": 0.046125461254612546,
+        "full_text+visual_frame_max+audio_pooled": 0.016605166051660517,
+        "full_text+visual_pooled+audio_frame_max": 0.06642066420664207,
+        "full_text+visual_pooled+audio_pooled": 0.04428044280442804
+      },
+      "title_only+visual_pooled+audio_frame_max": {
+        "title_only+visual_frame_max+audio_frame_max": 0.042435424354243544,
+        "title_only+visual_frame_max+audio_pooled": 0.08856088560885608,
+        "title_only+visual_pooled+audio_pooled": 0.055350553505535055,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.05904059040590406,
+        "title_keywords+visual_frame_max+audio_pooled": 0.09225092250922509,
+        "title_keywords+visual_pooled+audio_frame_max": 0.02029520295202952,
+        "title_keywords+visual_pooled+audio_pooled": 0.05904059040590406,
+        "full_text+visual_frame_max+audio_frame_max": 0.04428044280442804,
+        "full_text+visual_frame_max+audio_pooled": 0.07380073800738007,
+        "full_text+visual_pooled+audio_frame_max": 0.016605166051660517,
+        "full_text+visual_pooled+audio_pooled": 0.04797047970479705
+      },
+      "title_only+visual_pooled+audio_pooled": {
+        "title_only+visual_frame_max+audio_frame_max": 0.08671586715867159,
+        "title_only+visual_frame_max+audio_pooled": 0.04797047970479705,
+        "title_only+visual_pooled+audio_frame_max": 0.05719557195571956,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.08487084870848709,
+        "title_keywords+visual_frame_max+audio_pooled": 0.06088560885608856,
+        "title_keywords+visual_pooled+audio_frame_max": 0.05166051660516605,
+        "title_keywords+visual_pooled+audio_pooled": 0.02029520295202952,
+        "full_text+visual_frame_max+audio_frame_max": 0.07011070110701106,
+        "full_text+visual_frame_max+audio_pooled": 0.04981549815498155,
+        "full_text+visual_pooled+audio_frame_max": 0.04797047970479705,
+        "full_text+visual_pooled+audio_pooled": 0.016605166051660517
+      },
+      "title_keywords+visual_frame_max+audio_frame_max": {
+        "title_only+visual_frame_max+audio_frame_max": 0.05166051660516605,
+        "title_only+visual_frame_max+audio_pooled": 0.08856088560885608,
+        "title_only+visual_pooled+audio_frame_max": 0.07380073800738007,
+        "title_only+visual_pooled+audio_pooled": 0.09778597785977859,
+        "title_keywords+visual_frame_max+audio_pooled": 0.055350553505535055,
+        "title_keywords+visual_pooled+audio_frame_max": 0.027675276752767528,
+        "title_keywords+visual_pooled+audio_pooled": 0.06273062730627306,
+        "full_text+visual_frame_max+audio_frame_max": 0.014760147601476014,
+        "full_text+visual_frame_max+audio_pooled": 0.05904059040590406,
+        "full_text+visual_pooled+audio_frame_max": 0.04428044280442804,
+        "full_text+visual_pooled+audio_pooled": 0.07195571955719557
+      },
+      "title_keywords+visual_frame_max+audio_pooled": {
+        "title_only+visual_frame_max+audio_frame_max": 0.09040590405904059,
+        "title_only+visual_frame_max+audio_pooled": 0.05166051660516605,
+        "title_only+visual_pooled+audio_frame_max": 0.1014760147601476,
+        "title_only+visual_pooled+audio_pooled": 0.06826568265682657,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.04981549815498155,
+        "title_keywords+visual_pooled+audio_frame_max": 0.05904059040590406,
+        "title_keywords+visual_pooled+audio_pooled": 0.02214022140221402,
+        "full_text+visual_frame_max+audio_frame_max": 0.06088560885608856,
+        "full_text+visual_frame_max+audio_pooled": 0.02029520295202952,
+        "full_text+visual_pooled+audio_frame_max": 0.07564575645756458,
+        "full_text+visual_pooled+audio_pooled": 0.04428044280442804
+      },
+      "title_keywords+visual_pooled+audio_frame_max": {
+        "title_only+visual_frame_max+audio_frame_max": 0.09225092250922509,
+        "title_only+visual_frame_max+audio_pooled": 0.11808118081180811,
+        "title_only+visual_pooled+audio_frame_max": 0.055350553505535055,
+        "title_only+visual_pooled+audio_pooled": 0.08487084870848709,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.04797047970479705,
+        "title_keywords+visual_frame_max+audio_pooled": 0.08487084870848709,
+        "title_keywords+visual_pooled+audio_pooled": 0.04797047970479705,
+        "full_text+visual_frame_max+audio_frame_max": 0.05350553505535055,
+        "full_text+visual_frame_max+audio_pooled": 0.08487084870848709,
+        "full_text+visual_pooled+audio_frame_max": 0.02214022140221402,
+        "full_text+visual_pooled+audio_pooled": 0.05719557195571956
+      },
+      "title_keywords+visual_pooled+audio_pooled": {
+        "title_only+visual_frame_max+audio_frame_max": 0.11808118081180811,
+        "title_only+visual_frame_max+audio_pooled": 0.09225092250922509,
+        "title_only+visual_pooled+audio_frame_max": 0.09225092250922509,
+        "title_only+visual_pooled+audio_pooled": 0.05166051660516605,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.08118081180811808,
+        "title_keywords+visual_frame_max+audio_pooled": 0.046125461254612546,
+        "title_keywords+visual_pooled+audio_frame_max": 0.046125461254612546,
+        "full_text+visual_frame_max+audio_frame_max": 0.08487084870848709,
+        "full_text+visual_frame_max+audio_pooled": 0.05719557195571956,
+        "full_text+visual_pooled+audio_frame_max": 0.06273062730627306,
+        "full_text+visual_pooled+audio_pooled": 0.023985239852398525
+      },
+      "full_text+visual_frame_max+audio_frame_max": {
+        "title_only+visual_frame_max+audio_frame_max": 0.06457564575645756,
+        "title_only+visual_frame_max+audio_pooled": 0.1033210332103321,
+        "title_only+visual_pooled+audio_frame_max": 0.08671586715867159,
+        "title_only+visual_pooled+audio_pooled": 0.11070110701107011,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.042435424354243544,
+        "title_keywords+visual_frame_max+audio_pooled": 0.0940959409594096,
+        "title_keywords+visual_pooled+audio_frame_max": 0.06088560885608856,
+        "title_keywords+visual_pooled+audio_pooled": 0.0940959409594096,
+        "full_text+visual_frame_max+audio_pooled": 0.05166051660516605,
+        "full_text+visual_pooled+audio_frame_max": 0.03505535055350553,
+        "full_text+visual_pooled+audio_pooled": 0.06826568265682657
+      },
+      "full_text+visual_frame_max+audio_pooled": {
+        "title_only+visual_frame_max+audio_frame_max": 0.10516605166051661,
+        "title_only+visual_frame_max+audio_pooled": 0.07564575645756458,
+        "title_only+visual_pooled+audio_frame_max": 0.11808118081180811,
+        "title_only+visual_pooled+audio_pooled": 0.09225092250922509,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.08856088560885608,
+        "title_keywords+visual_frame_max+audio_pooled": 0.055350553505535055,
+        "title_keywords+visual_pooled+audio_frame_max": 0.0940959409594096,
+        "title_keywords+visual_pooled+audio_pooled": 0.06826568265682657,
+        "full_text+visual_frame_max+audio_frame_max": 0.05350553505535055,
+        "full_text+visual_pooled+audio_frame_max": 0.07195571955719557,
+        "full_text+visual_pooled+audio_pooled": 0.033210332103321034
+      },
+      "full_text+visual_pooled+audio_frame_max": {
+        "title_only+visual_frame_max+audio_frame_max": 0.0996309963099631,
+        "title_only+visual_frame_max+audio_pooled": 0.12730627306273062,
+        "title_only+visual_pooled+audio_frame_max": 0.06273062730627306,
+        "title_only+visual_pooled+audio_pooled": 0.09225092250922509,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.07564575645756458,
+        "title_keywords+visual_frame_max+audio_pooled": 0.11254612546125461,
+        "title_keywords+visual_pooled+audio_frame_max": 0.033210332103321034,
+        "title_keywords+visual_pooled+audio_pooled": 0.07564575645756458,
+        "full_text+visual_frame_max+audio_frame_max": 0.03874538745387454,
+        "full_text+visual_frame_max+audio_pooled": 0.07380073800738007,
+        "full_text+visual_pooled+audio_pooled": 0.04428044280442804
+      },
+      "full_text+visual_pooled+audio_pooled": {
+        "title_only+visual_frame_max+audio_frame_max": 0.12730627306273062,
+        "title_only+visual_frame_max+audio_pooled": 0.11070110701107011,
+        "title_only+visual_pooled+audio_frame_max": 0.0996309963099631,
+        "title_only+visual_pooled+audio_pooled": 0.06642066420664207,
+        "title_keywords+visual_frame_max+audio_frame_max": 0.1088560885608856,
+        "title_keywords+visual_frame_max+audio_pooled": 0.08671586715867159,
+        "title_keywords+visual_pooled+audio_frame_max": 0.07380073800738007,
+        "title_keywords+visual_pooled+audio_pooled": 0.042435424354243544,
+        "full_text+visual_frame_max+audio_frame_max": 0.07749077490774908,
+        "full_text+visual_frame_max+audio_pooled": 0.04059040590405904,
+        "full_text+visual_pooled+audio_frame_max": 0.04981549815498155
+      }
+    },
+    "top_complementary_pairs": [
+      {
+        "combination1": "title_keywords+visual_frame_max+audio_pooled",
+        "combination2": "title_only+visual_pooled+audio_frame_max",
+        "complementarity_score": 0.09686346863468634,
+        "combo1_helps_combo2": 0.1014760147601476,
+        "combo2_helps_combo1": 0.09225092250922509
+      },
+      {
+        "combination1": "title_keywords+visual_pooled+audio_pooled",
+        "combination2": "title_only+visual_frame_max+audio_frame_max",
+        "complementarity_score": 0.09686346863468634,
+        "combo1_helps_combo2": 0.11808118081180811,
+        "combo2_helps_combo1": 0.07564575645756458
+      },
+      {
+        "combination1": "full_text+visual_pooled+audio_frame_max",
+        "combination2": "title_only+visual_frame_max+audio_pooled",
+        "complementarity_score": 0.09686346863468634,
+        "combo1_helps_combo2": 0.12730627306273062,
+        "combo2_helps_combo1": 0.06642066420664207
+      },
+      {
+        "combination1": "full_text+visual_pooled+audio_pooled",
+        "combination2": "title_only+visual_frame_max+audio_frame_max",
+        "complementarity_score": 0.09686346863468634,
+        "combo1_helps_combo2": 0.12730627306273062,
+        "combo2_helps_combo1": 0.06642066420664207
+      },
+      {
+        "combination1": "full_text+visual_frame_max+audio_pooled",
+        "combination2": "title_only+visual_pooled+audio_frame_max",
+        "complementarity_score": 0.0959409594095941,
+        "combo1_helps_combo2": 0.11808118081180811,
+        "combo2_helps_combo1": 0.07380073800738007
+      },
+      {
+        "combination1": "full_text+visual_pooled+audio_frame_max",
+        "combination2": "title_keywords+visual_frame_max+audio_pooled",
+        "complementarity_score": 0.0940959409594096,
+        "combo1_helps_combo2": 0.11254612546125461,
+        "combo2_helps_combo1": 0.07564575645756458
+      },
+      {
+        "combination1": "title_keywords+visual_pooled+audio_frame_max",
+        "combination2": "title_only+visual_frame_max+audio_pooled",
+        "complementarity_score": 0.09317343173431734,
+        "combo1_helps_combo2": 0.11808118081180811,
+        "combo2_helps_combo1": 0.06826568265682657
+      },
+      {
+        "combination1": "title_keywords+visual_frame_max+audio_frame_max",
+        "combination2": "title_only+visual_pooled+audio_pooled",
+        "complementarity_score": 0.09132841328413284,
+        "combo1_helps_combo2": 0.09778597785977859,
+        "combo2_helps_combo1": 0.08487084870848709
+      },
+      {
+        "combination1": "full_text+visual_frame_max+audio_frame_max",
+        "combination2": "title_only+visual_pooled+audio_pooled",
+        "complementarity_score": 0.09040590405904059,
+        "combo1_helps_combo2": 0.11070110701107011,
+        "combo2_helps_combo1": 0.07011070110701106
+      },
+      {
+        "combination1": "full_text+visual_pooled+audio_pooled",
+        "combination2": "title_keywords+visual_frame_max+audio_frame_max",
+        "complementarity_score": 0.09040590405904059,
+        "combo1_helps_combo2": 0.1088560885608856,
+        "combo2_helps_combo1": 0.07195571955719557
+      }
+    ],
+    "summary": {
+      "most_complementary": {
+        "combination1": "title_keywords+visual_frame_max+audio_pooled",
+        "combination2": "title_only+visual_pooled+audio_frame_max",
+        "complementarity_score": 0.09686346863468634,
+        "combo1_helps_combo2": 0.1014760147601476,
+        "combo2_helps_combo1": 0.09225092250922509
+      },
+      "least_complementary": {
+        "combination1": "full_text+visual_pooled+audio_frame_max",
+        "combination2": "title_keywords+visual_pooled+audio_frame_max",
+        "complementarity_score": 0.027675276752767528,
+        "combo1_helps_combo2": 0.033210332103321034,
+        "combo2_helps_combo1": 0.02214022140221402
+      }
+    }
+  }
+}

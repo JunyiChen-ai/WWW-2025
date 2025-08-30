@@ -1,0 +1,18 @@
+{
+  "total_queries": 1578,
+  "memory_bank_size": 1036,
+  "memory_true_count": 503,
+  "memory_fake_count": 533,
+  "excluded_self_count": 1036,
+  "splits": {
+    "train": 490,
+    "test": 542,
+    "valid": 546
+  },
+  "avg_true_similarity": 0.7430008442078555,
+  "avg_fake_similarity": 0.7697743775915585,
+  "test_to_memory_avg_true_similarity": 0.6780364793824973,
+  "test_to_memory_avg_fake_similarity": 0.7100998360622413,
+  "test_to_memory_train_avg_true_similarity": 0.6280610418981976,
+  "test_to_memory_train_avg_fake_similarity": 0.6622176615497734
+}

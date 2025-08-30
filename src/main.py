@@ -6,9 +6,35 @@ from datetime import datetime
 import math
 import sys
 import hydra
+import subprocess
+import re
+
+def get_gpu_memory_info():
+    """Get GPU memory information using nvidia-smi"""
+    try:
+        result = subprocess.run(['nvidia-smi', '--query-gpu=index,memory.free', '--format=csv,nounits,noheader'], 
+                              capture_output=True, text=True, check=True)
+        gpu_info = []
+        for line in result.stdout.strip().split('\n'):
+            if line:
+                gpu_id, free_memory = map(int, line.split(', '))
+                gpu_info.append((gpu_id, free_memory))
+        return gpu_info
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        print("Warning: nvidia-smi not available, using GPU 0")
+        return [(0, 0)]
+
+def select_best_gpu():
+    """Select GPU with most free memory"""
+    gpu_info = get_gpu_memory_info()
+    best_gpu = max(gpu_info, key=lambda x: x[1])
+    print(f"Available GPUs: {gpu_info}")
+    print(f"Selected GPU {best_gpu[0]} with {best_gpu[1]} MiB free memory")
+    return str(best_gpu[0])
 
 # Set CUDA device - use GPU with most available memory to avoid multi-GPU conflicts
-os.environ['CUDA_VISIBLE_DEVICES'] = '0'  # GPU 1 has most free memory (81089 MiB)
+selected_gpu = select_best_gpu()
+os.environ['CUDA_VISIBLE_DEVICES'] = selected_gpu
 import numpy as np
 import pandas as pd
 import torch
@@ -35,6 +61,8 @@ from utils.core_utils import (
     BinaryClassificationMetric,
     EarlyStopping
 )
+
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 
 
 
@@ -181,6 +209,458 @@ class Trainer():
         logger.info(f"{Fore.MAGENTA}Real(0) Metrics: F1: {np.mean(f1_real_list):.4f}, P: {np.mean(prec_real_list):.4f}, R: {np.mean(rec_real_list):.4f}")
         logger.info(f"{Fore.MAGENTA}Fake(1) Metrics: F1: {np.mean(f1_fake_list):.4f}, P: {np.mean(prec_fake_list):.4f}, R: {np.mean(rec_fake_list):.4f}")
         logger.info(f"{Fore.MAGENTA}===============================")
+    
+    def run_eval_only(self):
+        """Run evaluation only mode - load model and evaluate on test set with detailed predictions"""
+        logger.info(f"{Fore.GREEN}=== EVALUATION ONLY MODE ===")
+        
+        # Check if checkpoint exists
+        best_model_path = self.save_path / 'best_model.pth'
+        if not best_model_path.exists():
+            raise ValueError(f"Best model not found: {best_model_path}")
+        
+        # Initialize with first fold/temporal to get data loaders
+        fold = self.dataset_range[0]
+        self._reset(self.cfg, fold, self.type)
+        
+        # Load the best model
+        logger.info(f"Loading model from: {best_model_path}")
+        self.model.load_state_dict(torch.load(best_model_path, weights_only=False))
+        
+        # Run evaluation on test set with detailed predictions
+        predictions = self._eval_with_predictions()
+        
+        # Save predictions to result folder
+        result_dir = Path(f"result/{self.dataset_name}")
+        result_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Determine filename based on model type
+        if hasattr(self.model, 'name') and self.model.name == 'ExMRD_Defer':
+            predictions_file = result_dir / "defer_predictions.json"
+        else:
+            predictions_file = result_dir / "slm_prediction.json"
+            
+        with open(predictions_file, 'w', encoding='utf-8') as f:
+            json.dump(predictions, f, ensure_ascii=False, indent=2)
+        
+        logger.info(f"{Fore.GREEN}Predictions saved to: {predictions_file}")
+        logger.info(f"{Fore.GREEN}Total predictions: {len(predictions)}")
+        
+        # Run defer analysis if this is a defer model
+        defer_analysis = {}
+        if hasattr(self.model, 'name') and self.model.name == 'ExMRD_Defer':
+            defer_analysis = self._eval_defer_analysis(predictions)
+            
+            # Save defer analysis results
+            analysis_file = result_dir / "defer_analysis.json"
+            with open(analysis_file, 'w', encoding='utf-8') as f:
+                json.dump(defer_analysis, f, ensure_ascii=False, indent=2)
+            logger.info(f"{Fore.GREEN}Defer analysis saved to: {analysis_file}")
+        
+        # Generate confidence distribution plot if confidence scores are available
+        confidence_available = any('confidence' in p for p in predictions)
+        if confidence_available:
+            logger.info(f"{Fore.CYAN}Generating confidence distribution plot...")
+            try:
+                import subprocess
+                import sys
+                
+                # Run the plotting script
+                plot_script = Path(__file__).parent.parent / "plot_confidence_distribution.py"
+                confidence_output_dir = result_dir / "confidence_analysis"
+                
+                cmd = [
+                    sys.executable, str(plot_script),
+                    "--prediction_file", str(predictions_file),
+                    "--output_dir", str(confidence_output_dir),
+                    "--dataset_name", self.dataset_name,
+                    "--plot_type", "both"
+                ]
+                
+                subprocess.run(cmd, check=True)
+                logger.info(f"{Fore.CYAN}Confidence analysis plots saved to: {confidence_output_dir}")
+                
+            except Exception as e:
+                logger.warning(f"{Fore.YELLOW}Could not generate confidence plots: {e}")
+        else:
+            logger.info(f"{Fore.YELLOW}No confidence values found in predictions - skipping confidence analysis")
+        
+    def _eval_with_predictions(self):
+        """Evaluate model on test set and return detailed predictions"""
+        self.model.eval()
+        predictions = []
+        
+        logger.info(f"{Fore.YELLOW}Running detailed evaluation on test set...")
+        
+        for batch in tqdm(self.test_dataloader, bar_format=f"{Fore.YELLOW}{{l_bar}}{{bar}}{{r_bar}}"):
+            vids = batch.pop('vids')
+            
+            # Separate tensor and non-tensor inputs
+            inputs = {}
+            for key, value in batch.items():
+                if hasattr(value, 'to'):  # Check if it's a tensor
+                    inputs[key] = value.to(self.device)
+                else:  # Keep non-tensor values as is (like boolean flags)
+                    inputs[key] = value
+                    
+            labels = inputs.pop('labels')
+        
+            with torch.no_grad():
+                output = self.model(**inputs)
+                
+                # Handle model-specific outputs
+                if hasattr(self.model, 'name') and self.model.name == 'ExMRD_Defer':
+                    # Defer model: get detailed predictions for analysis
+                    predict_output = self.model.predict(inputs['p_dm'], **{k:v for k,v in inputs.items() if k != 'p_dm'})
+                    
+                    pred = predict_output['final_probs']  # Final predictions after deferral
+                    defer_info = {
+                        'p_slm': predict_output['p_slm'],         # SLM predictions
+                        'p_dm': predict_output['p_dm'],           # LLM predictions  
+                        'pi': predict_output['pi'],               # Defer probabilities
+                        'defer_decisions': predict_output['defer_decisions'],  # Boolean defer decisions
+                        'defer_threshold': self.model.defer_threshold
+                    }
+                    
+                elif hasattr(self.model, 'name') and self.model.name == 'ExMRD_Evidential':
+                    # Check if using evidential or traditional classifier
+                    if hasattr(self.model, 'use_evidential') and self.model.use_evidential:
+                        # Evidential classifier: use fused predictions
+                        pred = output['p_fused']  # Predictive probabilities from fused evidence
+                    else:
+                        # Traditional classifier: output is logits
+                        pred = F.softmax(output, dim=1)
+                    defer_info = None
+                    
+                elif hasattr(self.model, 'name') and self.model.name == 'ExMRD_Retrieval':
+                    # Retrieval-augmented evidential classifier
+                    pred = output['p_fused']  # Predictive probabilities from fused evidence
+                    defer_info = None
+                else:
+                    # Regular model handling
+                    if type(output) is dict:
+                        pred = output['pred']
+                    else:
+                        pred = output
+                    defer_info = None
+            
+            _, preds = torch.max(pred, 1)
+            
+            # Store predictions for each sample in the batch
+            for i in range(len(vids)):
+                video_id = vids[i]
+                ground_truth = labels[i].item()
+                prediction = preds[i].item()
+                
+                # Convert labels to meaningful strings
+                gt_label = "真" if ground_truth == 0 else "假"
+                pred_label = "真" if prediction == 0 else "假"
+                
+                # Extract confidence (max prediction probability)
+                confidence = float(torch.max(pred[i]).item())
+                
+                # Add model type information for analysis
+                if hasattr(self.model, 'name') and self.model.name == 'ExMRD_Defer':
+                    model_type = "defer"
+                elif hasattr(self.model, 'use_evidential') and self.model.use_evidential:
+                    model_type = "evidential"
+                else:
+                    model_type = "traditional"
+                
+                pred_entry = {
+                    "video_id": video_id,
+                    "annotation": gt_label,
+                    "prediction": pred_label,
+                    "ground_truth": gt_label,  # For compatibility with plotting script
+                    "ground_truth_numeric": ground_truth,
+                    "prediction_numeric": prediction,
+                    "confidence": confidence,
+                    "model_type": model_type
+                }
+                
+                # Add defer-specific information if available
+                if defer_info is not None:
+                    # SLM predictions
+                    slm_pred_probs = defer_info['p_slm'][i]
+                    _, slm_pred_idx = torch.max(slm_pred_probs, 0)
+                    slm_pred_label = "真" if slm_pred_idx.item() == 0 else "假"
+                    
+                    # LLM predictions  
+                    llm_pred_probs = defer_info['p_dm'][i]
+                    _, llm_pred_idx = torch.max(llm_pred_probs, 0)
+                    llm_pred_label = "真" if llm_pred_idx.item() == 0 else "假"
+                    
+                    # Defer information
+                    pred_entry.update({
+                        "slm_prediction": slm_pred_label,
+                        "slm_prediction_numeric": slm_pred_idx.item(),
+                        "slm_confidence": float(torch.max(slm_pred_probs).item()),
+                        "llm_prediction": llm_pred_label,
+                        "llm_prediction_numeric": llm_pred_idx.item(), 
+                        "llm_confidence": float(torch.max(llm_pred_probs).item()),
+                        "defer_probability": float(defer_info['pi'][i].item()),
+                        "is_deferred": bool(defer_info['defer_decisions'][i].item()),
+                        "defer_threshold": float(defer_info['defer_threshold'])
+                    })
+                    
+                predictions.append(pred_entry)
+        
+        # Calculate and log metrics
+        ground_truth = [p["ground_truth_numeric"] for p in predictions]
+        pred_values = [p["prediction_numeric"] for p in predictions]
+        
+        self.evaluator._reset()
+        self.evaluator.update(torch.tensor(pred_values).to(self.device), torch.tensor(ground_truth).to(self.device))
+        metrics = self.evaluator.compute()
+        
+        logger.info(f"{Fore.GREEN}=== EVALUATION RESULTS ===")
+        logger.info(f"{Fore.GREEN}Total samples: {len(predictions)}")
+        logger.info(f"{Fore.GREEN}Accuracy: {metrics['acc']:.4f}")
+        logger.info(f"{Fore.GREEN}Macro F1: {metrics['f1']:.4f}")
+        logger.info(f"{Fore.GREEN}Macro Precision: {metrics['prec']:.4f}")
+        logger.info(f"{Fore.GREEN}Macro Recall: {metrics['rec']:.4f}")
+        logger.info(f"{Fore.GREEN}Real(0) F1: {metrics['f1_real']:.4f}, P: {metrics['prec_real']:.4f}, R: {metrics['rec_real']:.4f}")
+        logger.info(f"{Fore.GREEN}Fake(1) F1: {metrics['f1_fake']:.4f}, P: {metrics['prec_fake']:.4f}, R: {metrics['rec_fake']:.4f}")
+        logger.info(f"{Fore.GREEN}===========================")
+        
+        return predictions
+        
+    def _eval_defer_analysis(self, predictions):
+        """Analyze defer model predictions with detailed statistics"""
+        if not any(p.get('model_type') == 'defer' for p in predictions):
+            logger.info(f"{Fore.YELLOW}No defer model predictions found - skipping defer analysis")
+            return {}
+        
+        logger.info(f"{Fore.CYAN}=== DEFER MODEL DETAILED ANALYSIS ===")
+        
+        # Separate deferred and non-deferred samples
+        deferred_samples = [p for p in predictions if p.get('is_deferred', False)]
+        non_deferred_samples = [p for p in predictions if not p.get('is_deferred', False)]
+        
+        total_samples = len(predictions)
+        defer_count = len(deferred_samples)
+        non_defer_count = len(non_deferred_samples)
+        defer_rate = defer_count / total_samples if total_samples > 0 else 0
+        
+        # Calculate defer probability statistics
+        defer_probs = [p.get('defer_probability', 0) for p in predictions]
+        avg_defer_prob = np.mean(defer_probs) if defer_probs else 0
+        std_defer_prob = np.std(defer_probs) if defer_probs else 0
+        threshold = predictions[0].get('defer_threshold', 0.5) if predictions else 0.5
+        
+        # Overall metrics (using final predictions after deferral)
+        overall_gt = [p["ground_truth_numeric"] for p in predictions]
+        overall_pred = [p["prediction_numeric"] for p in predictions]
+        overall_acc = accuracy_score(overall_gt, overall_pred)
+        overall_f1_macro = f1_score(overall_gt, overall_pred, average='macro')
+        overall_prec_macro = precision_score(overall_gt, overall_pred, average='macro')
+        overall_rec_macro = recall_score(overall_gt, overall_pred, average='macro')
+        
+        # Per-class metrics
+        overall_f1_per_class = f1_score(overall_gt, overall_pred, average=None)
+        overall_prec_per_class = precision_score(overall_gt, overall_pred, average=None)
+        overall_rec_per_class = recall_score(overall_gt, overall_pred, average=None)
+        
+        logger.info(f"{Fore.CYAN}Overall Performance (with deferral):")
+        logger.info(f"{Fore.CYAN}  Accuracy: {overall_acc:.4f} ({len(overall_gt)} samples)")
+        logger.info(f"{Fore.CYAN}  Macro F1: {overall_f1_macro:.4f}, Precision: {overall_prec_macro:.4f}, Recall: {overall_rec_macro:.4f}")
+        logger.info(f"{Fore.CYAN}  Real(0) F1: {overall_f1_per_class[0]:.4f}, P: {overall_prec_per_class[0]:.4f}, R: {overall_rec_per_class[0]:.4f}")
+        logger.info(f"{Fore.CYAN}  Fake(1) F1: {overall_f1_per_class[1]:.4f}, P: {overall_prec_per_class[1]:.4f}, R: {overall_rec_per_class[1]:.4f}")
+        
+        # Pure SLM baseline (no deferral)
+        slm_only_pred = [p["slm_prediction_numeric"] for p in predictions]
+        slm_acc = accuracy_score(overall_gt, slm_only_pred)
+        slm_f1_macro = f1_score(overall_gt, slm_only_pred, average='macro')
+        slm_prec_macro = precision_score(overall_gt, slm_only_pred, average='macro')
+        slm_rec_macro = recall_score(overall_gt, slm_only_pred, average='macro')
+        
+        # Per-class metrics for SLM
+        slm_f1_per_class = f1_score(overall_gt, slm_only_pred, average=None)
+        slm_prec_per_class = precision_score(overall_gt, slm_only_pred, average=None)
+        slm_rec_per_class = recall_score(overall_gt, slm_only_pred, average=None)
+        
+        logger.info(f"{Fore.CYAN}Pure SLM Baseline (no deferral):")
+        logger.info(f"{Fore.CYAN}  Accuracy: {slm_acc:.4f} ({len(overall_gt)} samples)")
+        logger.info(f"{Fore.CYAN}  Macro F1: {slm_f1_macro:.4f}, Precision: {slm_prec_macro:.4f}, Recall: {slm_rec_macro:.4f}")
+        logger.info(f"{Fore.CYAN}  Real(0) F1: {slm_f1_per_class[0]:.4f}, P: {slm_prec_per_class[0]:.4f}, R: {slm_rec_per_class[0]:.4f}")
+        logger.info(f"{Fore.CYAN}  Fake(1) F1: {slm_f1_per_class[1]:.4f}, P: {slm_prec_per_class[1]:.4f}, R: {slm_rec_per_class[1]:.4f}")
+        
+        # Defer vs Pure SLM comparison
+        acc_improvement = overall_acc - slm_acc
+        f1_improvement = overall_f1_macro - slm_f1_macro
+        logger.info(f"{Fore.CYAN}Deferral vs Pure SLM:")
+        logger.info(f"{Fore.CYAN}  Accuracy improvement: {acc_improvement:+.4f}")
+        logger.info(f"{Fore.CYAN}  Macro F1 improvement: {f1_improvement:+.4f}")
+        
+        logger.info(f"{Fore.CYAN}Defer Statistics:")
+        logger.info(f"{Fore.CYAN}  Defer Rate: {defer_rate:.3f} ({defer_count}/{total_samples} samples)")
+        logger.info(f"{Fore.CYAN}  Average π: {avg_defer_prob:.3f} ± {std_defer_prob:.3f}")
+        logger.info(f"{Fore.CYAN}  Threshold: τ = {threshold}")
+        
+        analysis_results = {
+            'total_samples': total_samples,
+            'defer_rate': defer_rate,
+            'defer_count': defer_count,
+            'non_defer_count': non_defer_count,
+            'avg_defer_probability': avg_defer_prob,
+            'std_defer_probability': std_defer_prob,
+            'defer_threshold': threshold,
+            'overall_metrics': {
+                'accuracy': overall_acc,
+                'f1_macro': overall_f1_macro,
+                'precision_macro': overall_prec_macro,
+                'recall_macro': overall_rec_macro,
+                'f1_per_class': overall_f1_per_class.tolist(),
+                'precision_per_class': overall_prec_per_class.tolist(),
+                'recall_per_class': overall_rec_per_class.tolist()
+            },
+            'slm_baseline': {
+                'accuracy': slm_acc,
+                'f1_macro': slm_f1_macro,
+                'precision_macro': slm_prec_macro,
+                'recall_macro': slm_rec_macro,
+                'f1_per_class': slm_f1_per_class.tolist(),
+                'precision_per_class': slm_prec_per_class.tolist(),
+                'recall_per_class': slm_rec_per_class.tolist()
+            },
+            'improvement_over_slm': {
+                'accuracy': acc_improvement,
+                'f1_macro': f1_improvement
+            }
+        }
+        
+        # Analyze deferred samples
+        if deferred_samples:
+            # SLM-only performance on deferred samples
+            deferred_gt = [p["ground_truth_numeric"] for p in deferred_samples]
+            deferred_slm_pred = [p["slm_prediction_numeric"] for p in deferred_samples]
+            deferred_llm_pred = [p["llm_prediction_numeric"] for p in deferred_samples]
+            
+            # SLM metrics on deferred
+            slm_def_acc = accuracy_score(deferred_gt, deferred_slm_pred)
+            slm_def_f1_macro = f1_score(deferred_gt, deferred_slm_pred, average='macro')
+            slm_def_prec_macro = precision_score(deferred_gt, deferred_slm_pred, average='macro')
+            slm_def_rec_macro = recall_score(deferred_gt, deferred_slm_pred, average='macro')
+            
+            slm_def_f1_per_class = f1_score(deferred_gt, deferred_slm_pred, average=None)
+            slm_def_prec_per_class = precision_score(deferred_gt, deferred_slm_pred, average=None)
+            slm_def_rec_per_class = recall_score(deferred_gt, deferred_slm_pred, average=None)
+            
+            # LLM metrics on deferred
+            llm_def_acc = accuracy_score(deferred_gt, deferred_llm_pred)
+            llm_def_f1_macro = f1_score(deferred_gt, deferred_llm_pred, average='macro')
+            llm_def_prec_macro = precision_score(deferred_gt, deferred_llm_pred, average='macro')
+            llm_def_rec_macro = recall_score(deferred_gt, deferred_llm_pred, average='macro')
+            
+            llm_def_f1_per_class = f1_score(deferred_gt, deferred_llm_pred, average=None)
+            llm_def_prec_per_class = precision_score(deferred_gt, deferred_llm_pred, average=None)
+            llm_def_rec_per_class = recall_score(deferred_gt, deferred_llm_pred, average=None)
+            
+            improvement_acc = llm_def_acc - slm_def_acc
+            improvement_f1 = llm_def_f1_macro - slm_def_f1_macro
+            
+            logger.info(f"{Fore.CYAN}Deferred Samples Analysis ({defer_count} samples):")
+            logger.info(f"{Fore.CYAN}  SLM-only:")
+            logger.info(f"{Fore.CYAN}    Accuracy: {slm_def_acc:.4f}")
+            logger.info(f"{Fore.CYAN}    Macro F1: {slm_def_f1_macro:.4f}, Precision: {slm_def_prec_macro:.4f}, Recall: {slm_def_rec_macro:.4f}")
+            logger.info(f"{Fore.CYAN}    Real(0) F1: {slm_def_f1_per_class[0]:.4f}, P: {slm_def_prec_per_class[0]:.4f}, R: {slm_def_rec_per_class[0]:.4f}")
+            logger.info(f"{Fore.CYAN}    Fake(1) F1: {slm_def_f1_per_class[1]:.4f}, P: {slm_def_prec_per_class[1]:.4f}, R: {slm_def_rec_per_class[1]:.4f}")
+            
+            logger.info(f"{Fore.CYAN}  LLM:")
+            logger.info(f"{Fore.CYAN}    Accuracy: {llm_def_acc:.4f}")
+            logger.info(f"{Fore.CYAN}    Macro F1: {llm_def_f1_macro:.4f}, Precision: {llm_def_prec_macro:.4f}, Recall: {llm_def_rec_macro:.4f}")
+            logger.info(f"{Fore.CYAN}    Real(0) F1: {llm_def_f1_per_class[0]:.4f}, P: {llm_def_prec_per_class[0]:.4f}, R: {llm_def_rec_per_class[0]:.4f}")
+            logger.info(f"{Fore.CYAN}    Fake(1) F1: {llm_def_f1_per_class[1]:.4f}, P: {llm_def_prec_per_class[1]:.4f}, R: {llm_def_rec_per_class[1]:.4f}")
+            
+            logger.info(f"{Fore.CYAN}  LLM vs SLM Improvement:")
+            logger.info(f"{Fore.CYAN}    Accuracy: {improvement_acc:+.4f}, Macro F1: {improvement_f1:+.4f}")
+            
+            analysis_results['deferred_analysis'] = {
+                'count': defer_count,
+                'slm_metrics': {
+                    'accuracy': slm_def_acc,
+                    'f1_macro': slm_def_f1_macro,
+                    'precision_macro': slm_def_prec_macro,
+                    'recall_macro': slm_def_rec_macro,
+                    'f1_per_class': slm_def_f1_per_class.tolist(),
+                    'precision_per_class': slm_def_prec_per_class.tolist(),
+                    'recall_per_class': slm_def_rec_per_class.tolist()
+                },
+                'llm_metrics': {
+                    'accuracy': llm_def_acc,
+                    'f1_macro': llm_def_f1_macro,
+                    'precision_macro': llm_def_prec_macro,
+                    'recall_macro': llm_def_rec_macro,
+                    'f1_per_class': llm_def_f1_per_class.tolist(),
+                    'precision_per_class': llm_def_prec_per_class.tolist(),
+                    'recall_per_class': llm_def_rec_per_class.tolist()
+                },
+                'improvement': {
+                    'accuracy': improvement_acc,
+                    'f1_macro': improvement_f1
+                }
+            }
+        
+        # Analyze non-deferred samples
+        if non_deferred_samples:
+            non_deferred_gt = [p["ground_truth_numeric"] for p in non_deferred_samples]
+            non_deferred_slm_pred = [p["slm_prediction_numeric"] for p in non_deferred_samples]
+            
+            slm_nondef_acc = accuracy_score(non_deferred_gt, non_deferred_slm_pred)
+            slm_nondef_f1_macro = f1_score(non_deferred_gt, non_deferred_slm_pred, average='macro')
+            slm_nondef_prec_macro = precision_score(non_deferred_gt, non_deferred_slm_pred, average='macro')
+            slm_nondef_rec_macro = recall_score(non_deferred_gt, non_deferred_slm_pred, average='macro')
+            
+            slm_nondef_f1_per_class = f1_score(non_deferred_gt, non_deferred_slm_pred, average=None)
+            slm_nondef_prec_per_class = precision_score(non_deferred_gt, non_deferred_slm_pred, average=None)
+            slm_nondef_rec_per_class = recall_score(non_deferred_gt, non_deferred_slm_pred, average=None)
+            
+            logger.info(f"{Fore.CYAN}Non-deferred Samples ({non_defer_count} samples):")
+            logger.info(f"{Fore.CYAN}  SLM-only:")
+            logger.info(f"{Fore.CYAN}    Accuracy: {slm_nondef_acc:.4f}")
+            logger.info(f"{Fore.CYAN}    Macro F1: {slm_nondef_f1_macro:.4f}, Precision: {slm_nondef_prec_macro:.4f}, Recall: {slm_nondef_rec_macro:.4f}")
+            logger.info(f"{Fore.CYAN}    Real(0) F1: {slm_nondef_f1_per_class[0]:.4f}, P: {slm_nondef_prec_per_class[0]:.4f}, R: {slm_nondef_rec_per_class[0]:.4f}")
+            logger.info(f"{Fore.CYAN}    Fake(1) F1: {slm_nondef_f1_per_class[1]:.4f}, P: {slm_nondef_prec_per_class[1]:.4f}, R: {slm_nondef_rec_per_class[1]:.4f}")
+            
+            analysis_results['non_deferred_analysis'] = {
+                'count': non_defer_count,
+                'slm_metrics': {
+                    'accuracy': slm_nondef_acc,
+                    'f1_macro': slm_nondef_f1_macro,
+                    'precision_macro': slm_nondef_prec_macro,
+                    'recall_macro': slm_nondef_rec_macro,
+                    'f1_per_class': slm_nondef_f1_per_class.tolist(),
+                    'precision_per_class': slm_nondef_prec_per_class.tolist(),
+                    'recall_per_class': slm_nondef_rec_per_class.tolist()
+                }
+            }
+        
+        # Breakdown by ground truth labels
+        real_samples = [p for p in predictions if p["ground_truth_numeric"] == 0]
+        fake_samples = [p for p in predictions if p["ground_truth_numeric"] == 1]
+        
+        real_deferred = len([p for p in real_samples if p.get('is_deferred', False)])
+        fake_deferred = len([p for p in fake_samples if p.get('is_deferred', False)])
+        
+        real_defer_rate = real_deferred / len(real_samples) if real_samples else 0
+        fake_defer_rate = fake_deferred / len(fake_samples) if fake_samples else 0
+        
+        logger.info(f"{Fore.CYAN}Breakdown by Ground Truth:")
+        logger.info(f"{Fore.CYAN}  Real news: {real_defer_rate:.3f} deferred ({real_deferred}/{len(real_samples)})")
+        logger.info(f"{Fore.CYAN}  Fake news: {fake_defer_rate:.3f} deferred ({fake_deferred}/{len(fake_samples)})")
+        
+        analysis_results['ground_truth_breakdown'] = {
+            'real_defer_rate': real_defer_rate,
+            'fake_defer_rate': fake_defer_rate,
+            'real_total': len(real_samples),
+            'fake_total': len(fake_samples),
+            'real_deferred': real_deferred,
+            'fake_deferred': fake_deferred
+        }
+        
+        logger.info(f"{Fore.CYAN}======================================")
+        
+        return analysis_results
         
     def _train(self):
         loss_list =  []
@@ -217,33 +697,63 @@ class Trainer():
                     logger.info("ExMRD print_full_model_params not available, skipping parameter count")
                 self._first_forward_done = True
             
-            # Handle evidential model outputs
-            if hasattr(self.model, 'name') and self.model.name == 'ExMRD_Evidential':
-                # Check if using evidential or traditional classifier
-                if hasattr(self.model, 'use_evidential') and self.model.use_evidential:
-                    # Evidential classifier: output is a dict with alpha values
+            # Handle model-specific outputs
+            if hasattr(self.model, 'name') and self.model.name in ['ExMRD_Evidential', 'ExMRD_Defer', 'ExMRD_Retrieval']:
+                if self.model.name == 'ExMRD_Defer':
+                    # Defer model: uses combined defer + evidential loss
+                    losses_dict = self.model.compute_losses(output, labels, self.global_step)
+                    loss = losses_dict['loss_total']
+                    
+                    # Use SLM predictions for evaluation during training
+                    pred = output['p_slm']  # SLM predictions for training metrics
+                    
+                    # Log defer losses
+                    if self.global_step % 100 == 0:
+                        logger.debug(f"Defer losses - Total: {loss.item():.4f}, Defer: {losses_dict['loss_defer'].item():.4f}, "
+                                   f"Evid: {losses_dict['loss_evid'].item():.4f}, π_mean: {losses_dict['pi_mean'].item():.3f}, "
+                                   f"π_std: {losses_dict['pi_std'].item():.3f}, CE_SLM: {losses_dict['ce_slm'].item():.4f}, "
+                                   f"CE_DM: {losses_dict['ce_dm'].item():.4f}")
+                        
+                elif self.model.name == 'ExMRD_Evidential':
+                    # Check if using evidential or traditional classifier
+                    if hasattr(self.model, 'use_evidential') and self.model.use_evidential:
+                        # Evidential classifier: output is a dict with alpha values
+                        losses_dict = self.model.compute_losses(output, labels, self.global_step)
+                        loss = losses_dict['loss_total']
+                        
+                        # Use fused predictions for evaluation
+                        pred = output['p_fused']  # Predictive probabilities from fused evidence
+                        
+                        # Log evidential losses
+                        if self.global_step % 100 == 0:
+                            logger.debug(f"Evidential losses - Total: {loss.item():.4f}, Fused: {losses_dict['loss_fused'].item():.4f}, "
+                                       f"Text: {losses_dict['loss_text'].item():.4f}, Audio: {losses_dict['loss_audio'].item():.4f}, "
+                                       f"Image: {losses_dict['loss_image'].item():.4f}, KL_weight: {losses_dict['kl_weight'].item():.3f}")
+                    else:
+                        # Traditional classifier: output is logits
+                        losses_dict = self.model.compute_losses(output, labels, self.global_step)
+                        loss = losses_dict['loss_total']
+                        
+                        # Convert logits to probabilities for evaluation
+                        pred = F.softmax(output, dim=1)
+                        
+                        # Log traditional losses
+                        if self.global_step % 100 == 0:
+                            logger.debug(f"Traditional loss - Total: {loss.item():.4f}")
+                            
+                elif self.model.name == 'ExMRD_Retrieval':
+                    # Retrieval-augmented evidential classifier
                     losses_dict = self.model.compute_losses(output, labels, self.global_step)
                     loss = losses_dict['loss_total']
                     
                     # Use fused predictions for evaluation
                     pred = output['p_fused']  # Predictive probabilities from fused evidence
                     
-                    # Log evidential losses
+                    # Log retrieval losses
                     if self.global_step % 100 == 0:
-                        logger.debug(f"Evidential losses - Total: {loss.item():.4f}, Fused: {losses_dict['loss_fused'].item():.4f}, "
+                        logger.debug(f"Retrieval losses - Total: {loss.item():.4f}, Fused: {losses_dict['loss_fused'].item():.4f}, "
                                    f"Text: {losses_dict['loss_text'].item():.4f}, Audio: {losses_dict['loss_audio'].item():.4f}, "
                                    f"Image: {losses_dict['loss_image'].item():.4f}, KL_weight: {losses_dict['kl_weight'].item():.3f}")
-                else:
-                    # Traditional classifier: output is logits
-                    losses_dict = self.model.compute_losses(output, labels, self.global_step)
-                    loss = losses_dict['loss_total']
-                    
-                    # Convert logits to probabilities for evaluation
-                    pred = F.softmax(output, dim=1)
-                    
-                    # Log traditional losses
-                    if self.global_step % 100 == 0:
-                        logger.debug(f"Traditional loss - Total: {loss.item():.4f}")
             else:
                 # Regular model handling
                 if type(output) is dict:
@@ -264,6 +774,11 @@ class Trainer():
             loss_list.append(loss.item())
 
             loss.backward()
+            
+            # Optional gradient clipping
+            if hasattr(self.model, 'gradient_clip_norm') and self.model.gradient_clip_norm > 0:
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.model.gradient_clip_norm)
+            
             self.optimizer.step()
             self.optimizer.zero_grad()
             self.scheduler.step()
@@ -306,19 +821,40 @@ class Trainer():
             with torch.no_grad():
                 output = self.model(**inputs)
                 
-                # Handle evidential model outputs
-                if hasattr(self.model, 'name') and self.model.name == 'ExMRD_Evidential':
-                    # Check if using evidential or traditional classifier
-                    if hasattr(self.model, 'use_evidential') and self.model.use_evidential:
-                        # Evidential classifier: use fused predictions
+                # Handle model-specific outputs
+                if hasattr(self.model, 'name') and self.model.name in ['ExMRD_Evidential', 'ExMRD_Defer', 'ExMRD_Retrieval']:
+                    if self.model.name == 'ExMRD_Defer':
+                        # Defer model: use threshold-based deferral for final predictions
+                        predict_output = self.model.predict(inputs['p_dm'], **{k:v for k,v in inputs.items() if k != 'p_dm'})
+                        pred = predict_output['final_probs']  # Final predictions after deferral
+                        losses_dict = self.model.compute_losses(output, labels)
+                        loss = losses_dict['loss_total']
+                        
+                        # Log defer statistics during validation
+                        defer_rate = predict_output['defer_rate'].item()
+                        if hasattr(self, '_defer_stats'):
+                            self._defer_stats.append(defer_rate)
+                        else:
+                            self._defer_stats = [defer_rate]
+                            
+                    elif self.model.name == 'ExMRD_Evidential':
+                        # Check if using evidential or traditional classifier
+                        if hasattr(self.model, 'use_evidential') and self.model.use_evidential:
+                            # Evidential classifier: use fused predictions
+                            pred = output['p_fused']  # Predictive probabilities from fused evidence
+                            losses_dict = self.model.compute_losses(output, labels)
+                            loss = losses_dict['loss_total']
+                        else:
+                            # Traditional classifier: output is logits
+                            losses_dict = self.model.compute_losses(output, labels)
+                            loss = losses_dict['loss_total']
+                            pred = F.softmax(output, dim=1)
+                            
+                    elif self.model.name == 'ExMRD_Retrieval':
+                        # Retrieval-augmented evidential classifier
                         pred = output['p_fused']  # Predictive probabilities from fused evidence
                         losses_dict = self.model.compute_losses(output, labels)
                         loss = losses_dict['loss_total']
-                    else:
-                        # Traditional classifier: output is logits
-                        losses_dict = self.model.compute_losses(output, labels)
-                        loss = losses_dict['loss_total']
-                        pred = F.softmax(output, dim=1)
                 else:
                     # Regular model handling
                     if type(output) is dict:
@@ -337,31 +873,87 @@ class Trainer():
         logger.info(f"{fcolor}{split_name}: Acc: {metrics['acc']:.4f}, Macro F1: {metrics['f1']:.4f}, Macro Precision: {metrics['prec']:.4f}, Macro Recall: {metrics['rec']:.4f}")
         logger.info(f"{fcolor}{split_name} Per-class: Real(0) F1: {metrics['f1_real']:.4f}, P: {metrics['prec_real']:.4f}, R: {metrics['rec_real']:.4f} | Fake(1) F1: {metrics['f1_fake']:.4f}, P: {metrics['prec_fake']:.4f}, R: {metrics['rec_fake']:.4f}")
         
+        # Report defer statistics if available
+        if hasattr(self, '_defer_stats') and self._defer_stats:
+            defer_rate_mean = np.mean(self._defer_stats)
+            defer_rate_std = np.std(self._defer_stats)
+            logger.info(f"{fcolor}{split_name} Defer: Rate: {defer_rate_mean:.3f}±{defer_rate_std:.3f} (threshold: {getattr(self.model, 'defer_threshold', 'N/A')})")
+            # Reset defer stats for next validation
+            self._defer_stats = []
+        
         if use_earlystop:
             self.earlystopping(metrics['acc'], self.model)
         return metrics
 
 @hydra.main(version_base=None, config_path="config", config_name="ExMRD_FakeSV")
 def main(cfg: DictConfig):
-    # Create dataset-specific log path with include_piyao and ablation indicators
     global log_path
-    dataset_name = cfg.dataset if 'dataset' in cfg else 'unknown'
-    piyao_suffix = '_with_piyao' if cfg.data.get('include_piyao', False) else ''
-    ablation_suffix = '_no_cot' if cfg.data.get('ablation_no_cot', False) else ''
-    log_path = Path(f'log/{dataset_name}{piyao_suffix}{ablation_suffix}_{datetime.now().strftime("%m%d-%H%M%S")}')
-    log_path.mkdir(parents=True, exist_ok=True)
     
-    logger.remove()
-    logger.add(log_path / 'log.log', retention="10 days", level="DEBUG")
-    logger.add(sys.stdout, level="INFO")
-    logger.info(OmegaConf.to_yaml(cfg))
-    pd.set_option('future.no_silent_downcasting', True)
-    colorama.init()
-    set_seed(cfg.seed)
-    # mp.set_sharing_strategy('file_system')
-    
-    trainer = Trainer(cfg)
-    trainer.run()
+    # Check if eval_only mode
+    if cfg.get('eval_only', False):
+        if not cfg.get('checkpoint'):
+            raise ValueError("checkpoint parameter is required when eval_only=True")
+        
+        # Load configuration from checkpoint
+        checkpoint_path = Path(cfg.checkpoint)
+        if not checkpoint_path.exists():
+            raise ValueError(f"Checkpoint path does not exist: {checkpoint_path}")
+        
+        checkpoint_config_path = checkpoint_path / 'config.yaml'
+        if not checkpoint_config_path.exists():
+            raise ValueError(f"Config file not found in checkpoint: {checkpoint_config_path}")
+        
+        # Load the original configuration
+        original_cfg = OmegaConf.load(checkpoint_config_path)
+        
+        # Override eval_only and checkpoint from current config
+        original_cfg.eval_only = True
+        original_cfg.checkpoint = cfg.checkpoint
+        
+        # Use checkpoint path as log_path for this evaluation
+        log_path = checkpoint_path
+        
+        logger.remove()
+        logger.add(log_path / 'eval_log.log', retention="10 days", level="DEBUG")
+        logger.add(sys.stdout, level="INFO")
+        logger.info("=== EVALUATION ONLY MODE ===")
+        logger.info(f"Loading checkpoint from: {checkpoint_path}")
+        logger.info(OmegaConf.to_yaml(original_cfg))
+        
+        pd.set_option('future.no_silent_downcasting', True)
+        colorama.init()
+        set_seed(original_cfg.seed)
+        
+        # Run evaluation with original config
+        trainer = Trainer(original_cfg)
+        trainer.run_eval_only()
+        
+    else:
+        # Normal training mode
+        dataset_name = cfg.dataset if 'dataset' in cfg else 'unknown'
+        piyao_suffix = '_with_piyao' if cfg.data.get('include_piyao', False) else ''
+        ablation_suffix = '_no_cot' if cfg.data.get('ablation_no_cot', False) else ''
+        filter_k_suffix = f'_k{cfg.data.filter_k}' if cfg.data.get('filter_k') is not None else ''
+        log_path = Path(f'log/{dataset_name}{piyao_suffix}{ablation_suffix}{filter_k_suffix}_{datetime.now().strftime("%m%d-%H%M%S")}')
+        log_path.mkdir(parents=True, exist_ok=True)
+        
+        logger.remove()
+        logger.add(log_path / 'log.log', retention="10 days", level="DEBUG")
+        logger.add(sys.stdout, level="INFO")
+        logger.info(OmegaConf.to_yaml(cfg))
+        
+        # Save configuration to YAML file in log directory
+        config_save_path = log_path / 'config.yaml'
+        with open(config_save_path, 'w', encoding='utf-8') as f:
+            OmegaConf.save(config=cfg, f=f)
+        logger.info(f"Configuration saved to: {config_save_path}")
+        pd.set_option('future.no_silent_downcasting', True)
+        colorama.init()
+        set_seed(cfg.seed)
+        # mp.set_sharing_strategy('file_system')
+        
+        trainer = Trainer(cfg)
+        trainer.run()
 
 if  __name__ == '__main__':
     main()

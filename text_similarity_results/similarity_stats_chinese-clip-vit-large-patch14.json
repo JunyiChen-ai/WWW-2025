@@ -1,0 +1,22 @@
+{
+  "model": "OFA-Sys/chinese-clip-vit-large-patch14",
+  "test_set_size": 542,
+  "test_true_count": 238,
+  "test_fake_count": 304,
+  "train_true_count": 1303,
+  "train_fake_count": 1233,
+  "similarity_stats": {
+    "true_news_similarity": {
+      "mean": 0.7243317889661367,
+      "std": 0.10400462727116484,
+      "min": 0.4869474768638611,
+      "max": 0.9601668119430542
+    },
+    "fake_news_similarity": {
+      "mean": 0.77709637345863,
+      "std": 0.10169526443175127,
+      "min": 0.5150930881500244,
+      "max": 0.9748427867889404
+    }
+  }
+}

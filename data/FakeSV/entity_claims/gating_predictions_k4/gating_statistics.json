@@ -1,0 +1,20 @@
+{
+  "total_samples": 2687,
+  "successful_processing": 2687,
+  "failed_processing": 0,
+  "splits": {
+    "train": 1599,
+    "valid": 546,
+    "test": 542
+  },
+  "ground_truth_distribution": {
+    "假": 1357,
+    "真": 1330
+  },
+  "prediction_patterns": {
+    "slm_true_llm_agrees": 2058,
+    "slm_true_llm_disagrees": 629,
+    "slm_fake_llm_agrees": 560,
+    "slm_fake_llm_disagrees": 2127
+  }
+}

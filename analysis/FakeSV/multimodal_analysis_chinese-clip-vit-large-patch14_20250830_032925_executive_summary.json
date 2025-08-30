@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-08-30T03:29:25.054733",
+  "model": "OFA-Sys/chinese-clip-vit-large-patch14",
+  "data_overview": {
+    "test_samples": 542,
+    "memory_bank_samples": 3082,
+    "individual_modalities_tested": 7,
+    "multimodal_combinations_tested": 12
+  },
+  "performance_highlights": {
+    "best_individual_modality": {
+      "name": "text_full_text",
+      "accuracy": 0.9096,
+      "f1_macro": 0.9085
+    },
+    "best_multimodal_combination": {
+      "name": "full_text+visual_pooled+audio_pooled",
+      "accuracy": 0.8395,
+      "f1_macro": 0.8368
+    },
+    "multimodal_improvement": {
+      "absolute_improvement": -0.0701,
+      "relative_improvement_percent": -7.71
+    }
+  },
+  "top_performing_combinations": [
+    [
+      "full_text+visual_pooled+audio_pooled",
+      0.8394833948339483
+    ],
+    [
+      "full_text+visual_pooled+audio_frame_max",
+      0.8339483394833949
+    ],
+    [
+      "full_text+visual_frame_max+audio_pooled",
+      0.8321033210332104
+    ],
+    [
+      "full_text+visual_frame_max+audio_frame_max",
+      0.8302583025830258
+    ],
+    [
+      "title_keywords+visual_pooled+audio_frame_max",
+      0.8228782287822878
+    ]
+  ],
+  "key_insights": [
+    "Best fusion strategy: confidence_based (0.855 accuracy)",
+    "Full consensus achieved in 71.0% of samples",
+    "Most complementary pair: title_keywords+visual_frame_max+audio_pooled + title_only+visual_pooled+audio_frame_max"
+  ],
+  "analysis_completeness": {
+    "individual_modality_analysis": true,
+    "combination_agreement_analysis": true,
+    "consensus_pattern_analysis": true,
+    "complementarity_analysis": true,
+    "error_pattern_analysis": true
+  }
+}

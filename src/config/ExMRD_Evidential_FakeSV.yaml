@@ -7,9 +7,9 @@ data:
   temp_evolution: false   # If true, include temporal_evolution in text concatenation
   # Modality control parameters
   use_text: true         # If true, use text features
-  use_image: false        # If true, use visual/image features
-  use_audio: false        # If true, use audio features
-  
+  use_image: true        # If true, use visual/image features
+  use_audio: true        # If true, use audio features
+  filter_k: null
 para:
   hid_dim: 256
   dropout: 0.3
@@ -43,3 +43,7 @@ model: ExMRD_Evidential
 dataset: FakeSV
 type: temporal
 patience: 5
+
+# Evaluation parameters
+eval_only: false  # Set to true for evaluation only mode
+checkpoint: log/FakeSV_0818-173219  # Path to checkpoint for evaluation only mode

@@ -3,13 +3,16 @@ from torch.utils.data import Dataset, DataLoader
 from .baseline_data import FakeSVDataset, FakeTTDataset, FVCDataset
 import numpy as np
 import pandas as pd
+import json
+from pathlib import Path
 from transformers import AutoTokenizer
 
 class FakeSVDataset_ExMRD(FakeSVDataset):
     def __init__(self, fold: int, split: str, lm: str='gpt-4o', ablation_no_cot: bool=False, 
                  description: bool=False, temp_evolution: bool=False,
-                 use_text: bool=True, use_image: bool=True, use_audio: bool=True, **kwargs):
-        super(FakeSVDataset_ExMRD, self).__init__(**kwargs)
+                 use_text: bool=True, use_image: bool=True, use_audio: bool=True, 
+                 filter_k: int=None, **kwargs):
+        super(FakeSVDataset_ExMRD, self).__init__(filter_k=filter_k, **kwargs)
         self.data = self._get_data(fold, split)
         self.ablation_no_cot = ablation_no_cot
         self.description = description
@@ -314,3 +317,324 @@ class FVCCollator_ExMRD:
             'comsense_input': comsense_input,
             'causal_input': causal_input,
         }
+
+
+class FakeSVDataset_Defer(FakeSVDataset_ExMRD):
+    """Dataset for learn-to-defer training with LLM predictions and label smoothing"""
+    
+    def __init__(self, fold: int, split: str, llm_predictions_path: str = None, 
+                 label_smoothing_epsilon: float = 0.01, filter_k: int = None, 
+                 llm_independent: bool = False, **kwargs):
+        super(FakeSVDataset_Defer, self).__init__(fold, split, filter_k=filter_k, **kwargs)
+        
+        self.epsilon = label_smoothing_epsilon
+        self.filter_k = filter_k
+        self.llm_independent = llm_independent
+        
+        # Load LLM predictions - use k-specific and independent-specific path if specified
+        if llm_predictions_path is None:
+            base_path = "data/FakeSV/entity_claims/gating_predictions"
+            if filter_k is not None:
+                base_path += f"_k{filter_k}"
+            if llm_independent:
+                base_path += "_independent"
+            llm_predictions_path = f"{base_path}/gating_predictions.json"
+        
+        llm_path = Path(llm_predictions_path)
+        if not llm_path.exists():
+            raise FileNotFoundError(f"LLM predictions file not found: {llm_path}")
+        
+        with open(llm_path, 'r', encoding='utf-8') as f:
+            llm_data = json.load(f)
+        
+        # Create mapping from video_id to LLM predictions
+        self.llm_predictions = {}
+        for sample in llm_data:
+            video_id = sample['video_id']
+            
+            if self.llm_independent:
+                # For independent mode, both predictions are the same
+                llm_pred = sample['predictions']['slm_predicts_true']['prediction']
+                slm_true_pred = llm_pred
+                slm_fake_pred = llm_pred
+            else:
+                # Get LLM predictions for both scenarios (SLM predicts true/fake)
+                slm_true_pred = sample['predictions']['slm_predicts_true']['prediction']
+                slm_fake_pred = sample['predictions']['slm_predicts_fake']['prediction']
+                
+                # Convert Chinese labels to numeric and then to probabilities
+                # Use the better of the two LLM predictions (the one that matches ground truth if available)
+                ground_truth = sample['ground_truth']
+                
+                # Choose the LLM prediction that matches ground truth, or slm_true_pred as default
+                if slm_true_pred == ground_truth:
+                    llm_pred = slm_true_pred
+                elif slm_fake_pred == ground_truth:
+                    llm_pred = slm_fake_pred
+                else:
+                    # If neither matches, choose slm_true_pred (could also be slm_fake_pred)
+                    llm_pred = slm_true_pred
+            
+            # Convert to numeric label
+            llm_label = 0 if llm_pred == '真' else 1
+            
+            # Apply label smoothing: convert hard label to probability distribution
+            if llm_label == 0:  # Real
+                p_dm = torch.tensor([1.0 - self.epsilon, self.epsilon], dtype=torch.float32)
+            else:  # Fake
+                p_dm = torch.tensor([self.epsilon, 1.0 - self.epsilon], dtype=torch.float32)
+            
+            self.llm_predictions[video_id] = {
+                'p_dm': p_dm,
+                'hard_label': llm_label,
+                'slm_true_pred': slm_true_pred,
+                'slm_fake_pred': slm_fake_pred
+            }
+        
+        # Filter dataset to only include samples with LLM predictions
+        available_llm_ids = set(self.llm_predictions.keys())
+        original_length = len(self.data)
+        self.data = self.data[self.data['video_id'].isin(available_llm_ids)].reset_index(drop=True)
+        
+        print(f"Defer dataset: {original_length} -> {len(self.data)} samples "
+              f"(removed {original_length - len(self.data)} without LLM predictions)")
+        print(f"Loaded LLM predictions for {len(self.llm_predictions)} videos with ε={self.epsilon}")
+    
+    def __getitem__(self, idx):
+        # Get base sample from parent class
+        sample = super(FakeSVDataset_Defer, self).__getitem__(idx)
+        vid = sample['vid']
+        
+        # Add LLM prediction probabilities
+        if vid in self.llm_predictions:
+            sample['p_dm'] = self.llm_predictions[vid]['p_dm']
+        else:
+            # This shouldn't happen due to filtering, but add fallback
+            print(f"Warning: No LLM prediction for {vid}, using uniform distribution")
+            sample['p_dm'] = torch.tensor([0.5, 0.5], dtype=torch.float32)
+        
+        return sample
+
+
+class FakeSVCollator_Defer(FakeSVCollator_ExMRD):
+    """Collator for defer dataset that includes LLM predictions"""
+    
+    def __call__(self, batch):
+        # Get base batch from parent collator
+        result = super(FakeSVCollator_Defer, self).__call__(batch)
+        
+        # Add LLM prediction probabilities
+        p_dm = torch.stack([item['p_dm'] for item in batch])  # (batch_size, 2)
+        result['p_dm'] = p_dm
+        
+        return result
+
+
+class FakeSVDataset_Retrieval(FakeSVDataset_ExMRD):
+    """Dataset for retrieval-augmented training with positive/negative samples"""
+    
+    def __init__(self, fold: int, split: str, retrieval_path: str = None, 
+                 filter_k: int = None, **kwargs):
+        super(FakeSVDataset_Retrieval, self).__init__(fold, split, filter_k=filter_k, **kwargs)
+        
+        self.filter_k = filter_k
+        
+        # Load retrieval data
+        if retrieval_path is None:
+            retrieval_path = "text_similarity_results/full_dataset_retrieval_chinese-clip-vit-large-patch14.json"
+        
+        retrieval_file = Path(retrieval_path)
+        if not retrieval_file.exists():
+            raise FileNotFoundError(f"Retrieval file not found: {retrieval_file}")
+        
+        with open(retrieval_file, 'r', encoding='utf-8') as f:
+            retrieval_data = json.load(f)
+        
+        # Create mapping from video_id to retrieval data
+        self.retrieval_mapping = {}
+        for item in retrieval_data:
+            video_id = item['query_video']['video_id']
+            self.retrieval_mapping[video_id] = {
+                'positive_video_id': item['similar_true']['video_id'],
+                'negative_video_id': item['similar_fake']['video_id'],
+                'positive_data': item['similar_true'],
+                'negative_data': item['similar_fake']
+            }
+        
+        # Filter dataset to only include samples with retrieval data
+        available_retrieval_ids = set(self.retrieval_mapping.keys())
+        original_length = len(self.data)
+        self.data = self.data[self.data['video_id'].isin(available_retrieval_ids)].reset_index(drop=True)
+        
+        print(f"Retrieval dataset: {original_length} -> {len(self.data)} samples "
+              f"(removed {original_length - len(self.data)} without retrieval data)")
+        print(f"Loaded retrieval data for {len(self.retrieval_mapping)} videos")
+    
+    def __getitem__(self, idx):
+        # Get base sample from parent class
+        sample = super(FakeSVDataset_Retrieval, self).__getitem__(idx)
+        vid = sample['vid']
+        
+        if vid not in self.retrieval_mapping:
+            print(f"Warning: No retrieval data for {vid}")
+            return sample
+        
+        retrieval_info = self.retrieval_mapping[vid]
+        pos_vid = retrieval_info['positive_video_id']
+        neg_vid = retrieval_info['negative_video_id']
+        
+        # Add positive sample features
+        pos_features = {}
+        neg_features = {}
+        
+        # Visual features
+        if self.use_image and self.fea_frames is not None:
+            if pos_vid in self.fea_frames:
+                pos_features['visual'] = torch.Tensor(self.fea_frames[pos_vid])  # (16, 1024)
+            if neg_vid in self.fea_frames:
+                neg_features['visual'] = torch.Tensor(self.fea_frames[neg_vid])  # (16, 1024)
+        
+        # Audio features  
+        if self.use_audio and self.audio_features is not None:
+            if pos_vid in self.audio_features:
+                pos_features['audio'] = torch.Tensor(self.audio_features[pos_vid])  # (16, 768)
+            if neg_vid in self.audio_features:
+                neg_features['audio'] = torch.Tensor(self.audio_features[neg_vid])  # (16, 768)
+        
+        # Text features - construct from retrieval data
+        if self.use_text:
+            pos_data = retrieval_info['positive_data']
+            neg_data = retrieval_info['negative_data']
+            
+            # Construct text for positive sample
+            pos_text_parts = []
+            if 'title' in pos_data and pd.notna(pos_data['title']):
+                pos_text_parts.append(str(pos_data['title']))
+            if 'keywords' in pos_data and pd.notna(pos_data['keywords']):
+                pos_text_parts.append(str(pos_data['keywords']))
+            if self.description and 'description' in pos_data and pd.notna(pos_data['description']):
+                pos_text_parts.append(str(pos_data['description']))
+            if self.temp_evolution and 'temporal_evolution' in pos_data and pd.notna(pos_data['temporal_evolution']):
+                pos_text_parts.append(str(pos_data['temporal_evolution']))
+            
+            # Construct text for negative sample
+            neg_text_parts = []
+            if 'title' in neg_data and pd.notna(neg_data['title']):
+                neg_text_parts.append(str(neg_data['title']))
+            if 'keywords' in neg_data and pd.notna(neg_data['keywords']):
+                neg_text_parts.append(str(neg_data['keywords']))
+            if self.description and 'description' in neg_data and pd.notna(neg_data['description']):
+                neg_text_parts.append(str(neg_data['description']))
+            if self.temp_evolution and 'temporal_evolution' in neg_data and pd.notna(neg_data['temporal_evolution']):
+                neg_text_parts.append(str(neg_data['temporal_evolution']))
+            
+            pos_features['text'] = ' '.join(pos_text_parts)
+            neg_features['text'] = ' '.join(neg_text_parts)
+        
+        # Add retrieval features to sample
+        sample['positive_features'] = pos_features
+        sample['negative_features'] = neg_features
+        sample['positive_video_id'] = pos_vid
+        sample['negative_video_id'] = neg_vid
+        
+        return sample
+
+
+class FakeSVCollator_Retrieval(FakeSVCollator_ExMRD):
+    """Collator for retrieval dataset that includes positive/negative samples"""
+    
+    def __call__(self, batch):
+        # Get base batch from parent collator
+        result = super(FakeSVCollator_Retrieval, self).__call__(batch)
+        
+        # Get modality flags from first item (should be same for all)
+        use_text = batch[0]['use_text']
+        use_image = batch[0]['use_image'] 
+        use_audio = batch[0]['use_audio']
+        
+        # Process positive and negative text features if enabled
+        if use_text:
+            positive_texts = []
+            negative_texts = []
+            
+            for item in batch:
+                pos_text = item['positive_features'].get('text', '')
+                neg_text = item['negative_features'].get('text', '')
+                positive_texts.append(pos_text)
+                negative_texts.append(neg_text)
+            
+            max_len = 512  # Same as main text processing
+            
+            # Tokenize positive texts
+            positive_text_input = self.tokenizer(
+                positive_texts, 
+                padding=True, 
+                truncation=True, 
+                return_tensors='pt', 
+                max_length=max_len
+            )
+            result['positive_text_input'] = positive_text_input
+            
+            # Tokenize negative texts
+            negative_text_input = self.tokenizer(
+                negative_texts, 
+                padding=True, 
+                truncation=True, 
+                return_tensors='pt', 
+                max_length=max_len
+            )
+            result['negative_text_input'] = negative_text_input
+        
+        # Process positive and negative visual features if enabled
+        if use_image:
+            positive_visual_features = []
+            negative_visual_features = []
+            
+            for item in batch:
+                pos_visual = item['positive_features'].get('visual')
+                neg_visual = item['negative_features'].get('visual')
+                
+                if pos_visual is not None:
+                    positive_visual_features.append(pos_visual)
+                else:
+                    # Create dummy features if missing
+                    positive_visual_features.append(torch.zeros(16, 1024))
+                    
+                if neg_visual is not None:
+                    negative_visual_features.append(neg_visual)
+                else:
+                    # Create dummy features if missing  
+                    negative_visual_features.append(torch.zeros(16, 1024))
+            
+            result['positive_visual_features'] = torch.stack(positive_visual_features)
+            result['negative_visual_features'] = torch.stack(negative_visual_features)
+        
+        # Process positive and negative audio features if enabled
+        if use_audio:
+            positive_audio_features = []
+            negative_audio_features = []
+            
+            for item in batch:
+                pos_audio = item['positive_features'].get('audio')
+                neg_audio = item['negative_features'].get('audio')
+                
+                if pos_audio is not None:
+                    positive_audio_features.append(pos_audio)
+                else:
+                    # Create dummy features if missing
+                    positive_audio_features.append(torch.zeros(16, 768))
+                    
+                if neg_audio is not None:
+                    negative_audio_features.append(neg_audio)
+                else:
+                    # Create dummy features if missing
+                    negative_audio_features.append(torch.zeros(16, 768))
+            
+            result['positive_audio_features'] = torch.stack(positive_audio_features)
+            result['negative_audio_features'] = torch.stack(negative_audio_features)
+        
+        # Add video IDs for debugging
+        result['positive_video_ids'] = [item['positive_video_id'] for item in batch]
+        result['negative_video_ids'] = [item['negative_video_id'] for item in batch]
+        
+        return result

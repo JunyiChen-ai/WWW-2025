@@ -1,0 +1,44 @@
+batch_size: 32
+checkpoint: log/FakeSV_retrieval_0825-000000
+data:
+  description: false
+  filter_k: null
+  include_piyao: false
+  retrieval_path: text_similarity_results/full_dataset_retrieval_chinese-clip-vit-large-patch14.json
+  temp_evolution: false
+  tokenizer_name: OFA-Sys/chinese-clip-vit-large-patch14
+  use_audio: true
+  use_image: true
+  use_text: true
+dataset: FakeSV
+eval_only: false
+model: ExMRD_Retrieval
+num_epoch: 15
+opt:
+  lr: 3.0e-05
+  name: AdamW
+  weight_decay: 0.0005
+para:
+  anneal_steps: 1000
+  dropout: 0.1
+  evidential_dropout: 0.3
+  evidential_hidden: 128
+  gradient_clip_norm: 0
+  hid_dim: 256
+  loss_weights:
+    audio: 1.0
+    fused: 1.0
+    image: 0.5
+    text: 0.5
+  num_frozen_layers: 2
+  retrieval_alpha: 0.5
+  text_encoder: OFA-Sys/chinese-clip-vit-large-patch14
+  transformer_heads: 2
+  transformer_layers: 1
+patience: 3
+sche:
+  name: DummyLR
+seed: 2024
+text_encoder: OFA-Sys/chinese-clip-vit-large-patch14
+train: null
+type: temporal

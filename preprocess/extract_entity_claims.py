@@ -24,10 +24,6 @@ import atexit
 import openai
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
-import torch
-import numpy as np
-from transformers import ChineseCLIPProcessor, ChineseCLIPModel
-from sklearn.metrics.pairwise import cosine_similarity
 
 # Setup logging
 logging.basicConfig(
@@ -667,6 +663,145 @@ class EntityClaimExtractor:
     
     # ============== FAKE NEWS PROCESSING METHODS ==============
     
+    def create_fake_entity_claim_prompt(self, video_data: Dict, transcript: str) -> str:
+        """Create prompt for extracting entities and claims from fake videos"""
+        title = video_data.get('title', '')
+        keywords = video_data.get('keywords', '')
+        label = video_data.get('annotation', '')
+        publish_time = self.format_timestamp(video_data.get('publish_time_norm', 0))
+        
+        prompt = f"""分析这个短视频的内容，提取知识图谱信息。
+
+视频信息：
+- 标题：{title}
+- 关键词：{keywords}  
+- 音频转录：{transcript if transcript else "无音频转录"}
+- 标签：{label}
+- 发布时间：{publish_time}
+
+视频帧时序信息：
+这个视频包含4张复合帧图像，每张包含4个连续帧（2x2网格布局）：
+- 第1张复合帧（帧0-3，视频开始部分）：
+  左上(1,1): 帧0  |  右上(1,2): 帧1
+  左下(2,1): 帧2  |  右下(2,2): 帧3
+- 第2张复合帧（帧4-7，视频前中部分）：
+  左上(1,1): 帧4  |  右上(1,2): 帧5
+  左下(2,1): 帧6  |  右下(2,2): 帧7
+- 第3张复合帧（帧8-11，视频后中部分）：
+  左上(1,1): 帧8  |  右上(1,2): 帧9
+  左下(2,1): 帧10 |  右下(2,2): 帧11
+- 第4张复合帧（帧12-15，视频结束部分）：
+  左上(1,1): 帧12 |  右上(1,2): 帧13
+  左下(2,1): 帧14 |  右下(2,2): 帧15
+
+注意：如果音频转录看起来没有意义，可能是因为音频只是背景音乐而没有人声。
+
+请提取以下信息（用中文回答）：
+
+实体及其相关声称（Entity-Claim Mapping）：
+为每个主要实体列出与之直接相关的事实性声称
+
+每个声称必须遵循5W原则（Who/What/When/Where/Why），包含具体信息：
+- WHO（谁）：涉及的人物或组织
+- WHAT（什么）：发生了什么事件或行动
+- WHEN（何时）：具体时间或时间范围
+- WHERE（何地）：具体地点
+- WHY/HOW（为何/如何）：原因或方式（如适用）
+
+示例：
+- 错误："消防员牺牲" 
+- 正确："2019年3月21日，两名消防员在上海某化工厂爆炸事故救援中牺牲"
+
+返回JSON格式：
+{{
+  "entity_claims": {{
+    "实体1": [
+      "包含5W信息的具体声称1",
+      "包含5W信息的具体声称2"
+    ],
+    "实体2": [
+      "包含5W信息的具体声称3"
+    ]
+  }}
+}}"""
+        
+        return prompt
+    
+    async def extract_fake_entity_claims(self, video_data: Dict, images: List[str]) -> Optional[Dict]:
+        """Extract entities and claims from a single fake video"""
+        video_id = video_data.get('video_id')
+        
+        try:
+            # Load transcript
+            transcript = self.load_transcript(video_id)
+            
+            # Create prompt
+            prompt = self.create_fake_entity_claim_prompt(video_data, transcript)
+            
+            # Prepare messages
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt}
+                    ]
+                }
+            ]
+            
+            # Add images if available
+            for i, img_base64 in enumerate(images):
+                messages[0]["content"].append({
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/jpeg;base64,{img_base64}",
+                        "detail": "high"
+                    }
+                })
+            
+            # Call API
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=self.temperature,
+                max_tokens=self.max_tokens,
+                response_format={"type": "json_object"}
+            )
+            
+            # Parse response
+            result = json.loads(response.choices[0].message.content)
+            
+            # Process entity-claim mapping
+            entity_claims = result.get("entity_claims", {})
+            
+            # Extract entities list and all claims
+            entities = list(entity_claims.keys())
+            all_claims = []
+            for entity, claims in entity_claims.items():
+                all_claims.extend(claims)
+            
+            # Add metadata
+            extraction = {
+                "video_id": video_id,
+                "annotation": video_data.get('annotation'),
+                "title": video_data.get('title'),
+                "keywords": video_data.get('keywords'),
+                "entity_claims": entity_claims,
+                "entities": entities,
+                "claims": all_claims,
+                "metadata": {
+                    "model": self.model,
+                    "timestamp": datetime.now().isoformat(),
+                    "has_images": len(images) > 0,
+                    "has_transcript": bool(transcript)
+                }
+            }
+            
+            return extraction
+            
+        except Exception as e:
+            logger.error(f"Failed to process fake video {video_id}: {e}")
+            return None
+    
     def create_fake_description_prompt(self, video_data: Dict, transcript: str) -> str:
         """Create prompt for extracting only description and temporal evolution from fake videos"""
         title = video_data.get('title', '')
@@ -770,216 +905,13 @@ class EntityClaimExtractor:
             logger.error(f"Failed to process fake video {video_id}: {e}")
             return None
     
-    def encode_text_with_clip(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
-        """Encode texts using Chinese-CLIP model"""
-        logger.info("Loading Chinese-CLIP model for text encoding...")
-        
-        # Load model and processor
-        model_name = "OFA-Sys/chinese-clip-vit-large-patch14"
-        processor = ChineseCLIPProcessor.from_pretrained(model_name)
-        model = ChineseCLIPModel.from_pretrained(model_name)
-        
-        # Move to GPU if available
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        model = model.to(device)
-        model.eval()
-        
-        all_embeddings = []
-        
-        with torch.no_grad():
-            for i in tqdm(range(0, len(texts), batch_size), desc="Encoding texts"):
-                batch_texts = texts[i:i+batch_size]
-                
-                # Process texts
-                inputs = processor(text=batch_texts, padding=True, truncation=True, return_tensors="pt")
-                inputs = {k: v.to(device) for k, v in inputs.items()}
-                
-                # Get text features
-                text_features = model.get_text_features(**inputs)
-                text_features = text_features / text_features.norm(dim=-1, keepdim=True)  # Normalize
-                
-                all_embeddings.append(text_features.cpu().numpy())
-        
-        # Concatenate all embeddings
-        embeddings = np.vstack(all_embeddings)
-        logger.info(f"Encoded {len(texts)} texts into {embeddings.shape} embeddings")
-        
-        return embeddings
     
-    def find_similar_true_news(self, fake_descriptions: List[Dict], true_extractions: List[Dict], top_k: int = 5) -> Dict[str, List[Tuple[str, float]]]:
-        """Find most similar true news for each fake news using Chinese-CLIP"""
-        logger.info("Finding similar true news for fake videos...")
-        
-        # Prepare texts for encoding
-        fake_texts = []
-        fake_video_ids = []
-        
-        for desc in fake_descriptions:
-            text = f"{desc['title']} {desc.get('keywords', '')} {desc['description']} {desc['temporal_evolution']}"
-            fake_texts.append(text)
-            fake_video_ids.append(desc['video_id'])
-        
-        true_texts = []
-        true_video_ids = []
-        
-        for ext in true_extractions:
-            text = f"{ext['title']} {ext.get('keywords', '')} {ext.get('description', '')} {ext.get('temporal_evolution', '')}"
-            true_texts.append(text)
-            true_video_ids.append(ext['video_id'])
-        
-        # Encode all texts
-        logger.info(f"Encoding {len(fake_texts)} fake videos and {len(true_texts)} true videos...")
-        fake_embeddings = self.encode_text_with_clip(fake_texts)
-        true_embeddings = self.encode_text_with_clip(true_texts)
-        
-        # Calculate cosine similarity
-        similarities = cosine_similarity(fake_embeddings, true_embeddings)
-        
-        # Find top-k most similar true news for each fake news
-        similar_videos = {}
-        
-        for i, fake_vid in enumerate(fake_video_ids):
-            # Get similarity scores for this fake video
-            sim_scores = similarities[i]
-            
-            # Get indices of top-k most similar
-            top_indices = np.argsort(sim_scores)[-top_k:][::-1]
-            
-            # Store results
-            similar_videos[fake_vid] = [
-                (true_video_ids[idx], float(sim_scores[idx]))
-                for idx in top_indices
-            ]
-            
-        logger.info(f"Found top-{top_k} similar true news for {len(fake_video_ids)} fake videos")
-        return similar_videos
     
-    def create_false_claim_prompt(self, fake_video: Dict, similar_true_videos: List[Dict], entity_kb: Dict) -> str:
-        """Create prompt for extracting false claims based on similar true news"""
-        title = fake_video.get('title', '')
-        keywords = fake_video.get('keywords', '')
-        description = fake_video.get('description', '')
-        temporal = fake_video.get('temporal_evolution', '')
-        
-        # Collect entities and their correct claims from similar true videos
-        relevant_entities = {}
-        for true_video in similar_true_videos:
-            # Get entities mentioned in this true video
-            for entity in true_video.get('entities', []):
-                normalized_entity = self.normalize_entity(entity)
-                if normalized_entity in entity_kb:
-                    if normalized_entity not in relevant_entities:
-                        relevant_entities[normalized_entity] = entity_kb[normalized_entity].get('correct_claims', [])
-        
-        # Format entities and claims for prompt
-        entity_claim_text = ""
-        for entity, claims in relevant_entities.items():
-            entity_claim_text += f"\n【{entity}】的正确声称：\n"
-            for claim_data in claims[:5]:  # Limit to 5 claims per entity
-                entity_claim_text += f"  - {claim_data['claim']}\n"
-        
-        prompt = f"""分析这个假新闻视频，基于相关真实新闻的实体和声称，提取虚假声称。
-
-当前假新闻视频信息：
-- 标题：{title}
-- 关键词：{keywords}
-- 视频描述：{description}
-- 时序演变：{temporal}
-- 视频标签：假（这是一个假新闻视频）
-
-相关真实新闻中的实体及其正确声称：
-{entity_claim_text if entity_claim_text else "暂无相关实体"}
-
-任务要求：
-1. 针对上述已有实体，分析这个假新闻视频做出了哪些虚假声称
-2. 每个虚假声称要具体、明确，包含细节信息
-3. 如果视频中还涉及其他未列出的实体，也可以提取其虚假声称，但要标注为"新实体"
-
-返回JSON格式：
-{{
-  "entity_false_claims": {{
-    "已有实体1": [
-      "关于该实体的虚假声称1",
-      "关于该实体的虚假声称2"
-    ],
-    "已有实体2": [
-      "关于该实体的虚假声称"
-    ]
-  }},
-  "new_entity_false_claims": {{
-    "新实体1": [
-      "关于新实体的虚假声称"
-    ]
-  }}
-}}
-
-注意：
-- 虚假声称应该与正确声称形成对比或矛盾
-- 虚假声称要基于视频内容，不要凭空捏造
-- 新实体的虚假声称会标记为"基于LLM推测"
-"""
-        
-        return prompt
     
-    async def extract_false_claims(self, fake_video: Dict, similar_true_videos: List[Dict], 
-                                   entity_kb: Dict, images: List[str]) -> Optional[Dict]:
-        """Extract false claims from fake video based on similar true news context"""
-        video_id = fake_video.get('video_id')
-        
-        try:
-            # Create prompt
-            prompt = self.create_false_claim_prompt(fake_video, similar_true_videos, entity_kb)
-            
-            # Prepare messages
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": prompt}
-                    ]
-                }
-            ]
-            
-            # Add images if available
-            for i, img_base64 in enumerate(images):
-                messages[0]["content"].append({
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/jpeg;base64,{img_base64}",
-                        "detail": "high"
-                    }
-                })
-            
-            # Call API
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=self.max_tokens,
-                response_format={"type": "json_object"}
-            )
-            
-            # Parse response
-            result = json.loads(response.choices[0].message.content)
-            
-            return {
-                "video_id": video_id,
-                "annotation": "假",
-                "entity_false_claims": result.get("entity_false_claims", {}),
-                "new_entity_false_claims": result.get("new_entity_false_claims", {}),
-                "metadata": {
-                    "model": self.model,
-                    "timestamp": datetime.now().isoformat(),
-                    "similar_true_videos": [v['video_id'] for v in similar_true_videos]
-                }
-            }
-            
-        except Exception as e:
-            logger.error(f"Failed to extract false claims from video {video_id}: {e}")
-            return None
     
     async def process_fake_news_pipeline(self, sample_size: Optional[int] = None, 
                                          step1_only: bool = False,
+                                         step2_only: bool = False,
                                          skip_step1: bool = False,
                                          max_concurrent: int = 10):
         """
@@ -988,13 +920,18 @@ class EntityClaimExtractor:
         Args:
             sample_size: Number of samples to process (None for all)
             step1_only: If True, only execute Step 1 (extract descriptions)
+            step2_only: If True, only execute Step 2 (extract entity claims)
             skip_step1: If True, skip Step 1 and continue from Step 2
             max_concurrent: Maximum number of concurrent API calls (default: 10)
         """
         logger.info("Starting fake news processing pipeline...")
         
-        if step1_only and skip_step1:
-            logger.error("Cannot set both step1_only and skip_step1 to True")
+        if step1_only and (skip_step1 or step2_only):
+            logger.error("Cannot combine step1_only with skip_step1 or step2_only")
+            return
+        
+        if step2_only and skip_step1:
+            logger.error("step2_only and skip_step1 are redundant, use step2_only only")
             return
         
         # Load files if needed for later steps
@@ -1022,7 +959,7 @@ class EntityClaimExtractor:
         # Step 1: Extract descriptions from fake videos
         fake_descriptions = []
         
-        if not skip_step1:
+        if not (skip_step1 or step2_only):
             logger.info("Step 1: Extracting descriptions from fake videos...")
             fake_videos = self.load_video_data(filter_label='假')
             
@@ -1137,7 +1074,7 @@ class EntityClaimExtractor:
                 logger.info(f"Total descriptions: {len(fake_descriptions)}")
                 return
         else:
-            # Load existing descriptions if skipping Step 1
+            # Load existing descriptions if skipping Step 1 or running step2_only
             fake_desc_file = self.output_dir / "fake_video_descriptions.jsonl"
             if not fake_desc_file.exists():
                 logger.error("fake_video_descriptions.jsonl not found. Please run Step 1 first.")
@@ -1148,219 +1085,127 @@ class EntityClaimExtractor:
                     fake_descriptions.append(json.loads(line))
             logger.info(f"Loaded {len(fake_descriptions)} existing fake video descriptions")
         
-        # Step 2: Find similar true news
-        logger.info("Step 2: Finding similar true news for each fake video...")
-        similar_videos_map = self.find_similar_true_news(fake_descriptions, true_extractions, top_k=5)
+        logger.info("Fake video descriptions extraction completed.")
         
-        # Save similarity mapping
-        similarity_file = self.output_dir / "fake_true_similarity.json"
-        with open(similarity_file, 'w', encoding='utf-8') as f:
-            json.dump(similar_videos_map, f, ensure_ascii=False, indent=2)
-        logger.info(f"Saved similarity mapping to {similarity_file}")
-        
-        # Step 3: Extract false claims based on similar true news
-        logger.info("Step 3: Extracting false claims with true news context...")
-        false_claims_file = self.output_dir / "fake_video_false_claims.jsonl"
-        
-        # Load existing false claims if resuming
-        existing_false_claim_ids = set()
-        all_false_claims = []
-        if false_claims_file.exists():
-            with open(false_claims_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    claim_data = json.loads(line)
-                    all_false_claims.append(claim_data)
-                    existing_false_claim_ids.add(claim_data['video_id'])
-            logger.info(f"Loaded {len(all_false_claims)} existing false claim extractions")
-        
-        # Create lookup for true extractions
-        true_video_lookup = {ext['video_id']: ext for ext in true_extractions}
-        
-        for fake_desc in tqdm(fake_descriptions, desc="Extracting false claims"):
-            if fake_desc['video_id'] in existing_false_claim_ids:
-                continue
+        # Step 2: Extract entities and claims from fake videos
+        if not step1_only:
+            logger.info("Step 2: Extracting entities and claims from fake videos...")
             
-            # Get similar true videos
-            similar_vids = similar_videos_map.get(fake_desc['video_id'], [])
-            similar_true_videos = [
-                true_video_lookup[vid_id] 
-                for vid_id, _ in similar_vids 
-                if vid_id in true_video_lookup
-            ]
+            # Prepare output file
+            fake_entity_claims_file = self.output_dir / "fake_entity_claims.jsonl"
             
-            if not similar_true_videos:
-                logger.warning(f"No similar true videos found for {fake_desc['video_id']}")
-                continue
+            # Checkpoint file for Step 2
+            step2_checkpoint_file = self.output_dir / "fake_step2_checkpoint.json"
             
-            # Get images
-            images = self.prepare_composite_frames(fake_desc['video_id'])
+            # Load existing extractions if resuming
+            existing_extractions = []
+            existing_fake_ids = set()
+            if fake_entity_claims_file.exists():
+                with open(fake_entity_claims_file, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        extraction = json.loads(line)
+                        existing_extractions.append(extraction)
+                        existing_fake_ids.add(extraction['video_id'])
+                logger.info(f"Loaded {len(existing_extractions)} existing fake video extractions")
             
-            # Extract false claims
-            false_claims = await self.extract_false_claims(
-                fake_desc, similar_true_videos, entity_kb, images
-            )
+            # Load checkpoint if exists
+            if step2_checkpoint_file.exists():
+                with open(step2_checkpoint_file, 'r', encoding='utf-8') as f:
+                    checkpoint = json.load(f)
+                    logger.info(f"Loaded Step 2 checkpoint: {checkpoint.get('processed', 0)} videos processed")
             
-            if false_claims:
-                all_false_claims.append(false_claims)
-                # Save immediately
-                with open(false_claims_file, 'a', encoding='utf-8') as f:
-                    f.write(json.dumps(false_claims, ensure_ascii=False) + '\n')
+            # Get videos to process
+            videos_to_process = [desc for desc in fake_descriptions if desc['video_id'] not in existing_fake_ids]
+            logger.info(f"{len(videos_to_process)} videos remaining to process for entity-claim extraction")
             
-            await asyncio.sleep(self.rate_limit_delay)
-        
-        logger.info(f"Extracted false claims for {len(all_false_claims)} fake videos")
-        
-        # Step 4: Update entity knowledge base with false claims
-        logger.info("Step 4: Updating entity knowledge base with false claims...")
-        
-        for claim_data in all_false_claims:
-            video_id = claim_data['video_id']
-            
-            # Process existing entity false claims
-            for entity, claims in claim_data.get('entity_false_claims', {}).items():
-                normalized_entity = self.normalize_entity(entity)
+            if videos_to_process:
+                # Concurrent processing with semaphore
+                semaphore = asyncio.Semaphore(max_concurrent)
+                logger.info(f"Using {max_concurrent} concurrent connections for Step 2")
+                checkpoint_interval = 20  # Save checkpoint every N videos
                 
-                if normalized_entity not in entity_kb:
-                    # Create new entry if entity doesn't exist
-                    entity_kb[normalized_entity] = {
-                        "correct_claims": [],
-                        "false_claims": [],
-                        "video_count": {"真": 0, "假": 0, "辟谣": 0},
-                        "first_seen": datetime.now().isoformat(),
-                        "last_seen": datetime.now().isoformat(),
-                        "aliases": [entity] if entity != normalized_entity else []
-                    }
+                async def process_fake_entity_claims_with_semaphore(video_data, pbar):
+                    async with semaphore:
+                        if self.shutdown_requested:
+                            return None
+                        
+                        # Reconstruct video_data format expected by extract_fake_entity_claims
+                        video_data_full = {
+                            'video_id': video_data['video_id'],
+                            'annotation': video_data['annotation'],
+                            'title': video_data['title'],
+                            'keywords': video_data.get('keywords', ''),
+                            'publish_time_norm': 0  # Not needed for this extraction
+                        }
+                        
+                        images = self.prepare_composite_frames(video_data['video_id'])
+                        extraction = await self.extract_fake_entity_claims(video_data_full, images)
+                        
+                        # Rate limiting
+                        await asyncio.sleep(self.rate_limit_delay)
+                        
+                        # Update progress bar
+                        pbar.update(1)
+                        
+                        return extraction
                 
-                # Add false claims
-                for claim in claims:
-                    claim_entry = {
-                        "claim": claim,
-                        "video_ids": [video_id],
-                        "source_label": "假"
-                    }
+                # Process in batches for better checkpoint management
+                batch_size = 50
+                for batch_start in range(0, len(videos_to_process), batch_size):
+                    if self.shutdown_requested:
+                        logger.info("Processing interrupted. Saving checkpoint...")
+                        checkpoint = {
+                            'processed': len(existing_fake_ids),
+                            'total': len(fake_descriptions),
+                            'timestamp': datetime.now().isoformat()
+                        }
+                        with open(step2_checkpoint_file, 'w', encoding='utf-8') as f:
+                            json.dump(checkpoint, f, ensure_ascii=False, indent=2)
+                        logger.info("Checkpoint saved. Run again to continue.")
+                        return
                     
-                    # Check if claim already exists
-                    existing = False
-                    for existing_claim in entity_kb[normalized_entity]["false_claims"]:
-                        if existing_claim["claim"] == claim:
-                            existing_claim["video_ids"].append(video_id)
-                            existing = True
-                            break
+                    batch_end = min(batch_start + batch_size, len(videos_to_process))
+                    batch_videos = videos_to_process[batch_start:batch_end]
                     
-                    if not existing:
-                        entity_kb[normalized_entity]["false_claims"].append(claim_entry)
+                    logger.info(f"Processing batch {batch_start//batch_size + 1}: videos {batch_start+1}-{batch_end} of {len(videos_to_process)}")
+                    
+                    # Create tasks for this batch
+                    with tqdm(total=len(batch_videos), desc=f"Step 2 Batch {batch_start//batch_size + 1}") as pbar:
+                        tasks = [process_fake_entity_claims_with_semaphore(video, pbar) for video in batch_videos]
+                        results = await asyncio.gather(*tasks, return_exceptions=True)
+                    
+                    # Process results
+                    for video, result in zip(batch_videos, results):
+                        if isinstance(result, Exception):
+                            logger.error(f"Failed to process video {video['video_id']}: {result}")
+                        elif result:
+                            existing_extractions.append(result)
+                            existing_fake_ids.add(video['video_id'])
+                            # Save immediately
+                            with open(fake_entity_claims_file, 'a', encoding='utf-8') as f:
+                                f.write(json.dumps(result, ensure_ascii=False) + '\n')
+                    
+                    # Save checkpoint after each batch
+                    checkpoint = {
+                        'processed': len(existing_fake_ids),
+                        'total': len(fake_descriptions),
+                        'timestamp': datetime.now().isoformat(),
+                        'last_batch': batch_end
+                    }
+                    with open(step2_checkpoint_file, 'w', encoding='utf-8') as f:
+                        json.dump(checkpoint, f, ensure_ascii=False, indent=2)
+                    logger.info(f"Batch complete. Processed {len(existing_fake_ids)}/{len(fake_descriptions)} total videos")
                 
-                # Update video count
-                entity_kb[normalized_entity]["video_count"]["假"] += 1
+                # Clean up checkpoint file if all done
+                if len(existing_fake_ids) >= len(fake_descriptions):
+                    if step2_checkpoint_file.exists():
+                        step2_checkpoint_file.unlink()
+                        logger.info("Step 2 completed, checkpoint removed")
             
-            # Process new entity false claims (mark as LLM-generated)
-            for entity, claims in claim_data.get('new_entity_false_claims', {}).items():
-                normalized_entity = self.normalize_entity(entity)
-                
-                if normalized_entity not in entity_kb:
-                    entity_kb[normalized_entity] = {
-                        "correct_claims": [],
-                        "false_claims": [],
-                        "video_count": {"真": 0, "假": 0, "辟谣": 0},
-                        "first_seen": datetime.now().isoformat(),
-                        "last_seen": datetime.now().isoformat(),
-                        "aliases": [entity] if entity != normalized_entity else [],
-                        "llm_generated": True  # Mark as LLM-generated
-                    }
-                
-                for claim in claims:
-                    claim_entry = {
-                        "claim": claim,
-                        "video_ids": [video_id],
-                        "source_label": "假",
-                        "llm_generated": True  # Mark claim as LLM-generated
-                    }
-                    
-                    # Check if claim already exists
-                    existing = False
-                    for existing_claim in entity_kb[normalized_entity]["false_claims"]:
-                        if existing_claim["claim"] == claim:
-                            existing_claim["video_ids"].append(video_id)
-                            existing = True
-                            break
-                    
-                    if not existing:
-                        entity_kb[normalized_entity]["false_claims"].append(claim_entry)
-                
-                entity_kb[normalized_entity]["video_count"]["假"] += 1
+            logger.info(f"Step 2 complete: Extracted entities and claims for {len(existing_extractions)} fake videos")
+            logger.info(f"Results saved to: {fake_entity_claims_file}")
         
-        # Generate false claim summaries
-        logger.info("Generating false claim summaries for entities...")
-        await self.enhance_entity_false_descriptions(entity_kb)
-        
-        # Save updated entity knowledge base
-        with open(kb_file, 'w', encoding='utf-8') as f:
-            json.dump(entity_kb, f, ensure_ascii=False, indent=2)
-        logger.info(f"Updated entity knowledge base saved to {kb_file}")
-        
-        # Print statistics
-        false_claim_count = sum(
-            len(data.get("false_claims", [])) 
-            for data in entity_kb.values()
-        )
-        logger.info(f"\n=== Fake News Processing Complete ===")
-        logger.info(f"Processed {len(fake_descriptions)} fake videos")
-        logger.info(f"Added {false_claim_count} false claims to knowledge base")
-        logger.info(f"Updated {len(entity_kb)} entities")
     
-    async def enhance_entity_false_descriptions(self, entity_kb: Dict):
-        """Generate false claim summaries for entities"""
-        logger.info("Generating false claim summaries for entities...")
-        
-        entities_with_false_claims = [
-            (entity, data) for entity, data in entity_kb.items()
-            if data.get("false_claims") and not data.get("false_description") or data.get("false_description") == "[待后续从假新闻视频中提取]"
-        ]
-        
-        for entity, data in tqdm(entities_with_false_claims, desc="Generating false descriptions"):
-            false_claims = [c["claim"] for c in data.get("false_claims", [])]
-            
-            if false_claims:
-                data["false_description"] = await self.generate_entity_description(
-                    entity, false_claims, claim_type="false"
-                )
-                await asyncio.sleep(0.5)  # Rate limiting
-    
-    async def generate_entity_description(self, entity: str, claims: List[str], claim_type: str = "correct") -> str:
-        """Generate entity description using LLM based on claims"""
-        if not claims:
-            return "暂无相关声称"
-        
-        claim_label = "正确" if claim_type == "correct" else "虚假"
-        
-        prompt = f"""基于以下关于"{entity}"的{claim_label}声称，生成一个简洁、准确的描述（50-100字）：
-
-声称列表：
-{chr(10).join(f'- {claim}' for claim in claims)}
-
-要求：
-1. 综合所有声称中的关键信息
-2. 突出最重要的事实（时间、地点、事件）
-3. 保持客观、准确
-4. 不要简单罗列声称，而是形成连贯的描述
-5. 明确指出这些是{claim_label}声称
-
-返回格式（纯文本，不要JSON）：
-[实体的综合描述]"""
-
-        try:
-            response = await self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.3,
-                max_tokens=800
-            )
-            
-            description = response.choices[0].message.content.strip()
-            return description
-        except Exception as e:
-            logger.warning(f"Failed to generate {claim_type} description for {entity}: {e}")
-            return f"基于{claim_label}视频中的声称：{'; '.join(claims[:3])}"
     
     def aggregate_knowledge_base(self, extractions: List[Dict]) -> Dict:
         """Aggregate extractions into entity knowledge base"""
@@ -1612,6 +1457,7 @@ async def main():
     parser.add_argument("--process-fake", action="store_true", help="Process fake news videos after true news")
     parser.add_argument("--fake-only", action="store_true", help="Only process fake news videos (requires existing true news KB)")
     parser.add_argument("--fake-step1-only", action="store_true", help="Only execute Step 1 of fake news processing (extract descriptions)")
+    parser.add_argument("--fake-step2-only", action="store_true", help="Only execute Step 2 of fake news processing (extract entities and claims)")
     parser.add_argument("--fake-skip-step1", action="store_true", help="Skip Step 1 and continue from Step 2 in fake news processing")
     parser.add_argument("--max-concurrent", type=int, default=10, help="Maximum number of concurrent API calls (default: 10)")
     args = parser.parse_args()
@@ -1620,10 +1466,11 @@ async def main():
     extractor = EntityClaimExtractor(api_key=args.api_key, resume=not args.no_resume)
     
     # Special mode: process only fake news
-    if args.fake_only or args.fake_step1_only:
+    if args.fake_only or args.fake_step1_only or args.fake_step2_only:
         await extractor.process_fake_news_pipeline(
             sample_size=args.sample, 
             step1_only=args.fake_step1_only,
+            step2_only=args.fake_step2_only,
             skip_step1=args.fake_skip_step1,
             max_concurrent=args.max_concurrent
         )

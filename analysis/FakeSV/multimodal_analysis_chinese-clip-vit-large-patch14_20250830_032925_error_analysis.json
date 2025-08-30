@@ -1,0 +1,2544 @@
+{
+  "timestamp": "2025-08-30T03:29:25.133579",
+  "individual_modality_errors": {
+    "text_title_only": {
+      "total_errors": 110,
+      "error_rate": 0.2029520295202952,
+      "error_samples": [
+        {
+          "video_id": "7017259392332549390",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7042975772717436167",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xjp7rzxfjd5wes",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7029482339818392863",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7034062611872238856",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x56fqqqan35vtk",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xw3y8ahpfbefak",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033335315314101517",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7030541499603455247",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7024386092619025676",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7048603452229831943",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7029590123297754371",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7024788820474318094",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x3e23czmz7bhxa",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7031859613460925736",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        }
+      ]
+    },
+    "text_title_keywords": {
+      "total_errors": 77,
+      "error_rate": 0.14206642066420663,
+      "error_samples": [
+        {
+          "video_id": "7042975772717436167",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7043720289464749325",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7031153752790830374",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x56fqqqan35vtk",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7037740090369625379",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033335315314101517",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7024386092619025676",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7048603452229831943",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7048915245552782607",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7024788820474318094",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x3e23czmz7bhxa",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xr6rund6htjga4",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xiqs66buw6r2jw",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7028133155794111757",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x2t7ggzjjt2rxy",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        }
+      ]
+    },
+    "text_full_text": {
+      "total_errors": 49,
+      "error_rate": 0.09040590405904059,
+      "error_samples": [
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7031153752790830374",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x56fqqqan35vtk",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033335315314101517",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xr6rund6htjga4",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7028133155794111757",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7035068206834355469",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7024060485381147918",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7024722988222123302",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7048807143155191081",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033661092387720460",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7029585948459420964",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7048827243237281055",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xzrpewykxkhw9g",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7021151306094038307",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7028190137171430692",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xirssh3uruebri",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        }
+      ]
+    },
+    "visual_frame_max": {
+      "total_errors": 120,
+      "error_rate": 0.22140221402214022,
+      "error_samples": [
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7018783925770128655",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xmydr5rp66gfpm",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7054459665228303657",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7023059343138442511",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7020425430473706765",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7037740090369625379",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033335315314101517",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x7t93y4spz9vce",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7039979927290039588",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7017589177361435936",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7024788820474318094",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x3e23czmz7bhxa",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7031891728529394982",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        }
+      ]
+    },
+    "visual_pooled": {
+      "total_errors": 107,
+      "error_rate": 0.1974169741697417,
+      "error_samples": [
+        {
+          "video_id": "7029478371427912973",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7041921581278416158",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7018783925770128655",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xt56hysgxmysde",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xmydr5rp66gfpm",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7037740090369625379",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033335315314101517",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7039979927290039588",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7029590123297754371",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7024788820474318094",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x3e23czmz7bhxa",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xr6rund6htjga4",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7021444066311179560",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xiqs66buw6r2jw",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7028133155794111757",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        }
+      ]
+    },
+    "audio_frame_max": {
+      "total_errors": 277,
+      "error_rate": 0.511070110701107,
+      "error_samples": [
+        {
+          "video_id": "7043725834615606564",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7037720351664590120",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xvs9yq5ssbq394",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7041921581278416158",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7035041510471093508",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7029969757415673119",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xjp7rzxfjd5wes",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7043720289464749325",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xizkej8sh2m5ue",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7020439365021224195",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7029482339818392863",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7027945823648435488",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7040780207178927372",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        }
+      ]
+    },
+    "audio_pooled": {
+      "total_errors": 283,
+      "error_rate": 0.522140221402214,
+      "error_samples": [
+        {
+          "video_id": "7042975772717436167",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7043725834615606564",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7037720351664590120",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7050683268659727646",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7049723441108241679",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7029969757415673119",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7038198919838387493",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7043720289464749325",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3xizkej8sh2m5ue",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "3x6d7bq2f8dc95u",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7046936640991792418",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7020439365021224195",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "similarity": 0
+        },
+        {
+          "video_id": "7027945823648435488",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        },
+        {
+          "video_id": "7031153752790830374",
+          "ground_truth": "假",
+          "prediction": "真",
+          "similarity": 0
+        }
+      ]
+    }
+  },
+  "combination_errors": {
+    "title_only+visual_frame_max+audio_frame_max": {
+      "total_errors": 120,
+      "error_rate": 0.22140221402214022,
+      "error_samples": [
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3xjp7rzxfjd5wes",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7029482339818392863",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "title_only+visual_frame_max+audio_pooled": {
+      "total_errors": 123,
+      "error_rate": 0.22693726937269373,
+      "error_samples": [
+        {
+          "video_id": "7042975772717436167",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "title_only+visual_pooled+audio_frame_max": {
+      "total_errors": 115,
+      "error_rate": 0.21217712177121772,
+      "error_samples": [
+        {
+          "video_id": "7041921581278416158",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3xjp7rzxfjd5wes",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7029482339818392863",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7034062611872238856",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "title_only+visual_pooled+audio_pooled": {
+      "total_errors": 114,
+      "error_rate": 0.21033210332103322,
+      "error_samples": [
+        {
+          "video_id": "7042975772717436167",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7034062611872238856",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x56fqqqan35vtk",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "title_keywords+visual_frame_max+audio_frame_max": {
+      "total_errors": 107,
+      "error_rate": 0.1974169741697417,
+      "error_samples": [
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043720289464749325",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023059343138442511",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "title_keywords+visual_frame_max+audio_pooled": {
+      "total_errors": 110,
+      "error_rate": 0.2029520295202952,
+      "error_samples": [
+        {
+          "video_id": "7042975772717436167",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043720289464749325",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7031153752790830374",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        }
+      ]
+    },
+    "title_keywords+visual_pooled+audio_frame_max": {
+      "total_errors": 96,
+      "error_rate": 0.17712177121771217,
+      "error_samples": [
+        {
+          "video_id": "7041921581278416158",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043720289464749325",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x56fqqqan35vtk",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7037740090369625379",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        }
+      ]
+    },
+    "title_keywords+visual_pooled+audio_pooled": {
+      "total_errors": 97,
+      "error_rate": 0.17896678966789667,
+      "error_samples": [
+        {
+          "video_id": "7042975772717436167",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043720289464749325",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7031153752790830374",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7045955588488006944",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "full_text+visual_frame_max+audio_frame_max": {
+      "total_errors": 92,
+      "error_rate": 0.16974169741697417,
+      "error_samples": [
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7023059343138442511",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x56fqqqan35vtk",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7037740090369625379",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7033335315314101517",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "full_text+visual_frame_max+audio_pooled": {
+      "total_errors": 91,
+      "error_rate": 0.16789667896678967,
+      "error_samples": [
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "3x38ctqewjb8hmu",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7043748758198258975",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7031153752790830374",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7054459665228303657",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "full_text+visual_pooled+audio_frame_max": {
+      "total_errors": 90,
+      "error_rate": 0.16605166051660517,
+      "error_samples": [
+        {
+          "video_id": "7041921581278416158",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "3x56fqqqan35vtk",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7037740090369625379",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7033335315314101517",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7039979927290039588",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7029590123297754371",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        }
+      ]
+    },
+    "full_text+visual_pooled+audio_pooled": {
+      "total_errors": 87,
+      "error_rate": 0.16051660516605165,
+      "error_samples": [
+        {
+          "video_id": "7047824234395045156",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7033779180982603049",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7027490498361265443",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7042982526268362015",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7031153752790830374",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "假",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7023193130031713575",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "7034682911441915136",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "真",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        },
+        {
+          "video_id": "3x56fqqqan35vtk",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "假"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7037740090369625379",
+          "ground_truth": "假",
+          "prediction": "真",
+          "component_predictions": {
+            "text": "假",
+            "visual": "真",
+            "audio": "真"
+          },
+          "consensus": false,
+          "confidence": 0.6666666666666666
+        },
+        {
+          "video_id": "7033335315314101517",
+          "ground_truth": "真",
+          "prediction": "假",
+          "component_predictions": {
+            "text": "假",
+            "visual": "假",
+            "audio": "假"
+          },
+          "consensus": true,
+          "confidence": 1.0
+        }
+      ]
+    }
+  },
+  "systematic_failures": [
+    {
+      "video_id": "7047824234395045156",
+      "ground_truth": "假",
+      "error_modalities": 7,
+      "total_modalities": 7,
+      "error_rate": 1.0
+    },
+    {
+      "video_id": "7042982526268362015",
+      "ground_truth": "真",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7023193130031713575",
+      "ground_truth": "真",
+      "error_modalities": 7,
+      "total_modalities": 7,
+      "error_rate": 1.0
+    },
+    {
+      "video_id": "7034682911441915136",
+      "ground_truth": "假",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "3x56fqqqan35vtk",
+      "ground_truth": "真",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7037740090369625379",
+      "ground_truth": "假",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7033335315314101517",
+      "ground_truth": "真",
+      "error_modalities": 6,
+      "total_modalities": 7,
+      "error_rate": 0.8571428571428571
+    },
+    {
+      "video_id": "7024788820474318094",
+      "ground_truth": "真",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "3x3e23czmz7bhxa",
+      "ground_truth": "真",
+      "error_modalities": 6,
+      "total_modalities": 7,
+      "error_rate": 0.8571428571428571
+    },
+    {
+      "video_id": "3xiqs66buw6r2jw",
+      "ground_truth": "真",
+      "error_modalities": 6,
+      "total_modalities": 7,
+      "error_rate": 0.8571428571428571
+    },
+    {
+      "video_id": "7028133155794111757",
+      "ground_truth": "真",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "3x2t7ggzjjt2rxy",
+      "ground_truth": "假",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7033661092387720460",
+      "ground_truth": "假",
+      "error_modalities": 7,
+      "total_modalities": 7,
+      "error_rate": 1.0
+    },
+    {
+      "video_id": "7029585948459420964",
+      "ground_truth": "假",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "3xzrpewykxkhw9g",
+      "ground_truth": "真",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7021151306094038307",
+      "ground_truth": "假",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7042127707425099016",
+      "ground_truth": "真",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7055512816345795874",
+      "ground_truth": "真",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7048879953420569893",
+      "ground_truth": "假",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    },
+    {
+      "video_id": "7024047971012480293",
+      "ground_truth": "假",
+      "error_modalities": 5,
+      "total_modalities": 7,
+      "error_rate": 0.7142857142857143
+    }
+  ],
+  "improvement_opportunities": []
+}

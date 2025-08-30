@@ -1,0 +1,9 @@
+{
+  "model": "BAAI/bge-large-zh-v1.5",
+  "num_fake_videos": 10,
+  "num_true_videos": 1828,
+  "avg_top1_similarity": 0.6945972859859466,
+  "avg_top5_similarity": 0.6783541119098664,
+  "min_top1_similarity": 0.6090527176856995,
+  "max_top1_similarity": 0.8542664051055908
+}

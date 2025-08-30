@@ -1,0 +1,5422 @@
+[
+  {
+    "video_id": "7041921581278416158",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.757465660572052,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029948498762157342",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7712347507476807,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7049184364088823053",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6659807562828064,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028615037652618500",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5569034814834595,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031859613460925736",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.937405526638031,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056300233491303691",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9357713460922241,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055180730518883587",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9273672699928284,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042975466105343271",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.903938353061676,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044047262388882688",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.881232738494873,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7036952898252639503",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9226852059364319,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035210171949288740",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8247931599617004,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028536210775723272",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8684282898902893,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032965221509582092",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8609482049942017,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034473142282095904",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8575051426887512,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x2t7ggzjjt2rxy",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7626163363456726,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023555587845672204",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.681936502456665,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018354482329177359",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8571516871452332,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018071054258031876",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.860713541507721,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024680548287139110",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8312766551971436,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028054479111015692",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.638508677482605,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xtgnmm6ti7dax2",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8804625272750854,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7026286039853550882",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6847919821739197,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039973983286054179",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8907860517501831,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034494607262059776",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8446370363235474,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7060192184368221454",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7982169389724731,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031891728529394982",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8155063390731812,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042498832483028257",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8180605173110962,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7060231048436665640",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8013184070587158,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019257441250544904",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8484840989112854,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xkv3tjmzcqvn9c",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7970984578132629,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xw3y8ahpfbefak",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8407095074653625,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x7t93y4spz9vce",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.893108606338501,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xxhymwfjqiwaqk",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8705084323883057,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xd2pmsy6jz5t64",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8595292568206787,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xe35cdfnkit36c",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8881944417953491,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023193130031713575",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.9246001839637756,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021383978431106311",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.89947909116745,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035537991837699368",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8323865532875061,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021444066311179560",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8872184157371521,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023244925978397983",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8620646595954895,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023245555539184931",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7583136558532715,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053134515258068257",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7999024987220764,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xqd4wg3dspf9ra",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9126238226890564,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xjtcqeba4gb9wa",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9046244025230408,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023287644146633995",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.5168210864067078,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044821798168399141",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7791042923927307,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033359367730777348",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9173047542572021,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027945823648435488",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8836040496826172,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029590123297754371",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7306607365608215,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7022992369045851404",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8956438302993774,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025586251960945958",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8778226375579834,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018344678059724047",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8782626390457153,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037499302746393893",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7631192803382874,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053548393922071823",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8624101281166077,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032453438562700578",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8369925022125244,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xbiwhc4gr6aarm",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7428434491157532,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7022913322009890051",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7164111733436584,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021151306094038307",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.8145912289619446,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037740090369625379",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7708083987236023,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7047811261353987369",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7958922982215881,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xtnv52edctx7gq",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8531290888786316,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053608466006510880",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7845602035522461,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035206290636836096",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8812568187713623,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7047031603356388621",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9154106378555298,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044483368649493797",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9218826293945312,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044335645887712548",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9292616844177246,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034629754259098916",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.5438658595085144,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030642279803079973",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9112464785575867,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055213699849538831",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.927060067653656,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053657591594962210",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7323011755943298,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xviwmw4hienh2g",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9103413820266724,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029617693196160290",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9111499190330505,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027022221763824926",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8985924124717712,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7046643645541403941",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9254966974258423,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7047470404633480462",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9163591861724854,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xeku62m6ws5f92",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8378528356552124,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xha6nekemhtwqg",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8054787516593933,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xyee2uc9irhyw9",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8880020380020142,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038497948476378383",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8659099340438843,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021897732549823758",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8517166376113892,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037659286041906439",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8591586947441101,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xbd9q2xtppijqu",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8997809886932373,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x9zrpu3gbf7hh2",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9339383244514465,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xjp7rzxfjd5wes",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8972997665405273,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023258320903441699",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8414780497550964,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x34p5rv5rty2kq",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8985086679458618,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7049357768301546755",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9105334877967834,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017697773889834276",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8961979746818542,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018081523995888903",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9387384057044983,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xrq9wuzmb2n2wg",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9291285276412964,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xyekg2aa2sfxq4",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8596780896186829,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039979927290039588",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8031816482543945,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039905905583918340",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7592085003852844,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039904064364088608",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7831577062606812,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042982526268362015",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.914289116859436,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042975772717436167",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.9146662950515747,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040993287494307086",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.9277466535568237,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7045640507996916992",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8946322798728943,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xiqs66buw6r2jw",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8206233382225037,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018372776943766823",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9064289331436157,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054459665228303657",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.6356059312820435,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7036319814654151947",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.909483790397644,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037223827880938752",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8407614231109619,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xtf6mqjhubyp6q",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8547651171684265,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7036919950036012292",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8772657513618469,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053369565618670856",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7683374285697937,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033779180982603049",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6920110583305359,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056399445985987871",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8222089409828186,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056402040389520648",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7981809377670288,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056401603636563207",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8003056645393372,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x38ctqewjb8hmu",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8898987174034119,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021409894137859365",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9322234988212585,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043746381047008545",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8570128083229065,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043426723593014562",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8908432126045227,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027662208859393313",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5257687568664551,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043686053001186567",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8763917088508606,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050044992445893918",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9267286062240601,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054857378411400456",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7706860303878784,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028138502562860301",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8760359287261963,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043022295295593763",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8936012983322144,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020263243776019748",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9289084076881409,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042245916841053473",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9236356616020203,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xjmefgwtxxvtgy",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8622912168502808,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xxy6dwpnfur2gg",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9080897569656372,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018173859207728418",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.5935996770858765,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043720289464749325",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.681683361530304,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xnqtnd2zuif7ke",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8490502238273621,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054455374837075204",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8172473907470703,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7051566224471280904",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6917521953582764,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x2xkqtcffyy486",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.5944945216178894,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037037902475300128",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7117379903793335,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xnh6ksug7tnyti",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.5605478286743164,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033568781016239400",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9186921119689941,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025213002756394276",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7754985690116882,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038747888897264935",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9079323410987854,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053384921401789708",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9123961925506592,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xdqfdv7mydwwfc",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9339343309402466,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xirssh3uruebri",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9026172757148743,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xxpn236a2yfygq",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9257349967956543,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xc5gnc47aqijk4",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9206205010414124,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xekv75eurqih29",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8704803586006165,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xu8n8jmv53tx34",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8382940888404846,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xcz7in4que5si4",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8798596858978271,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019175347518328098",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.535247802734375,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025573055808294159",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8032689690589905,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xytyzwx3fpd5va",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.794094979763031,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043952122508872994",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8500577211380005,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040050087627607304",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.5683932304382324,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033034658308771110",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5930124521255493,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7047060920429792524",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7256002426147461,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7046999925455916318",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8182344436645508,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7046936640991792418",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8690293431282043,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027992116609453350",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8238493800163269,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034840731491634446",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.895193338394165,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034118132620971303",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.871030330657959,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035068206834355469",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9212589859962463,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034590432021581088",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8320525288581848,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xve3qzbjw2z6ds",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8436749577522278,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7022452124336262414",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.828407883644104,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xexs4d8xaxzsxk",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7180706858634949,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035041510471093508",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.519894540309906,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xffw33yzwyxn66",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.79618901014328,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038808265320418563",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9000373482704163,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x6snt7agsnh6yk",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8833463191986084,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044544101886332167",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8240504860877991,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044536903693110536",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.5073105096817017,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044789589755612427",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.8118917346000671,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044720935663914274",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.5635189414024353,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xrk8cxhhqwimqu",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.8700206875801086,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044814190552321287",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.8804710507392883,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029994065131277598",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9208510518074036,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029845929318436132",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.8705410361289978,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017441632828067109",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6197908520698547,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021333575794560288",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8366644978523254,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x8ire7jezweh7c",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.818496584892273,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xw59ifzkrgxeg4",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.906940758228302,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7049581887957896480",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.753571093082428,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048783060040551710",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.652025580406189,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048807143155191081",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.6837966442108154,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048919632329067810",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5678960680961609,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048827243237281055",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5273255109786987,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048861382715936035",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7260918617248535,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048915245552782607",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6559727191925049,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048879953420569893",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6092289090156555,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034683697068592424",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8698568344116211,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xizkej8sh2m5ue",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.920781135559082,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7058183113519746307",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9084036946296692,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017441093457399077",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.785237193107605,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017611679143906568",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8156532645225525,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017739552920014116",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5990148186683655,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017589177361435936",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8102424740791321,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017724427525688576",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7745984196662903,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017716576472321315",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6235383749008179,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017364334938443039",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8013867735862732,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017986654732340521",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7406367063522339,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030728031652138273",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9042277336120605,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7049528744184204574",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9168782234191895,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xr6rund6htjga4",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7621206045150757,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xfvd5368w5aaw9",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.5124476552009583,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017442227408473385",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8949447274208069,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017414510847724836",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8560371994972229,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017526065920789800",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9079992175102234,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017695556092890376",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6841059327125549,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018010806272920835",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8781425356864929,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048471469944327464",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9122581481933594,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027490498361265443",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.5969703197479248,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039922477526469901",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8270875811576843,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023059343138442511",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.925453782081604,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xqjpzpt4e4jmd6",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8995305299758911,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042467822664043783",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9094880223274231,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019625163473865996",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8828983306884766,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020242118274764046",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8556336164474487,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021440042019179791",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9008245468139648,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019851942029561091",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8853368759155273,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020227558654479650",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9169701337814331,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023011062509260071",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8977746367454529,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020326987369696526",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9257202744483948,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021067470937001254",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8601574301719666,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021159338882370855",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9013938903808594,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021306852726050052",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8975522518157959,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x6g8rysfypvsc6",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.8004875183105469,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018383515674889504",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.6724327802658081,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024047971012480293",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.6351163983345032,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055924468711050503",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.6684449911117554,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xzxrpdjujcqbxw",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.650235652923584,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xvg252p7mhzxnc",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7877813577651978,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034062611872238856",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9377028942108154,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7052522725612489992",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7021761536598206,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xf254cgufipfa2",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.907785952091217,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028207119946059040",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6983712315559387,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7036877571987934479",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9073824882507324,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038944755274829096",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9226097464561462,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048940393475460387",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8024203777313232,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033661092387720460",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.8084135055541992,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x3rg3rthx6yk8e",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7725068926811218,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xnw86kuddjgs2m",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.757580041885376,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xp849bntcd8umi",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8644797801971436,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x56fqqqan35vtk",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.704131543636322,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7041770702990626055",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8446236848831177,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xvvv5qkks2p7ba",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7312907576560974,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055512816345795874",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8133918642997742,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043725834615606564",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.629772961139679,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7041976735910432034",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8801406621932983,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7057110614602288425",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8061639070510864,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7041471601153559815",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8790348768234253,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xcbamtjy9g79fc",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.5784829258918762,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x5figva6s2sk7s",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8870494365692139,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018783925770128655",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6201360821723938,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xee737rmjg4p92",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8226538896560669,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xxqh9g2mqd5z6w",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7737540602684021,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018051758337412366",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.768355667591095,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xmydr5rp66gfpm",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.86252760887146,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xhdghhypy3s9ma",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7288163900375366,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7049723441108241679",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8717912435531616,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xt56hysgxmysde",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8516877293586731,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x5w3hq73bw9eby",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8911120295524597,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028133155794111757",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.9154866933822632,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037720351664590120",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8322985172271729,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030958335998315790",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7992957234382629,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025234606643334440",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8614988327026367,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031939937406553381",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8102092146873474,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032866394190417155",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8334200382232666,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032869305435933963",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7913212776184082,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043748758198258975",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6108123064041138,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043587064008281358",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6798813343048096,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x9dv6iyh9vqsny",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8945468068122864,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039894871749987621",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8755326867103577,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xkaxd72w6rqct9",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8824800848960876,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056367962126634253",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8042082786560059,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030659592841334053",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7948614358901978,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044899170313850153",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7585973739624023,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031561017180065063",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7873095273971558,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042654809836621071",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8767112493515015,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040585061250469158",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.875715970993042,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040459322459032873",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.721320629119873,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040780207178927372",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7780398726463318,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034350483309399309",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8969960808753967,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055265850936397071",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7267723679542542,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042840706381106439",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.61054927110672,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034682911441915136",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6200048923492432,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040430360127130892",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.855276882648468,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7036923326471671053",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5785804390907288,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7046313095060311333",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.55629563331604,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040481564500774178",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7828335762023926,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038198919838387493",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8502334356307983,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028453876248399135",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8973963260650635,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043312251079576864",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9103274345397949,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xjbrxwwnt7eiek",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9331336617469788,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xtrcijpu64y6xc",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9364113211631775,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020425430473706765",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9227917790412903,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020553684987809032",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.928846538066864,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020439365021224195",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9393523335456848,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023692039996919080",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8849925994873047,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xsu7qvs4uc3qw9",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8856806755065918,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021764129945898271",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8870784044265747,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020393255414156552",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9157350063323975,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044849883752320270",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8941217660903931,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029969757415673119",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8208680152893066,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044719543280848141",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8779597878456116,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020684985111809310",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8940861821174622,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028703095957851407",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9181580543518066,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050313098820947207",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9059308767318726,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7045091116760239360",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8936147093772888,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035978396383431976",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8933271169662476,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032213017500732680",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8957403302192688,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043412541501984038",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8819347023963928,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056682221725388064",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8505247235298157,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029201231767784711",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8978615403175354,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053378834468474149",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8025459051132202,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055801040767159565",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8289417624473572,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034867342387596559",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8285889625549316,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xzrpewykxkhw9g",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7506498098373413,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xkyntm4ddwj69s",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9215837121009827,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037346913875709197",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.841522753238678,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037347520925715720",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8562411665916443,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017376717115264286",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8800667524337769,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7022235670324251941",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6483189463615417,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019796409754881316",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8599803447723389,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033335315314101517",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7849863767623901,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021093041859579150",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8879713416099548,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023626433339641092",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.8338846564292908,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042137290080062724",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7422415018081665,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038958429158870280",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8917465209960938,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035424396676320515",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7914385795593262,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7044795417824922891",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8252266645431519,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027494216439811364",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8833622336387634,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027611337324858659",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8329818248748779,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029209861531520294",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8489853739738464,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030430491962527014",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8653191328048706,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028900912034893086",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7466570734977722,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033613488576679168",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8243189454078674,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029522681917689091",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8238183856010437,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031444334620757255",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8193560838699341,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028190137171430692",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6990578174591064,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028505403948420360",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.5364571809768677,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029585948459420964",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7948607802391052,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031153752790830374",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8542624711990356,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055532121758158112",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8827006220817566,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038847899148504361",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9182789921760559,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020750371622554913",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8870790600776672,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038857031654182148",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8804198503494263,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039925672155860265",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7835538387298584,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050683268659727646",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.920403003692627,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017433906135698724",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8850125074386597,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017259392332549390",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7811474204063416,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017326145901169956",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8628763556480408,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017344287406886181",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9294739961624146,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7057257608880655650",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5705668926239014,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054330907901136166",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6439339518547058,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053088371425529092",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.521578848361969,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xdq4zhsege5nsi",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7435398697853088,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053012112385363215",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7447182536125183,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056176038535056651",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6866904497146606,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7052273452274830599",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7299574017524719,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053069428979764487",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5372625589370728,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053628147362942223",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5302284359931946,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7057450949576609031",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6363478899002075,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7049920788383698215",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.65006422996521,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056404286284090662",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.5320931673049927,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029566764732222750",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5546274781227112,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032253745689857317",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6334548592567444,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029229563137821989",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5923422574996948,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029482339818392863",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.5947867631912231,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054005875446500612",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6683568358421326,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7045955588488006944",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.599513053894043,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056313944817945856",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7555229663848877,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050820590671842572",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8964347243309021,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7049986028387568935",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8887732625007629,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048197292616174862",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8878121376037598,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039513583717272863",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8938618898391724,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7045264001541917966",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8604488968849182,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7023492285463612708",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.850607693195343,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050839413848296739",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8817124962806702,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7057098924561108262",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8950613141059875,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033979808505777411",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.5847612023353577,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024763407547125006",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8759283423423767,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054496591473855747",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9146290421485901,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042505949998828815",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8641847968101501,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034461852092353807",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.910146951675415,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055540654083935523",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9148514270782471,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035112768273517828",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9181162714958191,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024878215407619362",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8749790191650391,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025167215913667851",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7049343585968018,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025136991641537833",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9000809788703918,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025048954974833934",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7826005816459656,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024927766906719518",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6363876461982727,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024885711677525260",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7489324808120728,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024872299543235874",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7061074376106262,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024869071128628516",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6830626130104065,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xe5ep2me9fcac4",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9334641695022583,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025399661116525854",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9243447184562683,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024868156531330304",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7998558282852173,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018009000729988352",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8594931960105896,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018087007637359876",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7803307771682739,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042979615991811342",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8728572726249695,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x6kgc2skkeys7m",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9194486737251282,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018389998277774606",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8586446046829224,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042127707425099016",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6746584177017212,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7033669372057111815",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.81800776720047,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x5azhb8s73fe3e",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8068000674247742,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037808720532786445",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8191887736320496,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054804462501776651",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8315421938896179,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7053609099254041895",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.914124608039856,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035566006554643751",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8142791390419006,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037462720379211011",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8432241678237915,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030354324840566029",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8740733861923218,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027674089112341795",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8648822903633118,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055906127388658974",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8501865267753601,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038252244478840095",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7786392569541931,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7041933462365883683",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8654332160949707,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xp8rwyviepz87q",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8321439623832703,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7045383922292641031",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8436228632926941,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7026575265421610244",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8762878775596619,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037803401752677662",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.861425518989563,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xqeqr9w3n4c7hk",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9259198904037476,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050479213098388777",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9023313522338867,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024788820474318094",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6131366491317749,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054011574050147598",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6475124359130859,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7046943614638787872",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.546285092830658,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031744433435479310",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8319618105888367,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029577288278641927",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8956971168518066,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7036960164108324109",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8853068947792053,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xvs9yq5ssbq394",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8911277055740356,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7058189158447140103",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8849071264266968,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043791676510440745",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8799501657485962,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7045236629421690153",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8824923038482666,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7043265905731620103",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8470569849014282,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020440059090406659",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8307226896286011,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021289862108122404",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8083995580673218,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035914620879555855",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8266546726226807,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7022988623481998600",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7811973094940186,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055097663162879272",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8469199538230896,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021437448987102471",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8733402490615845,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031081942648933670",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8424445986747742,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7041717698761329923",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8724612593650818,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020227111260523809",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7868110537528992,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020645164867702055",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9020068049430847,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020557739868867870",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8328229784965515,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xy6xs5kz4asrd9",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7837488651275635,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7020228622967491879",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8807843923568726,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021399162243534118",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8803988099098206,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xzfu98w5vd8rym",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6543874144554138,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021083431903808779",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7869365215301514,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7057819525407952167",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8237137794494629,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048969477999840516",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.865553081035614,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7034083180672011552",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8506129384040833,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032614704946138404",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6982744336128235,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x8hupc4mjyjx7e",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9280789494514465,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7052861203307056414",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9171938300132751,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7018074404609330472",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8336251974105835,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7017791130548833536",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8063932061195374,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7026682604434902276",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8833295106887817,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019485257175043335",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8687739968299866,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031973520406023427",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9008667469024658,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7054523893691829544",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8415715098381042,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7037678639407713544",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8020675778388977,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035527261545598243",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8948161602020264,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035936383457824041",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8766699433326721,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031123988202016039",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8194867968559265,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030342786935246084",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8655114769935608,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7028529035609148676",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6849382519721985,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031865728416468236",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8657201528549194,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7022645150371433732",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.917584240436554,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030579781770988808",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.920244038105011,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025198307337063721",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9362581968307495,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031042923403726118",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.934274435043335,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x65ep66n5zqdxm",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8589069247245789,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048950287305952544",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7607958912849426,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xc8mjfrqhruxq9",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7530240416526794,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024060485381147918",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6445744037628174,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024386092619025676",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7581440210342407,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xhykdy7axiwyaq",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6579188704490662,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x3e23czmz7bhxa",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7444188594818115,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7045925414622989605",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6913643479347229,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030004578389183784",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8906358480453491,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xgjcuv8463gbhs",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7001886367797852,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7027788692471287076",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.906773567199707,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x76a99a5e67jre",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7350661754608154,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048603452229831943",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.8023352026939392,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048279986280598819",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7020004987716675,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048461958416305448",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.6430613994598389,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7048576318459497742",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.7210372090339661,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7021056131950857480",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8586084842681885,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7047824234395045156",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.5710318088531494,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019229281704250662",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.5004162192344666,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024722988222123302",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7367473840713501,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7059265016276552992",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.6501756310462952,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056718049017204004",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9186816811561584,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056960971734109476",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.902759850025177,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056726761974926628",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9173221588134766,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xcwdz3x45utvmw",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9070779085159302,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7051877619251318023",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9182831645011902,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032175363627240744",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.7884282469749451,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019176421272718604",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8711907267570496,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7052674165236583688",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8331812620162964,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7057915117601688868",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9180890917778015,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025218023657114910",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9239088296890259,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025145570293566731",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8909921050071716,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024876615393938724",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.899559736251831,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7025142316490919204",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8551520109176636,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050760867020934414",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8453221321105957,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xsefhr4knp7zvm",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.576347291469574,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050033675534208256",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8008105754852295,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7050407300435053832",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.86776202917099,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019839633865428262",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7590571045875549,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040074834931354914",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9190641641616821,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x6d7bq2f8dc95u",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8454023599624634,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7040267067081133326",
+    "annotation": "真",
+    "prediction": "假",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 1,
+    "confidence": 0.6649375557899475,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038557817552293123",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8931434750556946,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xrdmz9jp5euq5a",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8460735082626343,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7038604197650058503",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8997660875320435,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xj4meizhnndq7w",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.6077405214309692,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x6y3jhyehykdz6",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8378002643585205,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039178038545845536",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8439304232597351,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039183851284860197",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.793565571308136,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7039192061043576100",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8123540282249451,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029602985692941572",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9094187021255493,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7047561614614187264",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9093742370605469,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3xuhnzpzcm59xjw",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.920842707157135,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029478371427912973",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.925446629524231,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029504216238427431",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.9284016489982605,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029510412718624040",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8614659309387207,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7029591662020070691",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8834930062294006,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7051775977361296655",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8042303323745728,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7024261770944531751",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8316666483879089,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7051811666438196521",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8748371005058289,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030359137842154752",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8644060492515564,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7056381386420145444",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8881350755691528,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "3x86dqjqgniye9q",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7282741665840149,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7026283453658287400",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8641422390937805,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7031092145968729378",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8582308888435364,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7030541499603455247",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6171387434005737,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7032287848623639840",
+    "annotation": "假",
+    "prediction": "真",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 0,
+    "confidence": 0.7241742014884949,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7051110607449263398",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6216246485710144,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7051927357380168960",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8229703307151794,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7055611209025850662",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8127470016479492,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019104516016590080",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8952105641365051,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7042845353191755020",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.7944764494895935,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7035462964685704479",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.8219138383865356,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7046160617840856361",
+    "annotation": "假",
+    "prediction": "假",
+    "ground_truth": "假",
+    "ground_truth_numeric": 1,
+    "prediction_numeric": 1,
+    "confidence": 0.9313977360725403,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7019606833019047180",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.8547140955924988,
+    "model_type": "evidential"
+  },
+  {
+    "video_id": "7041376892577991973",
+    "annotation": "真",
+    "prediction": "真",
+    "ground_truth": "真",
+    "ground_truth_numeric": 0,
+    "prediction_numeric": 0,
+    "confidence": 0.6553605794906616,
+    "model_type": "evidential"
+  }
+]

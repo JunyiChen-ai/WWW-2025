@@ -1,0 +1,14 @@
+{
+  "total_queries": 3624,
+  "memory_bank_size": 2320,
+  "memory_true_count": 1185,
+  "memory_fake_count": 1135,
+  "excluded_self_count": 2320,
+  "splits": {
+    "valid": 546,
+    "train": 2536,
+    "test": 542
+  },
+  "avg_true_similarity": 0.7856501200078075,
+  "avg_fake_similarity": 0.8006120070519037
+}

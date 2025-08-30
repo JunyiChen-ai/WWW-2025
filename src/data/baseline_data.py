@@ -5,9 +5,10 @@ from PIL import Image
 
 
 class FakeSVDataset(Dataset):
-    def __init__(self, include_piyao=False, **kwargs):
+    def __init__(self, include_piyao=False, filter_k=None, **kwargs):
         super(FakeSVDataset, self).__init__()
         self.include_piyao = include_piyao
+        self.filter_k = filter_k
     
     def _get_complete_data(self):
         # Always use original dataset which contains '辟谣' labels
@@ -50,7 +51,12 @@ class FakeSVDataset(Dataset):
         return data
 
     def _get_temporal_data(self, split: str):
-        vid_path = f'data/FakeSV/vids/vid_time3_{split}.txt'
+        # Use filtered training file if filter_k is specified and split is 'train'
+        if split == 'train' and self.filter_k is not None:
+            vid_path = f'data/FakeSV/vids/vid_time3_train_k{self.filter_k}.txt'
+        else:
+            vid_path = f'data/FakeSV/vids/vid_time3_{split}.txt'
+            
         with open(vid_path, "r") as fr:
             vids = [line.strip() for line in fr.readlines()]
         data = self._get_complete_data()

@@ -1,0 +1,12 @@
+{
+  "total_original_entities": 3550,
+  "total_disambiguated_clusters": 2165,
+  "reduction_rate": 39.01408450704225,
+  "jaccard_threshold": 0.3,
+  "cluster_distribution": {
+    "true_only": 842,
+    "fake_only": 880,
+    "overlapping": 443
+  },
+  "timestamp": "2025-08-29T16:43:05.354311"
+}

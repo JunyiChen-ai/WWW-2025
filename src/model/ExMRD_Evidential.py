@@ -389,14 +389,49 @@ class ExMRD_Evidential(nn.Module):
             visual_feats = torch.mean(visual_feats, dim=1)  # (B, 1024)
             visual_features = self.visual_proj(visual_feats)  # (B, hid_dim)
         
+        # Create gate_x by concatenating available modality features
+        # For missing modalities, use zero vectors of appropriate size
+        batch_size = None
+        device = None
+        
+        # Determine batch size and device from available features
+        for feat in [text_features, audio_features, visual_features]:
+            if feat is not None:
+                batch_size = feat.shape[0]
+                device = feat.device
+                break
+        
+        if batch_size is None:
+            raise ValueError("At least one modality must be provided")
+        
+        # Create feature representations for gate_x (use zero padding for missing modalities)
+        if text_features is None:
+            text_features = torch.zeros(batch_size, self.hid_dim, device=device)
+        if audio_features is None:
+            audio_features = torch.zeros(batch_size, self.hid_dim, device=device)
+        if visual_features is None:
+            visual_features = torch.zeros(batch_size, self.hid_dim, device=device)
+        
+        # Concatenate all modalities for gate_x (B, 3*hid_dim)
+        gate_x = torch.cat([text_features, audio_features, visual_features], dim=1)
+        
         if self.use_evidential:
             # Evidential classification
-            return self.evidential_classifier(text_features, audio_features, visual_features)
+            evidential_outputs = self.evidential_classifier(
+                text_features if use_text else None,
+                audio_features if use_audio else None, 
+                visual_features if use_image else None
+            )
+            # Add gate_x to the output for defer mechanism
+            evidential_outputs['gate_x'] = gate_x
+            return evidential_outputs
         else:
             # Traditional concatenation + classification
-            concatenated_features = torch.cat([text_features, audio_features, visual_features], dim=1)
-            logits = self.concat_classifier(concatenated_features)
-            return logits
+            logits = self.concat_classifier(gate_x)  # Use gate_x for consistency
+            return {
+                'logits': logits,
+                'gate_x': gate_x
+            }
     
     def compute_losses(self, outputs, labels, global_step=0):
         """Compute evidential or traditional losses"""

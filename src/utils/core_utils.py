@@ -85,7 +85,7 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
         case _:
             try:
         # Attempt to import the module
-                if model_name in ['ExMRD', 'ExMRD_Evidential']:
+                if model_name in ['ExMRD', 'ExMRD_Evidential', 'ExMRD_Defer', 'ExMRD_Retrieval']:
                     module = importlib.import_module("data.ExMRD_data")
                 else:
                     module = importlib.import_module("data.baseline_data")
@@ -93,9 +93,13 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
                 raise ImportError("Failed to import the 'data' module. Please ensure it exists and is in the correct path.")
 
             try:
-                # Attempt to get the dataset class - for ExMRD_Evidential, use ExMRD dataset
+                # Attempt to get the dataset class
                 if model_name == 'ExMRD_Evidential':
                     dataset_class = getattr(module, f'{dataset_name}Dataset_ExMRD')
+                elif model_name == 'ExMRD_Defer':
+                    dataset_class = getattr(module, f'{dataset_name}Dataset_Defer')
+                elif model_name == 'ExMRD_Retrieval':
+                    dataset_class = getattr(module, f'{dataset_name}Dataset_Retrieval')
                 else:
                     dataset_class = getattr(module, f'{dataset_name}Dataset_{model_name}')
             except AttributeError:
@@ -120,7 +124,7 @@ def get_data_collator(model_name: str, dataset_name: str, **kargs):
         case _:
             try:
                 # Attempt to import the module
-                if model_name in ['ExMRD', 'ExMRD_Evidential']:
+                if model_name in ['ExMRD', 'ExMRD_Evidential', 'ExMRD_Defer', 'ExMRD_Retrieval']:
                     module = importlib.import_module("data.ExMRD_data")
                 else:
                     module = importlib.import_module("data.baseline_data")
@@ -128,9 +132,13 @@ def get_data_collator(model_name: str, dataset_name: str, **kargs):
                 raise ImportError("Failed to import the 'data' module. Please ensure it exists and is in the correct path.")
 
             try:
-                # Attempt to get the model class - for ExMRD_Evidential, use ExMRD collator
+                # Attempt to get the collator class
                 if model_name == 'ExMRD_Evidential':
                     collator_class = getattr(module, f'{dataset_name}Collator_ExMRD')
+                elif model_name == 'ExMRD_Defer':
+                    collator_class = getattr(module, f'{dataset_name}Collator_Defer')
+                elif model_name == 'ExMRD_Retrieval':
+                    collator_class = getattr(module, f'{dataset_name}Collator_Retrieval')
                 else:
                     collator_class = getattr(module, f'{dataset_name}Collator_{model_name}')
             except AttributeError:
