@@ -4,6 +4,7 @@ import librosa
 import torch
 import torchaudio
 import pandas as pd
+import argparse
 from tqdm import tqdm
 from transformers import Wav2Vec2Processor, Wav2Vec2Model, WhisperProcessor, WhisperForConditionalGeneration
 import warnings
@@ -285,10 +286,9 @@ def load_existing_results(dataset_name):
     
     return existing_frame_features, existing_global_features, existing_frame_transcripts, existing_video_ids
 
-def process_dataset():
-    """Process FakeSV dataset for frame-level and global audio features with resume capability"""
+def process_dataset(dataset_name):
+    """Process dataset for frame-level and global audio features with resume capability"""
     
-    dataset_name = "FakeSV"
     frames_dir = f"data/{dataset_name}/frames_16"
     audios_dir = f"data/{dataset_name}/audios"
     
@@ -431,5 +431,25 @@ def process_dataset():
     else:
         print("No videos were successfully processed!")
 
+def main():
+    parser = argparse.ArgumentParser(description='Process audio features for video dataset')
+    parser.add_argument('--dataset', type=str, default='FakeSV', 
+                        choices=['FakeSV', 'FakeTT', 'FVC'],
+                        help='Dataset name (default: FakeSV)')
+    
+    args = parser.parse_args()
+    
+    print(f"Processing dataset: {args.dataset}")
+    print(f"Expected directory structure:")
+    print(f"  - data/{args.dataset}/frames_16/ (video frame directories with timestamps)")
+    print(f"  - data/{args.dataset}/audios/ (audio files)")
+    print(f"Will create:")
+    print(f"  - data/{args.dataset}/fea/audio_features_frames.pt")
+    print(f"  - data/{args.dataset}/fea/audio_features_global.pt")
+    print(f"  - data/{args.dataset}/transcript_frames.jsonl")
+    print()
+    
+    process_dataset(args.dataset)
+
 if __name__ == "__main__":
-    process_dataset()
+    main()
