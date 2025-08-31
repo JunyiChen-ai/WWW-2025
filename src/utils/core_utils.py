@@ -190,9 +190,18 @@ def get_scheduler(optimizer, **kargs):
             scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
         case "DummyLR":
             scheduler = LambdaLR(optimizer, lambda x: 1)
+        case "StepLR":
+            # remove 'steps_per_epoch' and 'num_epoch' from kargs (not accepted by StepLR)
+            kargs.pop('steps_per_epoch', None)
+            kargs.pop('num_epoch', None)
+            # StepLR defaults: step_size=1, gamma=0.1
+            step_size = kargs.pop('step_size', 10)  # decay every 10 epochs
+            gamma = kargs.pop('gamma', 0.1)  # multiply by 0.1
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
         case 'ReduceLROnPlateau':
-            # remove 'steps_per_epoch' from kargs
-            kargs.pop('steps_per_epoch')
+            # remove 'steps_per_epoch' and 'num_epoch' from kargs (not accepted by ReduceLROnPlateau)
+            kargs.pop('steps_per_epoch', None)
+            kargs.pop('num_epoch', None)
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, **kargs)
         case _:
             raise NotImplementedError(f"Scheduler {scheduler_name} not implemented")

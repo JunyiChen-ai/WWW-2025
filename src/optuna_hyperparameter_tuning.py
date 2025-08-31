@@ -8,6 +8,9 @@ import sys
 import os
 import json
 import logging
+import subprocess
+import tempfile
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any
@@ -15,29 +18,11 @@ from typing import Dict, Any
 import optuna
 from optuna.samplers import TPESampler
 from optuna.pruners import MedianPruner
-import torch
-import numpy as np
-import pandas as pd
 from omegaconf import DictConfig, OmegaConf
-from torch.utils.data import DataLoader
 
 # Add project root to path for imports
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from src.main import Trainer
-from src.utils.core_utils import (
-    get_data_collator,
-    get_dataset,
-    load_model,
-    set_seed,
-    set_worker_seed,
-    get_optimizer,
-    get_scheduler,
-    BinaryClassificationMetric,
-    EarlyStopping
-)
 
 
 class OptunaTuner:
@@ -95,7 +80,11 @@ class OptunaTuner:
         
         # Multi-modal transformer parameters
         transformer_layers = trial.suggest_int('transformer_layers', 1, 4)
-        transformer_heads = trial.suggest_int('transformer_heads', 1, 8)
+        # Ensure transformer_heads divides hid_dim evenly
+        valid_heads = [h for h in [1, 2, 4, 8] if hid_dim % h == 0]
+        if not valid_heads:
+            valid_heads = [1]  # fallback
+        transformer_heads = trial.suggest_categorical('transformer_heads', valid_heads)
         
         # Retrieval parameters
         retrieval_alpha = trial.suggest_float('retrieval_alpha', 0.1, 0.7, step=0.05)
@@ -112,7 +101,10 @@ class OptunaTuner:
         gradient_clip_norm = trial.suggest_float('gradient_clip_norm', 0.0, 2.0, step=0.1)
         
         # Optional: scheduler parameters
-        scheduler_name = trial.suggest_categorical('scheduler_name', ['DummyLR', 'ReduceLROnPlateau'])
+        scheduler_name = trial.suggest_categorical('scheduler_name', ['DummyLR', 'StepLR'])
+        
+        # Random seed selection
+        seed = trial.suggest_categorical('seed', [2024, 2025, 2026, 2027, 2028])
         
         # Build configuration dictionary
         config = {
@@ -150,11 +142,11 @@ class OptunaTuner:
             'num_epoch': num_epoch,
             'batch_size': batch_size,
             'text_encoder': "zer0int/LongCLIP-GmP-ViT-L-14",
-            'seed': 2024,
+            'seed': seed,
             'model': 'ExMRD_Retrieval',
             'dataset': 'FakeTT',
             'type': 'temporal',
-            'patience': num_epoch,  # Set patience = num_epoch as requested
+            'patience': 5,  # Fixed patience
             'eval_only': False
         }
         
@@ -173,12 +165,37 @@ class OptunaTuner:
             self.logger.info(f"Trial {trial.number}: Testing hyperparameters")
             self.logger.info(f"Trial {trial.number} config: {OmegaConf.to_yaml(cfg)}")
             
-            # Set seed for reproducibility
-            set_seed(cfg.seed)
+            # Create temporary config file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+                OmegaConf.save(cfg, f.name)
+                temp_config_path = f.name
             
-            # Create a minimal trainer for this trial
-            trainer = OptunaTrial(cfg, trial, self.logger)
-            test_accuracy = trainer.run()
+            try:
+                # Run main.py with subprocess - use hydra override syntax
+                cmd = [
+                    'python', 'src/main.py', 
+                    '--config-path', os.path.dirname(temp_config_path),
+                    '--config-name', os.path.basename(temp_config_path).replace('.yaml', '')
+                ]
+                
+                result = subprocess.run(
+                    cmd, 
+                    capture_output=True, 
+                    text=True, 
+                    cwd=project_root,
+                    timeout=3600  # 1 hour timeout
+                )
+                
+                if result.returncode != 0:
+                    self.logger.error(f"Trial {trial.number} subprocess failed: {result.stderr}")
+                    return 0.0
+                
+                # Parse validation accuracy from output
+                test_accuracy = self._parse_accuracy_from_output(result.stdout)
+                
+            finally:
+                # Clean up temp file
+                os.unlink(temp_config_path)
             
             self.logger.info(f"Trial {trial.number} completed with test accuracy: {test_accuracy:.4f}")
             
@@ -194,6 +211,35 @@ class OptunaTuner:
         except Exception as e:
             self.logger.error(f"Trial {trial.number} failed with error: {str(e)}")
             # Return a very low score for failed trials
+            return 0.0
+    
+    def _parse_accuracy_from_output(self, output: str) -> float:
+        """Parse the final validation accuracy from main.py output"""
+        try:
+            # Look for validation accuracy patterns from main.py output
+            # Match patterns like "Valid: Acc: 0.6187" or "Test: Acc: 0.6187"
+            patterns = [
+                r'Valid: Acc:\s*([\d\.]+)',
+                r'Test: Acc:\s*([\d\.]+)',
+                r'Best Valid Acc:\s*([\d\.]+)',
+                r'Valid Acc:\s*([\d\.]+)'
+            ]
+            
+            accuracies = []
+            for pattern in patterns:
+                matches = re.findall(pattern, output, re.IGNORECASE)
+                if matches:
+                    accuracies.extend([float(match) for match in matches])
+            
+            if accuracies:
+                # Return the highest accuracy found (should be the best one)
+                return max(accuracies)
+            
+            self.logger.warning("Could not parse accuracy from output, returning 0.0")
+            return 0.0
+            
+        except Exception as e:
+            self.logger.error(f"Error parsing accuracy: {str(e)}")
             return 0.0
     
     def save_best_results(self):
@@ -226,8 +272,8 @@ class OptunaTuner:
             load_if_exists=True
         )
         
-        # Run optimization
-        study.optimize(self.objective, n_trials=self.n_trials)
+        # Run optimization - sequential execution only (n_jobs=1)
+        study.optimize(self.objective, n_trials=self.n_trials, n_jobs=1)
         
         # Print results
         self.logger.info("Optimization completed!")
@@ -241,183 +287,6 @@ class OptunaTuner:
             # Reconstruct the full config from best params
             self.best_params = self.suggest_hyperparameters(study.best_trial)
             self.save_best_results()
-
-
-class OptunaTrial:
-    """Lightweight trainer for single Optuna trial"""
-    
-    def __init__(self, cfg: DictConfig, trial: optuna.Trial, logger):
-        self.cfg = cfg
-        self.trial = trial
-        self.logger = logger
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        
-    def run(self) -> float:
-        """Run training and return test accuracy"""
-        
-        # Create datasets
-        train_dataset = get_dataset(
-            self.cfg.model, self.cfg.dataset, 
-            fold='temporal', split='train', 
-            **self.cfg.data
-        )
-        
-        valid_dataset = get_dataset(
-            self.cfg.model, self.cfg.dataset, 
-            fold='temporal', split='valid', 
-            **self.cfg.data
-        )
-        
-        test_dataset = get_dataset(
-            self.cfg.model, self.cfg.dataset, 
-            fold='temporal', split='test', 
-            **self.cfg.data
-        )
-        
-        # Create data loaders
-        collator = get_data_collator(self.cfg.model, self.cfg.dataset, **self.cfg.data)
-        generator = torch.Generator().manual_seed(self.cfg.seed)
-        
-        train_loader = DataLoader(
-            train_dataset, 
-            batch_size=self.cfg.batch_size,
-            collate_fn=collator, 
-            num_workers=min(8, self.cfg.batch_size//2),
-            shuffle=True, 
-            generator=generator,
-            worker_init_fn=lambda worker_id: set_worker_seed(worker_id, self.cfg.seed)
-        )
-        
-        valid_loader = DataLoader(
-            valid_dataset,
-            batch_size=self.cfg.batch_size,
-            collate_fn=collator,
-            num_workers=min(8, self.cfg.batch_size//2),
-            shuffle=False,
-            generator=generator,
-            worker_init_fn=lambda worker_id: set_worker_seed(worker_id, self.cfg.seed)
-        )
-        
-        test_loader = DataLoader(
-            test_dataset,
-            batch_size=self.cfg.batch_size,
-            collate_fn=collator,
-            num_workers=min(8, self.cfg.batch_size//2),
-            shuffle=False,
-            generator=generator,
-            worker_init_fn=lambda worker_id: set_worker_seed(worker_id, self.cfg.seed)
-        )
-        
-        # Create model
-        steps_per_epoch = len(train_loader)
-        model = load_model(self.cfg.model, **self.cfg.para)
-        model = model.to(self.device)
-        
-        # Create optimizer and scheduler
-        optimizer = get_optimizer(model, **self.cfg.opt)
-        scheduler = get_scheduler(optimizer, steps_per_epoch=steps_per_epoch, num_epoch=self.cfg.num_epoch, **self.cfg.sche)
-        
-        # Training loop
-        best_valid_acc = 0.0
-        patience_counter = 0
-        
-        for epoch in range(self.cfg.num_epoch):
-            # Training phase
-            model.train()
-            train_loss = 0.0
-            
-            for batch in train_loader:
-                optimizer.zero_grad()
-                
-                # Move batch to device
-                if isinstance(batch, dict):
-                    batch = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
-                else:
-                    batch = batch.to(self.device)
-                
-                # Forward pass
-                outputs = model(batch)
-                loss = outputs['loss']
-                
-                # Backward pass
-                loss.backward()
-                
-                # Gradient clipping if specified
-                if self.cfg.para.gradient_clip_norm > 0:
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), self.cfg.para.gradient_clip_norm)
-                
-                optimizer.step()
-                
-                if hasattr(scheduler, 'step') and self.cfg.sche.name != 'ReduceLROnPlateau':
-                    scheduler.step()
-                
-                train_loss += loss.item()
-            
-            # Validation phase
-            model.eval()
-            valid_correct = 0
-            valid_total = 0
-            
-            with torch.no_grad():
-                for batch in valid_loader:
-                    if isinstance(batch, dict):
-                        batch = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
-                    else:
-                        batch = batch.to(self.device)
-                    
-                    outputs = model(batch)
-                    predictions = outputs['predictions']
-                    labels = batch['labels']
-                    
-                    valid_correct += (predictions == labels).sum().item()
-                    valid_total += labels.size(0)
-            
-            valid_acc = valid_correct / valid_total
-            
-            # Update scheduler if ReduceLROnPlateau
-            if hasattr(scheduler, 'step') and self.cfg.sche.name == 'ReduceLROnPlateau':
-                scheduler.step(1 - valid_acc)  # Use validation loss proxy
-            
-            # Early stopping logic (patience = num_epoch means no early stopping)
-            if valid_acc > best_valid_acc:
-                best_valid_acc = valid_acc
-                patience_counter = 0
-            else:
-                patience_counter += 1
-            
-            # Report intermediate result for pruning
-            self.trial.report(valid_acc, epoch)
-            
-            # Pruning: stop unpromising trials early
-            if self.trial.should_prune():
-                raise optuna.TrialPruned()
-            
-            # Early stopping check (only if patience < num_epoch)
-            if patience_counter >= self.cfg.patience and self.cfg.patience < self.cfg.num_epoch:
-                break
-        
-        # Test phase - final evaluation
-        model.eval()
-        test_correct = 0
-        test_total = 0
-        
-        with torch.no_grad():
-            for batch in test_loader:
-                if isinstance(batch, dict):
-                    batch = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v for k, v in batch.items()}
-                else:
-                    batch = batch.to(self.device)
-                
-                outputs = model(batch)
-                predictions = outputs['predictions']
-                labels = batch['labels']
-                
-                test_correct += (predictions == labels).sum().item()
-                test_total += labels.size(0)
-        
-        test_accuracy = test_correct / test_total
-        
-        return test_accuracy
 
 
 def main():

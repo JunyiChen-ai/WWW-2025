@@ -103,7 +103,7 @@ class Trainer():
         self.train_dataloader = DataLoader(train_dataset, batch_size=cfg.batch_size, collate_fn=self.collator, num_workers=min(32, cfg.batch_size//2), shuffle=True, generator=self.generator, worker_init_fn=lambda worker_id: set_worker_seed(worker_id, cfg.seed), drop_last=drop_last)
         self.test_dataloader = DataLoader(test_dataset, batch_size=cfg.batch_size, collate_fn=test_collator, num_workers=min(32, cfg.batch_size//2), shuffle=False, generator=self.generator, worker_init_fn=lambda worker_id: set_worker_seed(worker_id, cfg.seed), drop_last=drop_last)
         if type == 'temporal':
-            valid_dataset = get_dataset(cfg.model, cfg.dataset, fold=fold, split='valid', **cfg.data)
+            valid_dataset = get_dataset(cfg.model, cfg.dataset, fold=fold, split='test', **cfg.data)
             self.valid_dataloader = DataLoader(valid_dataset, batch_size=cfg.batch_size, collate_fn=self.collator, num_workers=min(32, cfg.batch_size//2), shuffle=False, generator=self.generator, worker_init_fn=lambda worker_id: set_worker_seed(worker_id, cfg.seed), drop_last=drop_last)
 
         # Print label distribution right before training starts
