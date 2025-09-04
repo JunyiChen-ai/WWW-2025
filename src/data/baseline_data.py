@@ -11,19 +11,12 @@ class FakeSVDataset(Dataset):
         self.filter_k = filter_k
     
     def _get_complete_data(self):
-        # Always use original dataset which contains '辟谣' labels
-        data_complete = pd.read_json('./data/FakeSV/data_complete_orig.jsonl', orient='records', dtype=False, lines=True)
+        # Use cleaned dataset without '辟谣' labels - only contains '真' and '假'
+        data_complete = pd.read_json('./data/FakeSV/data.jsonl', orient='records', dtype=False, lines=True)
         
-        if self.include_piyao:
-            # Map '辟谣' (rumor debunking) to real/true (0), since it represents fact-checking content
-            replace_values = {'辟谣': 0, '假': 1, '真':0}
-            data_complete['label'] = data_complete['annotation'].replace(replace_values)
-            # Use all data including '辟谣' entries (mapped to 0)
-        else:
-            # Filter out '辟谣' entries - map to 2 then remove
-            replace_values = {'辟谣': 2, '假': 1, '真':0}
-            data_complete['label'] = data_complete['annotation'].replace(replace_values)
-            data_complete = data_complete[data_complete['label']!=2]
+        # Simple mapping since '辟谣' entries are already filtered out
+        replace_values = {'假': 1, '真': 0}
+        data_complete['label'] = data_complete['annotation'].replace(replace_values)
         
         data_complete['event'], _ = pd.factorize(data_complete['keywords'])
         return data_complete

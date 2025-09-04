@@ -4,8 +4,9 @@ import librosa
 import torch
 import torchaudio
 import pandas as pd
+import argparse
 from tqdm import tqdm
-from transformers import Wav2Vec2Processor, Wav2Vec2Model, WhisperProcessor, WhisperForConditionalGeneration
+from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2Model, WhisperProcessor, WhisperForConditionalGeneration
 import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -14,21 +15,34 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
+def initialize_wav2vec_model(model_name):
+    """Initialize Wav2Vec2 model with configurable model name"""
+    print(f"Loading Wav2Vec2 model: {model_name}")
+    feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(model_name)
+    model = Wav2Vec2Model.from_pretrained(model_name)
+    model.to(device)
+    model.eval()
+    
+    # Get hidden dimension from model config
+    hidden_dim = model.config.hidden_size
+    print(f"Wav2Vec2 hidden dimension: {hidden_dim}")
+    
+    return feature_extractor, model, hidden_dim
+
+def get_model_mark(model_name):
+    """Extract model mark from model name for file suffixes"""
+    return model_name.replace("/", "-").replace("_", "-")
+
 print(f"Using device: {device}")
 
-# Initialize Wav2Vec2 model
-print("Loading Wav2Vec2 model...")
-wav2vec_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-base-960h")
-wav2vec_model = Wav2Vec2Model.from_pretrained("facebook/wav2vec2-base-960h")
-wav2vec_model.to(device)
-wav2vec_model.eval()
-
-# Initialize Whisper model  
-print("Loading Whisper model...")
-whisper_processor = WhisperProcessor.from_pretrained("openai/whisper-large-v3")
-whisper_model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-large-v3", torch_dtype=torch_dtype)
-whisper_model.to(device)
-whisper_model.eval()
+def initialize_whisper_model():
+    """Initialize Whisper model for transcript generation"""
+    print("Loading Whisper model...")
+    processor = WhisperProcessor.from_pretrained("openai/whisper-large-v3")
+    model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-large-v3", torch_dtype=torch_dtype)
+    model.to(device)
+    model.eval()
+    return processor, model
 
 def load_frame_timestamps(timestamp_file):
     """Load frame timestamps from file"""
@@ -43,46 +57,18 @@ def load_frame_timestamps(timestamp_file):
                 timestamps.append((frame_name, start_time, end_time))
     return timestamps
 
-def process_frame_aligned_audio(video_id, audio_path, frame_timestamps):
-    """Process audio segments aligned with video frames in-memory"""
+def extract_frame_features(video_id, audio_path, frame_timestamps, wav2vec_feature_extractor, wav2vec_model, hidden_dim):
+    """Extract audio features from frame-aligned segments using wav2vec2"""
     try:
         # Load full audio
         audio, sr = librosa.load(audio_path, sr=16000)
         
-        # Audio validation warnings
-        audio_duration = len(audio) / sr
-        if audio_duration < 1.0:
-            print(f"WARNING: {video_id} - Very short audio duration: {audio_duration:.2f}s")
-        elif audio_duration > 300.0:  # 5 minutes
-            print(f"WARNING: {video_id} - Very long audio duration: {audio_duration:.2f}s")
-        
-        if len(frame_timestamps) != 16:
-            print(f"WARNING: {video_id} - Expected 16 frames, got {len(frame_timestamps)} timestamps")
-        
         frame_features = []
-        frame_transcripts = []
-        invalid_segments = 0
-        short_segments = 0
-        zero_segments = 0
         
         for i, (frame_name, start_time, end_time) in enumerate(frame_timestamps):
-            # Timestamp validation
-            segment_duration = end_time - start_time
-            if segment_duration <= 0:
-                print(f"WARNING: {video_id}, {frame_name} - Invalid timestamp: start={start_time:.3f}s, end={end_time:.3f}s, duration={segment_duration:.3f}s")
-                invalid_segments += 1
-            elif segment_duration > audio_duration:
-                print(f"WARNING: {video_id}, {frame_name} - Segment longer than audio: segment={segment_duration:.3f}s, audio={audio_duration:.3f}s")
-            
-            # Extract segment in memory (numpy array)
+            # Extract segment
             start_sample = int(start_time * sr)
             end_sample = int(end_time * sr)
-            
-            # Bounds validation
-            if start_sample < 0:
-                print(f"WARNING: {video_id}, {frame_name} - Negative start sample: {start_sample} (start_time={start_time:.3f}s)")
-            if end_sample > len(audio):
-                print(f"WARNING: {video_id}, {frame_name} - End sample exceeds audio: {end_sample} > {len(audio)} (end_time={end_time:.3f}s, audio_duration={audio_duration:.3f}s)")
             
             # Ensure valid segment bounds
             start_sample = max(0, start_sample)
@@ -90,46 +76,10 @@ def process_frame_aligned_audio(video_id, audio_path, frame_timestamps):
             
             if end_sample <= start_sample:
                 # Invalid segment, use zeros
-                print(f"WARNING: {video_id}, {frame_name} - Invalid segment bounds: start_sample={start_sample}, end_sample={end_sample}")
                 segment_length = int(0.5 * sr)  # 0.5 second default
-                segment = torch.zeros(segment_length)
-                transcript = ""
-                zero_segments += 1
+                segment = torch.zeros(segment_length, dtype=torch.float32)
             else:
                 segment = audio[start_sample:end_sample]
-                segment_length_sec = len(segment) / sr
-                
-                # Segment length warnings
-                if segment_length_sec < 0.1:
-                    short_segments += 1
-                    if short_segments <= 3:  # Limit spam
-                        print(f"WARNING: {video_id}, {frame_name} - Very short segment: {segment_length_sec:.3f}s")
-                elif segment_length_sec > 5.0:  # Very long segment
-                    print(f"WARNING: {video_id}, {frame_name} - Very long segment: {segment_length_sec:.3f}s")
-                
-                # Generate transcript with whisper (only if segment is long enough)
-                if len(segment) > 0.1 * sr:  # At least 0.1 seconds
-                    try:
-                        # Process with Whisper
-                        input_features = whisper_processor(segment, sampling_rate=16000, return_tensors="pt").input_features
-                        input_features = input_features.to(device, dtype=torch_dtype)  # Match model dtype
-                        
-                        with torch.no_grad():
-                            predicted_ids = whisper_model.generate(input_features)
-                            transcript = whisper_processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
-                            
-                        # Transcript quality warnings
-                        if len(transcript.strip()) == 0:
-                            pass  # Silent segment is normal
-                        elif len(transcript) > 200:  # Very long transcript
-                            print(f"WARNING: {video_id}, {frame_name} - Very long transcript ({len(transcript)} chars): {transcript[:50]}...")
-                            
-                    except Exception as e:
-                        print(f"ERROR: Whisper failed for {video_id}, {frame_name}: {e}")
-                        transcript = ""
-                else:
-                    transcript = ""
-                
                 # Convert to torch tensor for wav2vec
                 segment = torch.tensor(segment, dtype=torch.float32)
             
@@ -143,38 +93,100 @@ def process_frame_aligned_audio(video_id, audio_path, frame_timestamps):
                 with torch.no_grad():
                     wav2vec_outputs = wav2vec_model(segment)
                     # Use mean pooling over sequence length to get fixed-size features
-                    features = wav2vec_outputs.last_hidden_state.mean(dim=1)  # [1, 768]
+                    features = wav2vec_outputs.last_hidden_state.mean(dim=1)  # [1, hidden_dim]
                     frame_features.append(features.cpu())
             except Exception as e:
                 print(f"Wav2Vec2 error for {video_id}, {frame_name}: {e}")
                 # Fallback: zero features
-                frame_features.append(torch.zeros(1, 768))
-            
-            frame_transcripts.append(transcript.strip())
-        
-        # Video-level summary warnings
-        if invalid_segments > 0:
-            print(f"WARNING: {video_id} - {invalid_segments} invalid segments found")
-        if short_segments > 3:
-            print(f"WARNING: {video_id} - {short_segments} segments shorter than 0.1s")
-        if zero_segments > 0:
-            print(f"WARNING: {video_id} - {zero_segments} segments replaced with zeros")
+                frame_features.append(torch.zeros(1, hidden_dim))
         
         # Stack all frame features
         if frame_features:
-            stacked_features = torch.cat(frame_features, dim=0)  # [16, 768]
+            stacked_features = torch.cat(frame_features, dim=0)  # [16, hidden_dim]
         else:
             print(f"ERROR: {video_id} - No valid features extracted, using zero tensor")
-            stacked_features = torch.zeros(16, 768)
+            stacked_features = torch.zeros(16, hidden_dim)
             
-        return stacked_features, frame_transcripts
+        return stacked_features
         
     except Exception as e:
-        print(f"Error processing {video_id}: {e}")
-        # Return zero features and empty transcripts
-        return torch.zeros(16, 768), [""] * 16
+        print(f"Error processing features for {video_id}: {e}")
+        # Return zero features
+        return torch.zeros(16, hidden_dim)
 
-def process_global_audio(audio_path):
+def generate_frame_transcripts(video_id, audio_path, frame_timestamps, whisper_processor, whisper_model):
+    """Generate transcripts from frame-aligned audio segments using whisper"""
+    try:
+        # Load full audio
+        audio, sr = librosa.load(audio_path, sr=16000)
+        
+        frame_transcripts = []
+        
+        for i, (frame_name, start_time, end_time) in enumerate(frame_timestamps):
+            # Extract segment
+            start_sample = int(start_time * sr)
+            end_sample = int(end_time * sr)
+            
+            # Ensure valid segment bounds
+            start_sample = max(0, start_sample)
+            end_sample = min(len(audio), end_sample)
+            
+            if end_sample <= start_sample:
+                # Invalid segment
+                transcript = ""
+            else:
+                segment = audio[start_sample:end_sample]
+                
+                # Generate transcript if segment is long enough
+                if len(segment) > 0.1 * sr:  # At least 0.1 seconds
+                    try:
+                        # Process with Whisper
+                        input_features = whisper_processor(segment, sampling_rate=16000, return_tensors="pt").input_features
+                        input_features = input_features.to(device, dtype=torch_dtype)  # Match model dtype
+                        
+                        with torch.no_grad():
+                            predicted_ids = whisper_model.generate(input_features)
+                            transcript = whisper_processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+                            
+                    except Exception as e:
+                        print(f"ERROR: Whisper failed for {video_id}, {frame_name}: {e}")
+                        transcript = ""
+                else:
+                    transcript = ""
+            
+            frame_transcripts.append(transcript.strip())
+        
+        return frame_transcripts
+        
+    except Exception as e:
+        print(f"Error processing transcripts for {video_id}: {e}")
+        # Return empty transcripts
+        return [""] * 16
+
+def process_frame_aligned_audio(video_id, audio_path, frame_timestamps, wav2vec_feature_extractor, wav2vec_model, hidden_dim, skip_transcripts=False, whisper_processor=None, whisper_model=None, skip_features=False):
+    """Wrapper function to process audio features and/or transcripts"""
+    
+    # Initialize defaults
+    frame_features = None
+    frame_transcripts = []
+    
+    # Extract features if not skipping
+    if not skip_features:
+        frame_features = extract_frame_features(video_id, audio_path, frame_timestamps, wav2vec_feature_extractor, wav2vec_model, hidden_dim)
+    else:
+        # Use zero features when skipping
+        frame_features = torch.zeros(16, hidden_dim)
+    
+    # Generate transcripts if not skipping
+    if not skip_transcripts:
+        frame_transcripts = generate_frame_transcripts(video_id, audio_path, frame_timestamps, whisper_processor, whisper_model)
+    else:
+        # Use empty transcripts when skipping
+        frame_transcripts = [""] * 16
+    
+    return frame_features, frame_transcripts
+
+def process_global_audio(audio_path, wav2vec_model, hidden_dim):
     """Process full audio file for global features"""
     try:
         # Load full audio
@@ -186,25 +198,25 @@ def process_global_audio(audio_path):
         with torch.no_grad():
             wav2vec_outputs = wav2vec_model(audio_tensor)
             # Use mean pooling over sequence length to get fixed-size features
-            global_features = wav2vec_outputs.last_hidden_state.mean(dim=1)  # [1, 768]
+            global_features = wav2vec_outputs.last_hidden_state.mean(dim=1)  # [1, hidden_dim]
             
-        return global_features.cpu().squeeze(0)  # [768]
+        return global_features.cpu().squeeze(0)  # [hidden_dim]
         
     except Exception as e:
         print(f"Error processing global audio {audio_path}: {e}")
-        return torch.zeros(768)
+        return torch.zeros(hidden_dim)
 
-def load_existing_results(dataset_name):
+def load_existing_results(dataset_name, model_mark, skip_transcripts=False):
     """Load existing processing results to enable resume functionality"""
     existing_frame_features = []
     existing_global_features = []
     existing_frame_transcripts = []
     existing_video_ids = set()
     
-    # Try to load existing features
-    frame_features_path = f"data/{dataset_name}/fea/audio_features_frames.pt"
-    global_features_path = f"data/{dataset_name}/fea/audio_features_global.pt"
-    video_ids_path = f"data/{dataset_name}/fea/audio_video_ids.txt"
+    # Try to load existing features with model mark
+    frame_features_path = f"data/{dataset_name}/fea/audio_features_frames_{model_mark}.pt"
+    global_features_path = f"data/{dataset_name}/fea/audio_features_global_{model_mark}.pt"
+    video_ids_path = f"data/{dataset_name}/fea/audio_video_ids_{model_mark}.txt"
     transcripts_path = f"data/{dataset_name}/transcript_frames.jsonl"
     
     if os.path.exists(frame_features_path) and os.path.exists(global_features_path) and os.path.exists(video_ids_path):
@@ -218,9 +230,9 @@ def load_existing_results(dataset_name):
                 # New format: both are dictionaries with video IDs as keys
                 existing_video_list = list(global_features_data.keys())
                 
-                # Load existing transcripts
+                # Load existing transcripts (only if not skipping)
                 existing_transcripts_dict = {}
-                if os.path.exists(transcripts_path):
+                if not skip_transcripts and os.path.exists(transcripts_path):
                     with open(transcripts_path, 'r', encoding='utf-8') as f:
                         for line in f:
                             data = json.loads(line.strip())
@@ -230,15 +242,18 @@ def load_existing_results(dataset_name):
                 for video_id in existing_video_list:
                     existing_frame_features.append(frame_features_data[video_id])
                     existing_global_features.append(global_features_data[video_id])
-                    existing_frame_transcripts.append(existing_transcripts_dict.get(video_id, [""] * 16))
+                    if skip_transcripts:
+                        existing_frame_transcripts.append([""] * 16)  # Empty transcripts when skipping
+                    else:
+                        existing_frame_transcripts.append(existing_transcripts_dict.get(video_id, [""] * 16))
                     existing_video_ids.add(video_id)
             elif isinstance(global_features_data, dict):
                 # Mixed format: frame features is tensor, global is dict
                 existing_video_list = list(global_features_data.keys())
                 
-                # Load existing transcripts
+                # Load existing transcripts (only if not skipping)
                 existing_transcripts_dict = {}
-                if os.path.exists(transcripts_path):
+                if not skip_transcripts and os.path.exists(transcripts_path):
                     with open(transcripts_path, 'r', encoding='utf-8') as f:
                         for line in f:
                             data = json.loads(line.strip())
@@ -248,7 +263,10 @@ def load_existing_results(dataset_name):
                 for i, video_id in enumerate(existing_video_list):
                     existing_frame_features.append(frame_features_data[i])
                     existing_global_features.append(global_features_data[video_id])
-                    existing_frame_transcripts.append(existing_transcripts_dict.get(video_id, [""] * 16))
+                    if skip_transcripts:
+                        existing_frame_transcripts.append([""] * 16)  # Empty transcripts when skipping
+                    else:
+                        existing_frame_transcripts.append(existing_transcripts_dict.get(video_id, [""] * 16))
                     existing_video_ids.add(video_id)
             else:
                 # Old format: tensor with separate video ID file
@@ -256,9 +274,9 @@ def load_existing_results(dataset_name):
                 with open(video_ids_path, 'r') as f:
                     existing_video_list = [line.strip() for line in f.readlines()]
                 
-                # Load existing transcripts
+                # Load existing transcripts (only if not skipping)
                 existing_transcripts_dict = {}
-                if os.path.exists(transcripts_path):
+                if not skip_transcripts and os.path.exists(transcripts_path):
                     with open(transcripts_path, 'r', encoding='utf-8') as f:
                         for line in f:
                             data = json.loads(line.strip())
@@ -268,7 +286,10 @@ def load_existing_results(dataset_name):
                 for i, video_id in enumerate(existing_video_list):
                     existing_frame_features.append(frame_features_tensor[i])
                     existing_global_features.append(global_features_data[i])
-                    existing_frame_transcripts.append(existing_transcripts_dict.get(video_id, [""] * 16))
+                    if skip_transcripts:
+                        existing_frame_transcripts.append([""] * 16)  # Empty transcripts when skipping
+                    else:
+                        existing_frame_transcripts.append(existing_transcripts_dict.get(video_id, [""] * 16))
                     existing_video_ids.add(video_id)
             
             print(f"Loaded {len(existing_video_list)} existing processed videos")
@@ -285,10 +306,27 @@ def load_existing_results(dataset_name):
     
     return existing_frame_features, existing_global_features, existing_frame_transcripts, existing_video_ids
 
-def process_dataset():
-    """Process FakeSV dataset for frame-level and global audio features with resume capability"""
+def process_dataset(dataset_name, wav2vec_model_name, skip_transcripts=False, skip_features=False):
+    """Process dataset for frame-level and global audio features with resume capability"""
     
-    dataset_name = "FakeSV"
+    # Initialize wav2vec model conditionally
+    wav2vec_feature_extractor, wav2vec_model, hidden_dim = None, None, None
+    model_mark = get_model_mark(wav2vec_model_name)
+    
+    if not skip_features:
+        wav2vec_feature_extractor, wav2vec_model, hidden_dim = initialize_wav2vec_model(wav2vec_model_name)
+    else:
+        # Still need hidden_dim for tensor shapes when skipping features
+        if "CAiRE" in wav2vec_model_name:
+            hidden_dim = 1024
+        else:
+            hidden_dim = 768  # Default for facebook models
+    
+    # Initialize whisper model conditionally
+    whisper_processor, whisper_model = None, None
+    if not skip_transcripts:
+        whisper_processor, whisper_model = initialize_whisper_model()
+    
     frames_dir = f"data/{dataset_name}/frames_16"
     audios_dir = f"data/{dataset_name}/audios"
     
@@ -303,8 +341,8 @@ def process_dataset():
     video_dirs = [d for d in os.listdir(frames_dir) if os.path.isdir(os.path.join(frames_dir, d))]
     print(f"Found {len(video_dirs)} total videos in frames directory")
     
-    # Load existing results
-    all_frame_features, all_global_features, all_frame_transcripts, existing_video_ids = load_existing_results(dataset_name)
+    # Load existing results with model mark
+    all_frame_features, all_global_features, all_frame_transcripts, existing_video_ids = load_existing_results(dataset_name, model_mark, skip_transcripts)
     all_video_ids = list(existing_video_ids)
     
     # Filter out already processed videos
@@ -340,10 +378,13 @@ def process_dataset():
                 continue
             
             # Process frame-level audio
-            frame_features, frame_transcripts = process_frame_aligned_audio(video_id, audio_path, frame_timestamps)
+            frame_features, frame_transcripts = process_frame_aligned_audio(video_id, audio_path, frame_timestamps, wav2vec_feature_extractor, wav2vec_model, hidden_dim, skip_transcripts, whisper_processor, whisper_model, skip_features)
             
             # Process global audio
-            global_features = process_global_audio(audio_path)
+            if not skip_features:
+                global_features = process_global_audio(audio_path, wav2vec_model, hidden_dim)
+            else:
+                global_features = torch.zeros(hidden_dim)
             
             # Store results
             all_frame_features.append(frame_features)
@@ -370,66 +411,111 @@ def process_dataset():
         print(f"WARNING: {skipped} videos were skipped due to missing files or invalid timestamps")
     
     if all_video_ids:
-        # Create dictionaries for both frame and global features with video IDs as keys
-        frame_features_dict = {}
-        global_features_dict = {}
-        for video_id, frame_feat, global_feat in zip(all_video_ids, all_frame_features, all_global_features):
-            frame_features_dict[video_id] = frame_feat
-            global_features_dict[video_id] = global_feat
+        # Save features (only if not skipping)
+        if not skip_features:
+            # Create dictionaries for both frame and global features with video IDs as keys
+            frame_features_dict = {}
+            global_features_dict = {}
+            for video_id, frame_feat, global_feat in zip(all_video_ids, all_frame_features, all_global_features):
+                frame_features_dict[video_id] = frame_feat
+                global_features_dict[video_id] = global_feat
+            
+            # Save features as dictionaries with model mark
+            torch.save(frame_features_dict, f"data/{dataset_name}/fea/audio_features_frames_{model_mark}.pt")
+            torch.save(global_features_dict, f"data/{dataset_name}/fea/audio_features_global_{model_mark}.pt")
+            
+            # Save video ID mapping for reference with model mark
+            with open(f"data/{dataset_name}/fea/audio_video_ids_{model_mark}.txt", 'w') as f:
+                for video_id in all_video_ids:
+                    f.write(f"{video_id}\n")
         
-        # Save features as dictionaries
-        torch.save(frame_features_dict, f"data/{dataset_name}/fea/audio_features_frames.pt")
-        torch.save(global_features_dict, f"data/{dataset_name}/fea/audio_features_global.pt")
-        
-        # Save frame transcripts
-        frame_transcripts_data = []
-        for video_id, transcripts in zip(all_video_ids, all_frame_transcripts):
-            frame_transcripts_data.append({
-                'vid': video_id,
-                'frame_transcripts': transcripts
-            })
-        
-        with open(f"data/{dataset_name}/transcript_frames.jsonl", 'w', encoding='utf-8') as f:
-            for item in frame_transcripts_data:
-                f.write(json.dumps(item, ensure_ascii=False) + '\n')
-        
-        # Save video ID mapping for reference
-        with open(f"data/{dataset_name}/fea/audio_video_ids.txt", 'w') as f:
-            for video_id in all_video_ids:
-                f.write(f"{video_id}\n")
-        
-        # Calculate transcript quality statistics
-        total_transcripts = 0
-        non_empty_transcripts = 0
-        total_transcript_chars = 0
-        
-        for transcripts in all_frame_transcripts:
-            for transcript in transcripts:
-                total_transcripts += 1
-                if transcript.strip():
-                    non_empty_transcripts += 1
-                    total_transcript_chars += len(transcript)
-        
-        transcript_success_rate = (non_empty_transcripts / total_transcripts * 100) if total_transcripts > 0 else 0
-        avg_transcript_length = (total_transcript_chars / non_empty_transcripts) if non_empty_transcripts > 0 else 0
+        # Save frame transcripts (only if not skipping)
+        if not skip_transcripts:
+            frame_transcripts_data = []
+            for video_id, transcripts in zip(all_video_ids, all_frame_transcripts):
+                frame_transcripts_data.append({
+                    'vid': video_id,
+                    'frame_transcripts': transcripts
+                })
+            
+            with open(f"data/{dataset_name}/transcript_frames.jsonl", 'w', encoding='utf-8') as f:
+                for item in frame_transcripts_data:
+                    f.write(json.dumps(item, ensure_ascii=False) + '\n')
         
         print(f"\n=== OUTPUT FILES ===")
-        print(f"Frame features: dict with {len(frame_features_dict)} video IDs -> data/{dataset_name}/fea/audio_features_frames.pt")
-        print(f"Global features: dict with {len(global_features_dict)} video IDs -> data/{dataset_name}/fea/audio_features_global.pt")
-        print(f"Frame transcripts: {len(frame_transcripts_data)} videos -> data/{dataset_name}/transcript_frames.jsonl")
+        if not skip_features:
+            print(f"Frame features: dict with {len(frame_features_dict)} video IDs -> data/{dataset_name}/fea/audio_features_frames_{model_mark}.pt")
+            print(f"Global features: dict with {len(global_features_dict)} video IDs -> data/{dataset_name}/fea/audio_features_global_{model_mark}.pt")
+        else:
+            print("Audio features: Skipped (--skip_features enabled)")
         
-        print(f"\n=== TRANSCRIPT QUALITY ===")
-        print(f"Total frame segments: {total_transcripts}")
-        print(f"Successful transcripts: {non_empty_transcripts} ({transcript_success_rate:.1f}%)")
-        print(f"Average transcript length: {avg_transcript_length:.1f} characters")
+        if not skip_transcripts:
+            print(f"Frame transcripts: {len(frame_transcripts_data)} videos -> data/{dataset_name}/transcript_frames.jsonl")
+        else:
+            print("Frame transcripts: Skipped (--skip_transcripts enabled)")
         
-        if transcript_success_rate < 10:
-            print(f"WARNING: Very low transcript success rate ({transcript_success_rate:.1f}%) - check audio quality")
-        elif transcript_success_rate < 30:
-            print(f"WARNING: Low transcript success rate ({transcript_success_rate:.1f}%) - many silent segments")
+        # Calculate transcript quality statistics (only if not skipping)
+        if not skip_transcripts:
+            total_transcripts = 0
+            non_empty_transcripts = 0
+            total_transcript_chars = 0
+            
+            for transcripts in all_frame_transcripts:
+                for transcript in transcripts:
+                    total_transcripts += 1
+                    if transcript.strip():
+                        non_empty_transcripts += 1
+                        total_transcript_chars += len(transcript)
+            
+            transcript_success_rate = (non_empty_transcripts / total_transcripts * 100) if total_transcripts > 0 else 0
+            avg_transcript_length = (total_transcript_chars / non_empty_transcripts) if non_empty_transcripts > 0 else 0
+            
+            print(f"\n=== TRANSCRIPT QUALITY ===")
+            print(f"Total frame segments: {total_transcripts}")
+            print(f"Successful transcripts: {non_empty_transcripts} ({transcript_success_rate:.1f}%)")
+            print(f"Average transcript length: {avg_transcript_length:.1f} characters")
+            
+            if transcript_success_rate < 10:
+                print(f"WARNING: Very low transcript success rate ({transcript_success_rate:.1f}%) - check audio quality")
+            elif transcript_success_rate < 30:
+                print(f"WARNING: Low transcript success rate ({transcript_success_rate:.1f}%) - many silent segments")
         
     else:
         print("No videos were successfully processed!")
 
+def main():
+    parser = argparse.ArgumentParser(description='Process audio features for video dataset')
+    parser.add_argument('--dataset', type=str, default='FakeSV', 
+                        choices=['FakeSV', 'FakeTT', 'FVC'],
+                        help='Dataset name (default: FakeSV)')
+    parser.add_argument('--wav2vec_model', type=str, default='CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-all-age',
+                        help='Wav2Vec2 model name (default: CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-all-age)')
+    parser.add_argument('--skip_transcripts', action='store_true',
+                        help='Skip transcript generation and only extract audio features')
+    parser.add_argument('--skip_features', action='store_true',
+                        help='Skip feature extraction and only generate transcripts')
+    
+    args = parser.parse_args()
+    
+    model_mark = get_model_mark(args.wav2vec_model)
+    print(f"Processing dataset: {args.dataset}")
+    print(f"Using Wav2Vec2 model: {args.wav2vec_model}")
+    print(f"Model mark for files: {model_mark}")
+    print(f"Expected directory structure:")
+    print(f"  - data/{args.dataset}/frames_16/ (video frame directories with timestamps)")
+    print(f"  - data/{args.dataset}/audios/ (audio files)")
+    print(f"Will create:")
+    print(f"  - data/{args.dataset}/fea/audio_features_frames_{model_mark}.pt")
+    print(f"  - data/{args.dataset}/fea/audio_features_global_{model_mark}.pt")
+    print(f"  - data/{args.dataset}/transcript_frames.jsonl")
+    print()
+    
+    # Check for conflicting arguments
+    if args.skip_features and args.skip_transcripts:
+        print("ERROR: Cannot skip both features and transcripts. Nothing would be processed!")
+        return
+    
+    process_dataset(args.dataset, args.wav2vec_model, args.skip_transcripts, args.skip_features)
+
 if __name__ == "__main__":
-    process_dataset()
+    main()

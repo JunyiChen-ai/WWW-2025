@@ -106,8 +106,18 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
                 raise ValueError(f"Dataset '{dataset_name}' not found in the 'data' module.")
 
             try:
+                # Filter out parameters that don't belong to dataset constructor
+                # These parameters are used by collator or are dataset-specific
+                dataset_params_blacklist = ['tokenizer_name']
+                
+                # Add dataset-specific parameter filtering
+                if dataset_name == 'FakeTT':
+                    # FakeTT dataset doesn't support these FakeSV-specific parameters
+                    dataset_params_blacklist.extend(['include_piyao'])
+                    
+                filtered_kargs = {k: v for k, v in kargs.items() if k not in dataset_params_blacklist}
                 # Attempt to instantiate the dataset
-                dataset = dataset_class(**kargs)
+                dataset = dataset_class(**filtered_kargs)
             except TypeError as e:
                 raise TypeError(f"Error instantiating dataset '{dataset_name}': {str(e)}. Please check the provided arguments.")
 
@@ -180,9 +190,18 @@ def get_scheduler(optimizer, **kargs):
             scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=lr_lambda)
         case "DummyLR":
             scheduler = LambdaLR(optimizer, lambda x: 1)
+        case "StepLR":
+            # remove 'steps_per_epoch' and 'num_epoch' from kargs (not accepted by StepLR)
+            kargs.pop('steps_per_epoch', None)
+            kargs.pop('num_epoch', None)
+            # StepLR defaults: step_size=1, gamma=0.1
+            step_size = kargs.pop('step_size', 10)  # decay every 10 epochs
+            gamma = kargs.pop('gamma', 0.1)  # multiply by 0.1
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=step_size, gamma=gamma)
         case 'ReduceLROnPlateau':
-            # remove 'steps_per_epoch' from kargs
-            kargs.pop('steps_per_epoch')
+            # remove 'steps_per_epoch' and 'num_epoch' from kargs (not accepted by ReduceLROnPlateau)
+            kargs.pop('steps_per_epoch', None)
+            kargs.pop('num_epoch', None)
             scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, **kargs)
         case _:
             raise NotImplementedError(f"Scheduler {scheduler_name} not implemented")
