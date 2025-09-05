@@ -42,7 +42,8 @@ class MultimodalChoiceAnalyzer:
     def __init__(self, dataset: str = "FakeSV", 
                  audio_model: str = "CAiRE-SER-wav2vec2-large-xlsr-53-eng-zho-all-age",
                  text_model: str = None,
-                 output_dir: str = None):
+                 output_dir: str = None,
+                 top_k: int = 10):
         """
         Initialize multimodal choice analyzer
         
@@ -51,9 +52,11 @@ class MultimodalChoiceAnalyzer:
             audio_model: Audio model name suffix for loading features
             text_model: Text model for embeddings (auto-selected if None)
             output_dir: Output directory (auto-created if None)
+            top_k: Top-k samples to consider for entropy and p_event_mass calculations
         """
         self.dataset = dataset
         self.audio_model = audio_model
+        self.top_k = top_k
         
         # Auto-select text model if not provided
         if text_model is None:
@@ -326,7 +329,7 @@ class MultimodalChoiceAnalyzer:
         self.scores['A'] = audio_sim
         
         # Convert to probabilities
-        temp = 1.0  # Temperature for softmax
+        temp = 0.1  # Temperature for softmax
         self.probs = {}
         self.probs['T'] = self._softmax(text_sim / temp, axis=1)
         self.probs['I'] = self._softmax(visual_sim / temp, axis=1)
@@ -460,13 +463,17 @@ class MultimodalChoiceAnalyzer:
                     # Ensure consistent denominator
                     hit_scores.append(0)
                     
-                # 2. p_event_mass
-                event_mask = self.candidate_meta['candidate_event'] == query_event
-                p_event_mass = np.sum(query_probs[event_mask])
+                # 2. p_event_mass (only consider top-k)
+                top_k = self.top_k
+                top_k_indices = np.argpartition(query_probs, -top_k)[-top_k:] if len(query_probs) > top_k else np.arange(len(query_probs))
+                event_mask_top_k = self.candidate_meta['candidate_event'][top_k_indices] == query_event
+                p_event_mass = np.sum(query_probs[top_k_indices][event_mask_top_k])
                 p_event_masses.append(p_event_mass)
                 
-                # 3. Uncertainty metrics
-                H = entropy(query_probs + 1e-12)  # Entropy
+                # 3. Uncertainty metrics (only consider top-k)
+                top_k_probs = query_probs[top_k_indices]
+                top_k_probs = top_k_probs / (top_k_probs.sum() + 1e-12)  # Renormalize
+                H = entropy(top_k_probs + 1e-12)  # Entropy on top-k
                 sorted_probs = np.sort(query_probs)[::-1]
                 margin = sorted_probs[0] - sorted_probs[1] if len(sorted_probs) > 1 else 1.0
                 
@@ -650,7 +657,7 @@ class MultimodalChoiceAnalyzer:
         """Compare different fusion methods"""
         logger.info("Computing fusion methods comparison...")
         
-        methods = ['DSL', 'Sinkhorn', 'RRF', 'Entropy-Gated', 'UncertaintyWeightedLogPool']
+        methods = ['DSL', 'Sinkhorn', 'RRF', 'Entropy-Gated', 'UncertaintyWeightedLogPool', 'WeightedAverage']
         
         # Add DBNorm methods if hubness is high
         use_dbnorm = hubness_summary['gini_coefficient'] >= 0.30
@@ -674,6 +681,8 @@ class MultimodalChoiceAnalyzer:
                 fused_probs = self._entropy_gated_fusion()
             elif method == 'UncertaintyWeightedLogPool':
                 fused_probs = self._uncertainty_weighted_log_pool()
+            elif method == 'WeightedAverage':
+                fused_probs = self._weighted_average_fusion()
             elif method == 'DBNorm+DSL':
                 dbnorm_probs = self._apply_dbnorm_scores()
                 dbnorm_probs = self._apply_self_exclusion_to(dbnorm_probs)
@@ -714,9 +723,11 @@ class MultimodalChoiceAnalyzer:
                     # Ensure consistent denominator
                     event_hits.append(0)
                 
-                # p_event_mass
-                event_mask = self.candidate_meta['candidate_event'] == query_event
-                p_event_mass = np.sum(query_probs[event_mask])
+                # p_event_mass (only consider top-k)
+                top_k = self.top_k
+                top_k_indices = np.argpartition(query_probs, -top_k)[-top_k:] if len(query_probs) > top_k else np.arange(len(query_probs))
+                event_mask_top_k = self.candidate_meta['candidate_event'][top_k_indices] == query_event
+                p_event_mass = np.sum(query_probs[top_k_indices][event_mask_top_k])
                 p_event_masses.append(p_event_mass)
             
             # Bootstrap confidence intervals
@@ -843,11 +854,17 @@ class MultimodalChoiceAnalyzer:
         P = {'T': self.probs['T'], 'I': self.probs['I'], 'A': self.probs['A']}  # [Q,N]
         Q, N = P['T'].shape
         
-        # 1) 计算确定性分数 c_m(q) - 使用熵的倒数
+        # 1) 计算确定性分数 c_m(q) - 使用熵的倒数 (only consider top-k)
         C = {}
+        def entropy_top_k(r, k=self.top_k):
+            top_k_idx = np.argpartition(r, -k)[-k:] if len(r) > k else np.arange(len(r))
+            top_k_probs = r[top_k_idx]
+            top_k_probs = top_k_probs / (top_k_probs.sum() + eps)
+            return entropy(top_k_probs + eps)
+            
         for m in P:
-            # 默认：熵的倒数
-            ent = np.apply_along_axis(lambda r: entropy(r + eps), 1, P[m])  # [Q]
+            # 默认：熵的倒数 (only top-k)
+            ent = np.apply_along_axis(lambda r: entropy_top_k(r), 1, P[m])  # [Q]
             C[m] = 1.0 / (ent + eps)
         
         # 2) 归一化权重 w_m(q)
@@ -860,6 +877,25 @@ class MultimodalChoiceAnalyzer:
         
         fused = np.exp(fused_log)
         fused /= fused.sum(axis=1, keepdims=True) + eps
+        
+        return fused
+    
+    def _weighted_average_fusion(self, probs_dict=None, weights=None):
+        """Weighted average fusion of three modalities"""
+        if probs_dict is None:
+            probs_dict = self.probs
+        
+        # Default weights: equal weight for each modality
+        if weights is None:
+            weights = {'T': 1/3, 'I': 1/3, 'A': 1/3}
+        
+        # Weighted average of probabilities
+        fused = (weights['T'] * probs_dict['T'] + 
+                 weights['I'] * probs_dict['I'] + 
+                 weights['A'] * probs_dict['A'])
+        
+        # Ensure probabilities sum to 1 (should already be close due to linear combination)
+        fused = fused / (np.sum(fused, axis=1, keepdims=True) + 1e-12)
         
         return fused
     
@@ -967,7 +1003,13 @@ class MultimodalChoiceAnalyzer:
         for modality in ['T', 'I', 'A']:
             probs_m = self.probs[modality]
             for q in range(len(self.query_ids)):
-                H = entropy(probs_m[q] + 1e-12)
+                # Only consider top-k for entropy calculation
+                top_k = self.top_k
+                query_probs = probs_m[q]
+                top_k_indices = np.argpartition(query_probs, -top_k)[-top_k:] if len(query_probs) > top_k else np.arange(len(query_probs))
+                top_k_probs = query_probs[top_k_indices]
+                top_k_probs = top_k_probs / (top_k_probs.sum() + 1e-12)  # Renormalize
+                H = entropy(top_k_probs + 1e-12)
                 entropy_data.append(H)
                 modality_labels.append({'T': 'Text', 'I': 'Visual', 'A': 'Audio'}[modality])
         
@@ -1310,6 +1352,8 @@ def main():
                        help='Text model for embeddings (auto-selected if None)')
     parser.add_argument('--output-dir', type=str, default=None,
                        help='Output directory (default: analysis/{dataset}/multimodal_choice)')
+    parser.add_argument('--top-k', type=int, default=10,
+                       help='Top-k samples to consider for entropy and p_event_mass calculations (default: 10)')
     
     args = parser.parse_args()
     
@@ -1318,7 +1362,8 @@ def main():
         dataset=args.dataset,
         audio_model=args.audio_model,
         text_model=args.text_model,
-        output_dir=args.output_dir
+        output_dir=args.output_dir,
+        top_k=args.top_k
     )
     
     # Run analysis
