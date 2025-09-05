@@ -650,7 +650,7 @@ class MultimodalChoiceAnalyzer:
         """Compare different fusion methods"""
         logger.info("Computing fusion methods comparison...")
         
-        methods = ['DSL', 'Sinkhorn', 'RRF', 'Entropy-Gated']
+        methods = ['DSL', 'Sinkhorn', 'RRF', 'Entropy-Gated', 'UncertaintyWeightedLogPool']
         
         # Add DBNorm methods if hubness is high
         use_dbnorm = hubness_summary['gini_coefficient'] >= 0.30
@@ -672,6 +672,8 @@ class MultimodalChoiceAnalyzer:
                 fused_probs = self._rrf_fusion()
             elif method == 'Entropy-Gated':
                 fused_probs = self._entropy_gated_fusion()
+            elif method == 'UncertaintyWeightedLogPool':
+                fused_probs = self._uncertainty_weighted_log_pool()
             elif method == 'DBNorm+DSL':
                 dbnorm_probs = self._apply_dbnorm_scores()
                 dbnorm_probs = self._apply_self_exclusion_to(dbnorm_probs)
@@ -835,6 +837,32 @@ class MultimodalChoiceAnalyzer:
         
         return fused
     
+    def _uncertainty_weighted_log_pool(self, eps=1e-12):
+        """Uncertainty Weighted Log Pool fusion"""
+        # 获取每个模态的概率矩阵
+        P = {'T': self.probs['T'], 'I': self.probs['I'], 'A': self.probs['A']}  # [Q,N]
+        Q, N = P['T'].shape
+        
+        # 1) 计算确定性分数 c_m(q) - 使用熵的倒数
+        C = {}
+        for m in P:
+            # 默认：熵的倒数
+            ent = np.apply_along_axis(lambda r: entropy(r + eps), 1, P[m])  # [Q]
+            C[m] = 1.0 / (ent + eps)
+        
+        # 2) 归一化权重 w_m(q)
+        W = {m: C[m] / (C['T'] + C['I'] + C['A']) for m in P}  # 每个都是 [Q]
+        
+        # 3) 对数线性池
+        fused_log = np.zeros_like(P['T'])
+        for m in P:
+            fused_log += W[m][:, None] * np.log(P[m] + eps)
+        
+        fused = np.exp(fused_log)
+        fused /= fused.sum(axis=1, keepdims=True) + eps
+        
+        return fused
+    
     def _apply_dbnorm_scores(self, scores_dict=None, zscore=False):
         """Apply DBNorm to similarity scores (not probabilities)"""
         if scores_dict is None:
@@ -956,6 +984,51 @@ class MultimodalChoiceAnalyzer:
         plt.tight_layout()
         entropy_fig_path = self.output_dir / "entropy_distribution.png"
         plt.savefig(entropy_fig_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        # Figure A2: Entropy distributions with density curves
+        fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+        
+        # Plot density curves for each modality
+        for modality, label in [('T', 'Text'), ('I', 'Visual'), ('A', 'Audio')]:
+            modality_data = entropy_df[entropy_df['Modality'] == label]['Entropy']
+            modality_data.plot(kind='density', ax=ax, label=label, linewidth=2)
+        
+        ax.set_title('Entropy Distributions Across Modalities (Density)', fontsize=14)
+        ax.set_xlabel('Entropy', fontsize=12)
+        ax.set_ylabel('Density', fontsize=12)
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        
+        plt.tight_layout()
+        entropy_density_path = self.output_dir / "entropy_distribution_density.png"
+        plt.savefig(entropy_density_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        # Figure A3: Entropy distributions with histograms
+        fig, axes = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
+        
+        for idx, (modality, label) in enumerate([('T', 'Text'), ('I', 'Visual'), ('A', 'Audio')]):
+            ax = axes[idx]
+            modality_data = entropy_df[entropy_df['Modality'] == label]['Entropy']
+            ax.hist(modality_data, bins=30, alpha=0.7, edgecolor='black')
+            ax.set_title(f'{label} Entropy Distribution', fontsize=12)
+            ax.set_xlabel('Entropy', fontsize=10)
+            if idx == 0:
+                ax.set_ylabel('Frequency', fontsize=10)
+            ax.grid(True, alpha=0.3)
+            
+            # Add statistics text
+            mean_val = modality_data.mean()
+            std_val = modality_data.std()
+            ax.text(0.7, 0.95, f'μ={mean_val:.2f}\nσ={std_val:.2f}', 
+                    transform=ax.transAxes, verticalalignment='top',
+                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+        
+        fig.suptitle('Entropy Distributions Across Modalities (Histograms)', fontsize=14)
+        plt.tight_layout()
+        entropy_hist_path = self.output_dir / "entropy_distribution_histogram.png"
+        plt.savefig(entropy_hist_path, dpi=300, bbox_inches='tight')
         plt.close()
         
         # Figure B: JSD vs Pairwise Sinkhorn improvement
