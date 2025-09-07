@@ -43,7 +43,8 @@ class MultimodalChoiceAnalyzer:
                  audio_model: str = "CAiRE-SER-wav2vec2-large-xlsr-53-eng-zho-all-age",
                  text_model: str = None,
                  output_dir: str = None,
-                 top_k: int = 10):
+                 top_k: int = 10,
+                 use_cache: bool = False):
         """
         Initialize multimodal choice analyzer
         
@@ -57,6 +58,7 @@ class MultimodalChoiceAnalyzer:
         self.dataset = dataset
         self.audio_model = audio_model
         self.top_k = top_k
+        self.use_cache = use_cache
         
         # Auto-select text model if not provided
         if text_model is None:
@@ -70,6 +72,9 @@ class MultimodalChoiceAnalyzer:
             output_dir = f"analysis/{dataset}/multimodal_choice"
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        # Cache directory to avoid recomputation across runs
+        self.cache_dir = self.output_dir / "cache"
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
         
         logger.info(f"Initialized MultimodalChoiceAnalyzer for {dataset}")
         logger.info(f"Audio model: {audio_model}")
@@ -81,6 +86,8 @@ class MultimodalChoiceAnalyzer:
         self.audio_features = {}
         self.visual_features = {}
         self.text_embeddings = {}
+        # Keep a raw (pre-normalization) copy for diagnostics like scale-mismatch
+        self.text_embeddings_raw = {}
         self.transcript_embeddings = {}
         self.transcripts = {}
         self.splits = {}
@@ -183,6 +190,8 @@ class MultimodalChoiceAnalyzer:
     def _load_multimodal_features(self):
         """Load audio and visual features"""
         feature_dir = self.data_dir / "fea"
+        audio_source = None
+        audio_file_path = None
         
         # Load visual features
         vit_file = feature_dir / "vit_tensor.pt"
@@ -206,6 +215,8 @@ class MultimodalChoiceAnalyzer:
                 if features.numel() > 0:  # Ensure not empty
                     self.audio_features[video_id] = features.numpy()
             logger.info(f"Loaded global audio features for {len(self.audio_features)} videos")
+            audio_source = "global"
+            audio_file_path = str(audio_file)
         else:
             # Fallback to frame-level features if global not found
             logger.warning(f"Global audio features not found: {audio_file}")
@@ -219,10 +230,25 @@ class MultimodalChoiceAnalyzer:
                         pooled = torch.mean(frames, dim=0)
                         self.audio_features[video_id] = pooled.numpy()
                 logger.info(f"Loaded and pooled frame-level audio features for {len(self.audio_features)} videos")
+                audio_source = "frames_mean_pool"
+                audio_file_path = str(audio_file)
             else:
                 logger.error(f"No audio features file found (tried both global and frames)")
                 logger.error(f"  Global file: audio_features_global_{self.audio_model}.pt")
                 logger.error(f"  Frames file: audio_features_frames_{self.audio_model}.pt")
+
+        # Report which audio branch was used and the L2 norm stats
+        if len(self.audio_features) > 0:
+            try:
+                audio_norms = [float(np.linalg.norm(v)) for v in self.audio_features.values()]
+                logger.info(
+                    f"Audio loading branch: {audio_source}, file: {audio_file_path}"
+                )
+                logger.info(
+                    f"Audio feature L2 norms: mean={np.mean(audio_norms):.3f}, std={np.std(audio_norms):.3f}"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to compute audio norm stats: {e}")
     
     def _load_text_model(self):
         """Load text embedding model"""
@@ -238,6 +264,22 @@ class MultimodalChoiceAnalyzer:
     
     def _compute_text_embeddings(self):
         """Compute text embeddings for all videos"""
+        # Try load from cache
+        cache_file = self.cache_dir / "text_embeddings.npz"
+        if self.use_cache and cache_file.exists():
+            logger.info(f"Loading cached text embeddings from {cache_file}")
+            data = np.load(cache_file, allow_pickle=True)
+            ids = list(data['ids'])
+            embs = data['embeddings']
+            embs_raw = data['embeddings_raw'] if 'embeddings_raw' in data else None
+            for vid, emb in zip(ids, embs):
+                self.text_embeddings[str(vid)] = emb
+            if embs_raw is not None:
+                for vid, emb in zip(ids, embs_raw):
+                    self.text_embeddings_raw[str(vid)] = emb
+            logger.info(f"Loaded {len(self.text_embeddings)} cached text embeddings")
+            return
+
         video_ids = []
         texts = []
         
@@ -251,6 +293,7 @@ class MultimodalChoiceAnalyzer:
         # Encode in batches
         batch_size = 16
         all_embeddings = []
+        all_embeddings_raw = []
         
         with torch.no_grad():
             for i in tqdm(range(0, len(texts), batch_size), desc="Computing text embeddings"):
@@ -283,24 +326,54 @@ class MultimodalChoiceAnalyzer:
                 else:
                     outputs = self.model.text_model(**inputs)
                     embeddings = outputs.last_hidden_state[:, 0]  # CLS token
-                
-                # Normalize embeddings
+
+                # Save a raw copy (pre-normalization) for diagnostics
+                embeddings_raw = embeddings.detach().cpu().numpy()
+
+                # Normalize embeddings for retrieval computations
                 embeddings = embeddings / embeddings.norm(dim=-1, keepdim=True)
+
+                all_embeddings_raw.append(embeddings_raw)
                 all_embeddings.append(embeddings.cpu().numpy())
         
         # Combine all embeddings
         all_embeddings = np.vstack(all_embeddings)
+        all_embeddings_raw = np.vstack(all_embeddings_raw)
         
         # Store embeddings
         for video_id, embedding in zip(video_ids, all_embeddings):
             self.text_embeddings[video_id] = embedding
+        for video_id, embedding in zip(video_ids, all_embeddings_raw):
+            self.text_embeddings_raw[video_id] = embedding
         
         logger.info(f"Computed text embeddings for {len(self.text_embeddings)} videos")
+
+        # Save cache
+        try:
+            np.savez_compressed(cache_file,
+                                ids=np.array(video_ids),
+                                embeddings=all_embeddings,
+                                embeddings_raw=all_embeddings_raw)
+            logger.info(f"Cached text embeddings to {cache_file}")
+        except Exception as e:
+            logger.warning(f"Failed to cache text embeddings: {e}")
     
     def _compute_transcript_embeddings(self):
         """Compute embeddings for audio transcripts using same model as text"""
         if not self.transcripts:
             logger.warning("No transcripts loaded, skipping transcript embeddings")
+            return
+
+        # Try load from cache
+        cache_file = self.cache_dir / "transcript_embeddings.npz"
+        if self.use_cache and cache_file.exists():
+            logger.info(f"Loading cached transcript embeddings from {cache_file}")
+            data = np.load(cache_file, allow_pickle=True)
+            ids = list(data['ids'])
+            embs = data['embeddings']
+            for vid, emb in zip(ids, embs):
+                self.transcript_embeddings[str(vid)] = emb
+            logger.info(f"Loaded {len(self.transcript_embeddings)} cached transcript embeddings")
             return
         
         video_ids = []
@@ -357,10 +430,49 @@ class MultimodalChoiceAnalyzer:
             self.transcript_embeddings[video_id] = embedding
         
         logger.info(f"Computed transcript embeddings for {len(self.transcript_embeddings)} videos")
+
+        # Save cache
+        try:
+            np.savez_compressed(cache_file,
+                                ids=np.array(video_ids),
+                                embeddings=all_embeddings)
+            logger.info(f"Cached transcript embeddings to {cache_file}")
+        except Exception as e:
+            logger.warning(f"Failed to cache transcript embeddings: {e}")
     
     def prepare_analysis_data(self):
         """Prepare data matrices for analysis"""
         logger.info("Preparing analysis data matrices...")
+
+        # Attempt to load prepared matrices from cache
+        prepared_cache = self.cache_dir / "prepared_data.npz"
+        if self.use_cache and prepared_cache.exists():
+            try:
+                data = np.load(prepared_cache, allow_pickle=True)
+                self.query_ids = list(data['query_ids'])
+                self.query_events = np.array(data['query_events'])
+                self.candidate_meta = {
+                    'candidate_event': data['candidate_event'],
+                    'candidate_label': data['candidate_label'],
+                    'candidate_ids': data['candidate_ids']
+                }
+                self.scores = {
+                    'T': data['scores_T'],
+                    'I': data['scores_I'],
+                    'A': data['scores_A'],
+                    'S': data['scores_S']
+                }
+                self.probs = {
+                    'T': data['probs_T'],
+                    'I': data['probs_I'],
+                    'A': data['probs_A'],
+                    'S': data['probs_S']
+                }
+                logger.info(f"Loaded prepared matrices from cache: {prepared_cache}")
+                logger.info(f"Analysis data (cached): {len(self.query_ids)} queries × {len(self.candidate_meta['candidate_ids'])} candidates")
+                return
+            except Exception as e:
+                logger.warning(f"Failed to load prepared cache, will recompute: {e}")
         
         # Show data availability breakdown
         total_in_splits = sum(len(ids) for ids in self.splits.values())
@@ -473,6 +585,20 @@ class MultimodalChoiceAnalyzer:
         
         logger.info(f"Analysis data prepared: {Q} queries × {N} candidates")
         logger.info(f"Probability matrices shape: {self.probs['T'].shape}")
+
+        # Save prepared cache
+        try:
+            np.savez_compressed(prepared_cache,
+                                query_ids=np.array(self.query_ids),
+                                query_events=self.query_events,
+                                candidate_event=self.candidate_meta['candidate_event'],
+                                candidate_label=self.candidate_meta['candidate_label'],
+                                candidate_ids=self.candidate_meta['candidate_ids'],
+                                scores_T=self.scores['T'], scores_I=self.scores['I'], scores_A=self.scores['A'], scores_S=self.scores['S'],
+                                probs_T=self.probs['T'], probs_I=self.probs['I'], probs_A=self.probs['A'], probs_S=self.probs['S'])
+            logger.info(f"Cached prepared matrices to {prepared_cache}")
+        except Exception as e:
+            logger.warning(f"Failed to cache prepared matrices: {e}")
     
     def _softmax(self, x, axis=1):
         """Stable softmax"""
@@ -1452,8 +1578,13 @@ class MultimodalChoiceAnalyzer:
         query_ids = list(self.query_ids)
         
         # Extract original features (before L2 normalization)
-        text_candidates_orig = np.stack([self.text_embeddings[vid] for vid in candidate_ids])
-        text_queries_orig = np.stack([self.text_embeddings[vid] for vid in query_ids])
+        # Use pre-normalization text embeddings to reveal true scale differences
+        text_candidates_orig = np.stack([
+            (self.text_embeddings_raw.get(vid, self.text_embeddings[vid])) for vid in candidate_ids
+        ])
+        text_queries_orig = np.stack([
+            (self.text_embeddings_raw.get(vid, self.text_embeddings[vid])) for vid in query_ids
+        ])
         visual_candidates_orig = np.stack([self.visual_features[vid] for vid in candidate_ids])
         visual_queries_orig = np.stack([self.visual_features[vid] for vid in query_ids])
         audio_candidates_orig = np.stack([self.audio_features[vid] for vid in candidate_ids])
@@ -1723,22 +1854,25 @@ Literature Support:
         # Part 4: Attention Soft Simulation - Temperature Sweep
         ax4 = axes[1, 0]
         temperatures = [0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0]
-        
+
+        # Collect per-modality entropy curves for summary statistics
+        attention_entropy_per_modality = []  # list of [len(temperatures)] arrays
+
         for mod_key, mod_name, color in [('T', 'Text', 'blue'), ('I', 'Visual', 'green'), ('A', 'Audio', 'red')]:
             attention_entropies = []
-            
+
             for temp in temperatures:
-                # Simulate attention weights using unsupervised scores (similarity to mean)
-                sim_matrix = self.scores[mod_key]
-                mean_query = np.mean(sim_matrix, axis=1, keepdims=True)  # Mean similarity per query
-                attention_logits = mean_query / temp
-                attention_weights = self._softmax(attention_logits, axis=1)
-                
-                # Compute entropy of attention weights
-                entropies = [entropy(weights + 1e-12) for weights in attention_weights]
-                mean_entropy = np.mean(entropies)
+                # Use candidate-wise logits to form attention over candidates per query
+                sim_matrix = self.scores[mod_key]  # [Q, N]
+                row_max = np.max(sim_matrix, axis=1, keepdims=True)
+                attention_weights = self._softmax((sim_matrix - row_max) / temp, axis=1)  # [Q, N]
+
+                # Compute mean entropy across queries
+                entropies = [entropy(w + 1e-12) for w in attention_weights]
+                mean_entropy = float(np.mean(entropies))
                 attention_entropies.append(mean_entropy)
-            
+
+            attention_entropy_per_modality.append(np.array(attention_entropies))
             ax4.plot(temperatures, attention_entropies, marker='o', label=mod_name, color=color)
         
         ax4.set_xlabel('Temperature (τ)')
@@ -1786,12 +1920,18 @@ Literature Support:
         # Part 6: Literature Alignment Summary
         ax6 = axes[1, 2]
         ax6.axis('off')
-        
+
         # Compute key metrics for summary
         mean_anisotropy = np.mean(anisotropy_indices)
         mean_jaccard = np.mean(jaccard_matrix)
-        min_entropy_temp_idx = 0  # Index of temperature with minimum entropy
-        min_temp_for_collapse = temperatures[min_entropy_temp_idx]
+        # Determine critical temperature as min of mean entropy across modalities
+        if len(attention_entropy_per_modality) > 0:
+            mean_entropy_over_modalities = np.mean(np.vstack(attention_entropy_per_modality), axis=0)  # [len(temperatures)]
+            min_entropy_temp_idx = int(np.argmin(mean_entropy_over_modalities))
+            min_temp_for_collapse = float(temperatures[min_entropy_temp_idx])
+        else:
+            min_entropy_temp_idx = 0
+            min_temp_for_collapse = float(temperatures[min_entropy_temp_idx])
         
         summary_text = f"""Literature Alignment Summary
 
@@ -2080,6 +2220,24 @@ and structural inconsistencies"""
         except Exception as e:
             logger.warning(f"Similarity Concentration & Neighborhood figure failed: {e}")
 
+        # Step 7.4: Single-plot NSI to show modality quality and variance
+        try:
+            self.create_modality_nsi_boxplot()
+        except Exception as e:
+            logger.warning(f"NSI single-plot creation failed: {e}")
+
+        # Step 7.5: Standalone random pairwise cosine similarity
+        try:
+            self.create_random_pairwise_cosine_plot()
+        except Exception as e:
+            logger.warning(f"Random pairwise cosine plot failed: {e}")
+
+        # Step 7.6: Standalone kNN Jaccard overlap heatmap
+        try:
+            self.create_knn_jaccard_overlap_plot()
+        except Exception as e:
+            logger.warning(f"kNN Jaccard overlap plot failed: {e}")
+
         # Step 8: Generate decision summary
         decision_summary = self.generate_decision_summary(single_df, pairs_df, hubness_summary, methods_df)
         
@@ -2302,12 +2460,167 @@ and structural inconsistencies"""
             logger.warning(f"Temperature sweep failed: {e}")
 
 
+    def create_modality_nsi_boxplot(self, k: int = 10, max_samples: int = 2000, seed: int = 42):
+        """Create a single boxplot showing per-modality feature quality and intra-modality variance.
+
+        Unsupervised Neighborhood Separability Index (NSI) per sample i:
+          NSI(i) = (mean_topk - mean_rest) / (std_all + 1e-6),
+        where similarities are cosine within the same modality (self excluded).
+        Higher NSI implies clearer local structure (better quality). Distribution spread shows variance.
+        """
+        logger.info("Creating NSI single-plot (modality quality & variance)...")
+
+        rng = np.random.default_rng(seed)
+
+        def stack_and_sample(feat_dict, max_n):
+            ids = list(feat_dict.keys())
+            if len(ids) == 0:
+                return None
+            if len(ids) > max_n:
+                sel = list(rng.choice(ids, size=max_n, replace=False))
+            else:
+                sel = ids
+            X = np.stack([feat_dict[i] for i in sel], axis=0).astype(np.float32)
+            # L2-normalize (diagnostics only)
+            X = X / (np.linalg.norm(X, axis=1, keepdims=True) + 1e-12)
+            return X
+
+        feats = {
+            'Text': stack_and_sample(self.text_embeddings, max_samples),
+            'Visual': stack_and_sample(self.visual_features, max_samples),
+            'Audio': stack_and_sample(self.audio_features, max_samples),
+            # Exclude Transcript per latest requirement
+        }
+
+        rows = []
+        for name, X in feats.items():
+            if X is None or X.shape[0] < (k + 2):
+                logger.warning(f"NSI: modality {name} has insufficient samples for k={k}")
+                continue
+
+            S = np.dot(X, X.T)
+            np.fill_diagonal(S, -np.inf)
+
+            # Top-k mean per row
+            topk_vals = np.partition(S, -k, axis=1)[:, -k:]
+            mean_topk = topk_vals.mean(axis=1)
+
+            # Mean/std over all non-diagonal entries
+            mask = ~np.eye(S.shape[0], dtype=bool)
+            all_vals = S[mask].reshape(S.shape[0], -1)
+            full_sum = all_vals.sum(axis=1)
+            full_std = all_vals.std(axis=1)
+
+            # Mean over the rest (excluding top-k)
+            topk_sum = topk_vals.sum(axis=1)
+            denom_rest = (S.shape[0] - 1 - k)
+            mean_rest = (full_sum - topk_sum) / np.maximum(denom_rest, 1)
+
+            nsi = (mean_topk - mean_rest) / (full_std + 1e-6)
+            rows.extend({'Modality': name, 'NSI': float(v)} for v in nsi)
+
+        if not rows:
+            logger.warning("NSI: no data available to plot")
+            return None
+
+        df = pd.DataFrame(rows)
+        mods_order = ['Text', 'Visual', 'Audio']
+
+        plt.figure(figsize=(8, 5))
+        ax = sns.boxplot(data=df, x='Modality', y='NSI', order=mods_order, showfliers=False)
+
+        # Overlay mean ± std
+        means = df.groupby('Modality')['NSI'].mean().reindex(mods_order)
+        stds = df.groupby('Modality')['NSI'].std().reindex(mods_order)
+        xlocs = np.arange(len(mods_order))
+        ax.errorbar(xlocs, means.values, yerr=stds.values, fmt='o', color='black',
+                    capsize=4, lw=1.2, label='Mean ± Std')
+        ax.legend(loc='upper right')
+        ax.set_title('Modality Feature Quality (NSI) and Intra-modality Variance')
+        ax.set_ylabel('Neighborhood Separability Index (higher = better)')
+        plt.tight_layout()
+        out = self.output_dir / 'feature_quality_variance_nsi.png'
+        plt.savefig(out, dpi=300, bbox_inches='tight')
+        plt.close()
+        logger.info(f"  - NSI single-plot saved: {out}")
+        return out
+
+    def create_random_pairwise_cosine_plot(self, n_sample_pairs: int = 5000, seed: int = 42):
+        """Create a standalone violin plot of random pairwise cosine similarities for T/I/A."""
+        logger.info("Creating standalone random pairwise cosine similarity plot...")
+        rng = np.random.default_rng(seed)
+
+        text_sim = self.scores['T']
+        visual_sim = self.scores['I']
+        audio_sim = self.scores['A']
+
+        similarity_data = []
+        modality_labels = []
+        for sim_matrix, mod_name in [(text_sim, 'Text'), (visual_sim, 'Visual'), (audio_sim, 'Audio')]:
+            q_indices = rng.integers(0, sim_matrix.shape[0], size=n_sample_pairs)
+            c_indices = rng.integers(0, sim_matrix.shape[1], size=n_sample_pairs)
+            vals = sim_matrix[q_indices, c_indices]
+            similarity_data.extend(vals.tolist())
+            modality_labels.extend([mod_name] * len(vals))
+
+        df = pd.DataFrame({'Cosine_Similarity': similarity_data, 'Modality': modality_labels})
+        plt.figure(figsize=(6.5, 5))
+        sns.violinplot(data=df, x='Modality', y='Cosine_Similarity')
+        plt.title('Random Pairwise Cosine Similarity Distributions')
+        plt.ylabel('Cosine Similarity')
+        plt.tight_layout()
+        out = self.output_dir / 'random_pairwise_cosine.png'
+        plt.savefig(out, dpi=300, bbox_inches='tight')
+        plt.close()
+        logger.info(f"  - Random pairwise cosine figure saved: {out}")
+        return out
+
+    def create_knn_jaccard_overlap_plot(self, k_values: List[int] = [5, 10, 20]):
+        """Create a standalone heatmap of cross-modal kNN Jaccard overlaps for T/I/A."""
+        logger.info("Creating standalone kNN Jaccard overlap heatmap...")
+
+        pair_names = ['Text-Visual', 'Text-Audio', 'Visual-Audio']
+        pair_combinations = [('T', 'I'), ('T', 'A'), ('I', 'A')]
+
+        jaccard_results = []
+        for k in k_values:
+            row = []
+            for mod1, mod2 in pair_combinations:
+                scores1 = self.scores[mod1]
+                scores2 = self.scores[mod2]
+                jaccard_scores = self._compute_knn_jaccard_overlap(scores1, scores2, k=k)
+                row.append(float(np.mean(jaccard_scores)))
+            jaccard_results.append(row)
+
+        jaccard_matrix = np.array(jaccard_results)
+        plt.figure(figsize=(6.5, 5))
+        ax = plt.gca()
+        im = ax.imshow(jaccard_matrix, cmap='RdYlBu_r', aspect='auto')
+        ax.set_title('kNN Jaccard Overlap (Cross-modal)')
+        ax.set_xlabel('Modality Pairs')
+        ax.set_ylabel('k Values')
+        ax.set_xticks(range(len(pair_names)))
+        ax.set_xticklabels(pair_names, rotation=45, ha='right')
+        ax.set_yticks(range(len(k_values)))
+        ax.set_yticklabels([f'k={k}' for k in k_values])
+        for i in range(len(k_values)):
+            for j in range(len(pair_names)):
+                ax.text(j, i, f'{jaccard_matrix[i, j]:.3f}', ha='center', va='center', color='black', fontweight='bold')
+        plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+        plt.tight_layout()
+        out = self.output_dir / 'knn_jaccard_overlap.png'
+        plt.savefig(out, dpi=300, bbox_inches='tight')
+        plt.close()
+        logger.info(f"  - kNN Jaccard overlap heatmap saved: {out}")
+        return out
+
+
 def main():
     parser = argparse.ArgumentParser(description='Multimodal Choice Analysis for Fusion Method Selection')
     parser.add_argument('--dataset', type=str, default='FakeSV',
                        help='Dataset name (default: FakeSV)')
     parser.add_argument('--audio-model', type=str, 
-                       default='CAiRE-SER-wav2vec2-large-xlsr-53-eng-zho-all-age',
+                       default='laion-clap-htsat-fused',
                        help='Audio model name suffix for loading features')
     parser.add_argument('--text-model', type=str, default=None,
                        help='Text model for embeddings (auto-selected if None)')
@@ -2315,6 +2628,8 @@ def main():
                        help='Output directory (default: analysis/{dataset}/multimodal_choice)')
     parser.add_argument('--top-k', type=int, default=10,
                        help='Top-k samples to consider for entropy and p_event_mass calculations (default: 10)')
+    parser.add_argument('--use-cache', action='store_true',
+                        help='Use cached embeddings and prepared matrices if available to avoid recomputation')
     
     args = parser.parse_args()
     
@@ -2324,7 +2639,8 @@ def main():
         audio_model=args.audio_model,
         text_model=args.text_model,
         output_dir=args.output_dir,
-        top_k=args.top_k
+        top_k=args.top_k,
+        use_cache=args.use_cache
     )
     
     # Run analysis
