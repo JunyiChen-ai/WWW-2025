@@ -81,10 +81,12 @@ class MultimodalChoiceAnalyzer:
         self.audio_features = {}
         self.visual_features = {}
         self.text_embeddings = {}
+        self.transcript_embeddings = {}
+        self.transcripts = {}
         self.splits = {}
         
         # Analysis results
-        self.probs = {}  # T, I, A probability matrices
+        self.probs = {}  # T, I, A, S probability matrices
         self.candidate_meta = {}
         self.query_events = []
         
@@ -103,12 +105,18 @@ class MultimodalChoiceAnalyzer:
         logger.info("Loading temporal splits...")
         self._load_temporal_splits()
         
+        logger.info("Loading transcripts...")
+        self._load_transcripts()
+        
         logger.info("Loading multimodal features...")
         self._load_multimodal_features()
         
         logger.info("Loading text model and computing embeddings...")
         self._load_text_model()
         self._compute_text_embeddings()
+        
+        logger.info("Computing transcript embeddings...")
+        self._compute_transcript_embeddings()
         
         logger.info("Data loading complete")
     
@@ -139,6 +147,24 @@ class MultimodalChoiceAnalyzer:
                     }
         
         logger.info(f"Loaded metadata for {len(self.video_metadata)} videos")
+    
+    def _load_transcripts(self):
+        """Load audio transcripts from transcript.jsonl"""
+        transcript_file = self.data_dir / "transcript.jsonl"
+        
+        if not transcript_file.exists():
+            logger.warning(f"Transcript file not found: {transcript_file}")
+            return
+        
+        with open(transcript_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                data = json.loads(line)
+                video_id = data['vid']
+                transcript = data.get('transcript', '')
+                if transcript:
+                    self.transcripts[video_id] = transcript
+        
+        logger.info(f"Loaded transcripts for {len(self.transcripts)} videos")
     
     def _load_temporal_splits(self):
         """Load train/valid/test splits"""
@@ -171,18 +197,32 @@ class MultimodalChoiceAnalyzer:
         else:
             logger.error(f"Visual features file not found: {vit_file}")
             
-        # Load audio features with model suffix
-        audio_file = feature_dir / f"audio_features_frames_{self.audio_model}.pt"
+        # Load global audio features with model suffix (no pooling needed)
+        audio_file = feature_dir / f"audio_features_global_{self.audio_model}.pt"
         if audio_file.exists():
             raw_audio = torch.load(audio_file, map_location='cpu')
-            # Mean pool frame-level features
-            for video_id, frames in raw_audio.items():
-                if frames.shape[0] > 0:  # Ensure not empty
-                    pooled = torch.mean(frames, dim=0)  # [1024]
-                    self.audio_features[video_id] = pooled.numpy()
-            logger.info(f"Loaded and pooled audio features for {len(self.audio_features)} videos")
+            # Global features are already pooled
+            for video_id, features in raw_audio.items():
+                if features.numel() > 0:  # Ensure not empty
+                    self.audio_features[video_id] = features.numpy()
+            logger.info(f"Loaded global audio features for {len(self.audio_features)} videos")
         else:
-            logger.error(f"Audio features file not found: {audio_file}")
+            # Fallback to frame-level features if global not found
+            logger.warning(f"Global audio features not found: {audio_file}")
+            audio_file = feature_dir / f"audio_features_frames_{self.audio_model}.pt"
+            if audio_file.exists():
+                logger.info("Falling back to frame-level audio features with mean pooling")
+                raw_audio = torch.load(audio_file, map_location='cpu')
+                # Mean pool frame-level features
+                for video_id, frames in raw_audio.items():
+                    if frames.shape[0] > 0:
+                        pooled = torch.mean(frames, dim=0)
+                        self.audio_features[video_id] = pooled.numpy()
+                logger.info(f"Loaded and pooled frame-level audio features for {len(self.audio_features)} videos")
+            else:
+                logger.error(f"No audio features file found (tried both global and frames)")
+                logger.error(f"  Global file: audio_features_global_{self.audio_model}.pt")
+                logger.error(f"  Frames file: audio_features_frames_{self.audio_model}.pt")
     
     def _load_text_model(self):
         """Load text embedding model"""
@@ -257,6 +297,67 @@ class MultimodalChoiceAnalyzer:
         
         logger.info(f"Computed text embeddings for {len(self.text_embeddings)} videos")
     
+    def _compute_transcript_embeddings(self):
+        """Compute embeddings for audio transcripts using same model as text"""
+        if not self.transcripts:
+            logger.warning("No transcripts loaded, skipping transcript embeddings")
+            return
+        
+        video_ids = []
+        transcript_texts = []
+        
+        # Prepare transcript texts
+        for video_id, transcript in self.transcripts.items():
+            video_ids.append(video_id)
+            transcript_texts.append(transcript if transcript else 'unknown')
+        
+        # Encode in batches (same process as text embeddings)
+        batch_size = 16
+        all_embeddings = []
+        
+        with torch.no_grad():
+            for i in tqdm(range(0, len(transcript_texts), batch_size), desc="Computing transcript embeddings"):
+                batch_texts = transcript_texts[i:i+batch_size]
+                
+                # Use same tokenizer settings as text
+                if 'chinese-clip' in self.text_model.lower():
+                    max_len = 512
+                elif 'longclip' in self.text_model.lower():
+                    max_len = 248
+                else:
+                    max_len = 77
+                
+                inputs = self.tokenizer(
+                    batch_texts,
+                    padding=True,
+                    truncation=True,
+                    max_length=max_len,
+                    return_tensors="pt"
+                )
+                inputs = {k: v.to(self.device) for k, v in inputs.items()}
+                
+                # Get embeddings (same extraction as text)
+                if 'chinese-clip' in self.text_model.lower():
+                    outputs = self.model.text_model(**inputs)
+                    embeddings = outputs.last_hidden_state[:, 0]  # CLS token
+                elif 'longclip' in self.text_model.lower():
+                    outputs = self.model.text_model(**inputs)
+                    embeddings = outputs.last_hidden_state.mean(dim=1)  # Mean pooling
+                else:
+                    outputs = self.model.text_model(**inputs)
+                    embeddings = outputs.pooler_output
+                
+                embeddings = embeddings.cpu().numpy()
+                all_embeddings.append(embeddings)
+        
+        all_embeddings = np.vstack(all_embeddings)
+        
+        # Store embeddings
+        for video_id, embedding in zip(video_ids, all_embeddings):
+            self.transcript_embeddings[video_id] = embedding
+        
+        logger.info(f"Computed transcript embeddings for {len(self.transcript_embeddings)} videos")
+    
     def prepare_analysis_data(self):
         """Prepare data matrices for analysis"""
         logger.info("Preparing analysis data matrices...")
@@ -269,12 +370,14 @@ class MultimodalChoiceAnalyzer:
         logger.info(f"  Videos with text embeddings: {len(self.text_embeddings)}")
         logger.info(f"  Videos with visual features: {len(self.visual_features)}")
         logger.info(f"  Videos with audio features: {len(self.audio_features)}")
+        logger.info(f"  Videos with transcript embeddings: {len(self.transcript_embeddings)}")
         
-        # Get all video IDs that have all three modalities
+        # Get all video IDs that have all four modalities
         common_video_ids = set(self.video_metadata.keys()) & \
                           set(self.text_embeddings.keys()) & \
                           set(self.visual_features.keys()) & \
-                          set(self.audio_features.keys())
+                          set(self.audio_features.keys()) & \
+                          set(self.transcript_embeddings.keys())
         
         # Filter by available splits
         split_video_ids = set()
@@ -309,6 +412,10 @@ class MultimodalChoiceAnalyzer:
         audio_candidates = np.stack([self.audio_features[vid] for vid in candidate_ids])
         audio_queries = np.stack([self.audio_features[vid] for vid in query_ids])
         
+        # Transcript features
+        transcript_candidates = np.stack([self.transcript_embeddings[vid] for vid in candidate_ids])
+        transcript_queries = np.stack([self.transcript_embeddings[vid] for vid in query_ids])
+        
         # L2 normalize features
         text_candidates = text_candidates / (np.linalg.norm(text_candidates, axis=1, keepdims=True) + 1e-12)
         text_queries = text_queries / (np.linalg.norm(text_queries, axis=1, keepdims=True) + 1e-12)
@@ -316,17 +423,21 @@ class MultimodalChoiceAnalyzer:
         visual_queries = visual_queries / (np.linalg.norm(visual_queries, axis=1, keepdims=True) + 1e-12)
         audio_candidates = audio_candidates / (np.linalg.norm(audio_candidates, axis=1, keepdims=True) + 1e-12)
         audio_queries = audio_queries / (np.linalg.norm(audio_queries, axis=1, keepdims=True) + 1e-12)
+        transcript_candidates = transcript_candidates / (np.linalg.norm(transcript_candidates, axis=1, keepdims=True) + 1e-12)
+        transcript_queries = transcript_queries / (np.linalg.norm(transcript_queries, axis=1, keepdims=True) + 1e-12)
         
         # Compute similarity matrices 
         text_sim = np.dot(text_queries, text_candidates.T)  # [Q, N]
         visual_sim = np.dot(visual_queries, visual_candidates.T)  # [Q, N]
         audio_sim = np.dot(audio_queries, audio_candidates.T)  # [Q, N]
+        transcript_sim = np.dot(transcript_queries, transcript_candidates.T)  # [Q, N]
         
         # Store similarity scores (for DBNorm)
         self.scores = {}
         self.scores['T'] = text_sim
         self.scores['I'] = visual_sim  
         self.scores['A'] = audio_sim
+        self.scores['S'] = transcript_sim
         
         # Convert to probabilities
         temp = 0.1  # Temperature for softmax
@@ -334,6 +445,7 @@ class MultimodalChoiceAnalyzer:
         self.probs['T'] = self._softmax(text_sim / temp, axis=1)
         self.probs['I'] = self._softmax(visual_sim / temp, axis=1)
         self.probs['A'] = self._softmax(audio_sim / temp, axis=1)
+        self.probs['S'] = self._softmax(transcript_sim / temp, axis=1)
         
         # Build candidate metadata
         candidate_events = []
@@ -423,8 +535,8 @@ class MultimodalChoiceAnalyzer:
         
         results = []
         
-        for modality in ['T', 'I', 'A']:
-            modality_name = {'T': 'Text', 'I': 'Visual', 'A': 'Audio'}[modality]
+        for modality in ['T', 'I', 'A', 'S']:
+            modality_name = {'T': 'Text', 'I': 'Visual', 'A': 'Audio', 'S': 'Transcript'}[modality]
             probs_m = self.probs[modality]  # [Q, N]
             
             # 1. Event-Hit@1(pair)
@@ -501,8 +613,12 @@ class MultimodalChoiceAnalyzer:
         logger.info("Computing modality pair analysis...")
         
         results = []
-        modality_pairs = [('T', 'I'), ('T', 'A'), ('I', 'A')]
-        modality_names = {'T': 'Text', 'I': 'Visual', 'A': 'Audio'}
+        modality_pairs = [
+            ('T', 'I'), ('T', 'A'), ('T', 'S'),
+            ('I', 'A'), ('I', 'S'),
+            ('A', 'S')
+        ]
+        modality_names = {'T': 'Text', 'I': 'Visual', 'A': 'Audio', 'S': 'Transcript'}
         
         for m1, m2 in modality_pairs:
             pair_name = f"{modality_names[m1]}-{modality_names[m2]}"
@@ -657,7 +773,7 @@ class MultimodalChoiceAnalyzer:
         """Compare different fusion methods"""
         logger.info("Computing fusion methods comparison...")
         
-        methods = ['DSL', 'Sinkhorn', 'RRF', 'Entropy-Gated', 'UncertaintyWeightedLogPool', 'WeightedAverage']
+        methods = ['DSL', 'Sinkhorn', 'RRF', 'Entropy-Gated', 'Margin-Gated', 'UncertaintyWeightedLogPool', 'WeightedAverage']
         
         # Add DBNorm methods if hubness is high
         use_dbnorm = hubness_summary['gini_coefficient'] >= 0.30
@@ -679,6 +795,8 @@ class MultimodalChoiceAnalyzer:
                 fused_probs = self._rrf_fusion()
             elif method == 'Entropy-Gated':
                 fused_probs = self._entropy_gated_fusion()
+            elif method == 'Margin-Gated':
+                fused_probs = self._margin_gated_fusion()
             elif method == 'UncertaintyWeightedLogPool':
                 fused_probs = self._uncertainty_weighted_log_pool()
             elif method == 'WeightedAverage':
@@ -766,7 +884,7 @@ class MultimodalChoiceAnalyzer:
             probs_dict = self.probs
             
         # Element-wise product of probabilities (already softmaxed)
-        fused = probs_dict['T'] * probs_dict['I'] * probs_dict['A']
+        fused = probs_dict['T'] * probs_dict['I'] * probs_dict['A'] * probs_dict['S']
         
         # Renormalize
         fused = fused / (np.sum(fused, axis=1, keepdims=True) + 1e-12)
@@ -778,18 +896,18 @@ class MultimodalChoiceAnalyzer:
         if probs_dict is None:
             probs_dict = self.probs
             
-        # Set column marginal target as average of three modalities
-        col_target = (probs_dict['T'] + probs_dict['I'] + probs_dict['A']) / 3.0
+        # Set column marginal target as average of four modalities
+        col_target = (probs_dict['T'] + probs_dict['I'] + probs_dict['A'] + probs_dict['S']) / 4.0
         log_col_target = np.log(col_target + 1e-12)  # [Q, N]
         
         # Convert to log space
         log_probs = {}
-        for m in ['T', 'I', 'A']:
+        for m in ['T', 'I', 'A', 'S']:
             log_probs[m] = np.log(probs_dict[m] + 1e-12)
         
-        # Stack into 3D array: [Q, 3, N]
+        # Stack into 3D array: [Q, 4, N]
         Q, N = log_probs['T'].shape
-        log_prob_stack = np.stack([log_probs['T'], log_probs['I'], log_probs['A']], axis=1)
+        log_prob_stack = np.stack([log_probs['T'], log_probs['I'], log_probs['A'], log_probs['S']], axis=1)
         
         # Sinkhorn iterations with target marginal
         for _ in range(n_iters):
@@ -815,7 +933,7 @@ class MultimodalChoiceAnalyzer:
         Q, N = self.probs['T'].shape
         fused_scores = np.zeros((Q, N))
         
-        for modality in ['T', 'I', 'A']:
+        for modality in ['T', 'I', 'A', 'S']:
             probs_m = self.probs[modality]
             
             # Convert probabilities to ranks (higher prob = lower rank number)
@@ -829,7 +947,7 @@ class MultimodalChoiceAnalyzer:
         fused = self._softmax(fused_scores, axis=1)
         
         return fused
-    
+
     def _entropy_gated_fusion(self):
         """Entropy-gated selection (choose modality with lowest entropy per query)"""
         Q, N = self.probs['T'].shape
@@ -838,7 +956,7 @@ class MultimodalChoiceAnalyzer:
         for q in range(Q):
             # Calculate entropy for each modality for this query
             entropies = {}
-            for modality in ['T', 'I', 'A']:
+            for modality in ['T', 'I', 'A', 'S']:
                 p = self.probs[modality][q]
                 entropies[modality] = entropy(p + 1e-12)
             
@@ -847,11 +965,30 @@ class MultimodalChoiceAnalyzer:
             fused[q] = self.probs[best_modality][q]
         
         return fused
+
+    def _margin_gated_fusion(self):
+        """Margin-gated selection (choose modality with largest top1-top2 margin per query)"""
+        Q, N = self.probs['T'].shape
+        fused = np.zeros((Q, N))
+        for q in range(Q):
+            margins = {}
+            for modality in ['T', 'I', 'A']:
+                r = self.probs[modality][q]
+                if r.size >= 2:
+                    # use partial sort for top2
+                    top2 = np.partition(r, -2)[-2:]
+                    margin = float(top2.max() - top2.min())
+                else:
+                    margin = 1.0
+                margins[modality] = margin
+            best_modality = max(margins, key=margins.get)
+            fused[q] = self.probs[best_modality][q]
+        return fused
     
     def _uncertainty_weighted_log_pool(self, eps=1e-12):
         """Uncertainty Weighted Log Pool fusion"""
         # 获取每个模态的概率矩阵
-        P = {'T': self.probs['T'], 'I': self.probs['I'], 'A': self.probs['A']}  # [Q,N]
+        P = {'T': self.probs['T'], 'I': self.probs['I'], 'A': self.probs['A'], 'S': self.probs['S']}  # [Q,N]
         Q, N = P['T'].shape
         
         # 1) 计算确定性分数 c_m(q) - 使用熵的倒数 (only consider top-k)
@@ -868,7 +1005,7 @@ class MultimodalChoiceAnalyzer:
             C[m] = 1.0 / (ent + eps)
         
         # 2) 归一化权重 w_m(q)
-        W = {m: C[m] / (C['T'] + C['I'] + C['A']) for m in P}  # 每个都是 [Q]
+        W = {m: C[m] / (C['T'] + C['I'] + C['A'] + C['S']) for m in P}  # 每个都是 [Q]
         
         # 3) 对数线性池
         fused_log = np.zeros_like(P['T'])
@@ -881,18 +1018,19 @@ class MultimodalChoiceAnalyzer:
         return fused
     
     def _weighted_average_fusion(self, probs_dict=None, weights=None):
-        """Weighted average fusion of three modalities"""
+        """Weighted average fusion of four modalities"""
         if probs_dict is None:
             probs_dict = self.probs
         
         # Default weights: equal weight for each modality
         if weights is None:
-            weights = {'T': 1/3, 'I': 1/3, 'A': 1/3}
+            weights = {'T': 0.25, 'I': 0.25, 'A': 0.25, 'S': 0.25}
         
         # Weighted average of probabilities
         fused = (weights['T'] * probs_dict['T'] + 
                  weights['I'] * probs_dict['I'] + 
-                 weights['A'] * probs_dict['A'])
+                 weights['A'] * probs_dict['A'] +
+                 weights['S'] * probs_dict['S'])
         
         # Ensure probabilities sum to 1 (should already be close due to linear combination)
         fused = fused / (np.sum(fused, axis=1, keepdims=True) + 1e-12)
@@ -1000,7 +1138,7 @@ class MultimodalChoiceAnalyzer:
         entropy_data = []
         modality_labels = []
         
-        for modality in ['T', 'I', 'A']:
+        for modality in ['T', 'I', 'A', 'S']:
             probs_m = self.probs[modality]
             for q in range(len(self.query_ids)):
                 # Only consider top-k for entropy calculation
@@ -1011,7 +1149,7 @@ class MultimodalChoiceAnalyzer:
                 top_k_probs = top_k_probs / (top_k_probs.sum() + 1e-12)  # Renormalize
                 H = entropy(top_k_probs + 1e-12)
                 entropy_data.append(H)
-                modality_labels.append({'T': 'Text', 'I': 'Visual', 'A': 'Audio'}[modality])
+                modality_labels.append({'T': 'Text', 'I': 'Visual', 'A': 'Audio', 'S': 'Transcript'}[modality])
         
         entropy_df = pd.DataFrame({
             'Entropy': entropy_data,
@@ -1032,7 +1170,7 @@ class MultimodalChoiceAnalyzer:
         fig, ax = plt.subplots(1, 1, figsize=(10, 6))
         
         # Plot density curves for each modality
-        for modality, label in [('T', 'Text'), ('I', 'Visual'), ('A', 'Audio')]:
+        for modality, label in [('T', 'Text'), ('I', 'Visual'), ('A', 'Audio'), ('S', 'Transcript')]:
             modality_data = entropy_df[entropy_df['Modality'] == label]['Entropy']
             modality_data.plot(kind='density', ax=ax, label=label, linewidth=2)
         
@@ -1048,9 +1186,9 @@ class MultimodalChoiceAnalyzer:
         plt.close()
         
         # Figure A3: Entropy distributions with histograms
-        fig, axes = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
+        fig, axes = plt.subplots(1, 4, figsize=(20, 5), sharey=True)
         
-        for idx, (modality, label) in enumerate([('T', 'Text'), ('I', 'Visual'), ('A', 'Audio')]):
+        for idx, (modality, label) in enumerate([('T', 'Text'), ('I', 'Visual'), ('A', 'Audio'), ('S', 'Transcript')]):
             ax = axes[idx]
             modality_data = entropy_df[entropy_df['Modality'] == label]['Entropy']
             ax.hist(modality_data, bins=30, alpha=0.7, edgecolor='black')
@@ -1082,7 +1220,14 @@ class MultimodalChoiceAnalyzer:
         
         # Compute pairwise fusion improvements
         pairwise_improvements = []
-        modality_map = {'Text-Visual': ('T', 'I'), 'Text-Audio': ('T', 'A'), 'Visual-Audio': ('I', 'A')}
+        modality_map = {
+            'Text-Visual': ('T', 'I'), 
+            'Text-Audio': ('T', 'A'), 
+            'Text-Transcript': ('T', 'S'),
+            'Visual-Audio': ('I', 'A'),
+            'Visual-Transcript': ('I', 'S'),
+            'Audio-Transcript': ('A', 'S')
+        }
         
         for pair_name in pair_names:
             m1, m2 = modality_map[pair_name]
@@ -1105,7 +1250,7 @@ class MultimodalChoiceAnalyzer:
             pairwise_improvements.append(improvement)
         
         # Create scatter plot with actual pairwise improvements
-        colors = ['red', 'green', 'blue']
+        colors = ['red', 'green', 'blue', 'orange', 'purple', 'brown']
         for i, (jsd, improvement, pair_name) in enumerate(zip(jsds, pairwise_improvements, pair_names)):
             ax.scatter(jsd, improvement, color=colors[i], s=100, label=pair_name, alpha=0.7)
         
@@ -1160,6 +1305,132 @@ class MultimodalChoiceAnalyzer:
         logger.info(f"  - Entropy distribution: {entropy_fig_path}")
         logger.info(f"  - JSD vs improvement: {jsd_fig_path}")
         logger.info(f"  - Hubness curve: {hubness_fig_path}")
+    
+    def create_entropy_vs_event_hit_curve(self, n_bins: int = 10):
+        """Plot Event-Hit@1(pair) vs entropy bins for each modality.
+
+        For each modality (Text, Visual, Audio):
+          - Compute per-query top-k entropy (consistent with other places using top-k).
+          - Compute per-query Event-Hit@1(pair) if we select this modality only.
+          - Bin queries by entropy quantiles (per modality) and compute hit-rate per bin.
+        Saves:
+          - entropy_vs_event_hit_curve.png
+          - entropy_vs_event_hit_by_bin.csv
+        """
+        logger.info("Creating entropy vs Event-Hit@1 curves...")
+
+        eps = 1e-12
+        modalities = [('T', 'Text'), ('I', 'Visual'), ('A', 'Audio'), ('S', 'Transcript')]
+
+        def entropy_top_k_row(r, k=self.top_k):
+            idx = np.argpartition(r, -k)[-k:] if r.shape[0] > k else np.arange(r.shape[0])
+            sub = r[idx]
+            sub = sub / (sub.sum() + eps)
+            return float(entropy(sub + eps))
+
+        def compute_event_hit_for_row(r, q_idx):
+            """Event-Hit@1(pair) for a single modality row r = probs[q]"""
+            pos_mask = (self.candidate_meta['candidate_label'] == 1)
+            neg_mask = (self.candidate_meta['candidate_label'] == 0)
+            if np.sum(pos_mask) == 0 or np.sum(neg_mask) == 0:
+                return 0
+            pos_probs = r[pos_mask]
+            neg_probs = r[neg_mask]
+            top1_pos_idx = int(np.argmax(pos_probs))
+            top1_neg_idx = int(np.argmax(neg_probs))
+            pos_events = self.candidate_meta['candidate_event'][pos_mask]
+            neg_events = self.candidate_meta['candidate_event'][neg_mask]
+            top1_pos_event = pos_events[top1_pos_idx]
+            top1_neg_event = neg_events[top1_neg_idx]
+            query_event = self.query_events[q_idx]
+            return 1 if (top1_pos_event == query_event or top1_neg_event == query_event) else 0
+
+        # Collect rows for CSV
+        rows = []
+
+        # Prepare plot
+        plt.figure(figsize=(10, 6))
+
+        for key, label in modalities:
+            Pm = self.probs[key]  # [Q, N]
+            Qn = Pm.shape[0]
+
+            # Per-query entropy and hit
+            ent_vec = np.zeros(Qn, dtype=np.float32)
+            hit_vec = np.zeros(Qn, dtype=np.float32)
+            for qi in range(Qn):
+                r = Pm[qi]
+                ent_vec[qi] = entropy_top_k_row(r)
+                hit_vec[qi] = compute_event_hit_for_row(r, qi)
+
+            # Bin by entropy quantiles (per modality)
+            try:
+                # Use pandas qcut to handle duplicates; drop duplicate edges
+                cat = pd.qcut(ent_vec, q=n_bins, duplicates='drop')
+                df_m = pd.DataFrame({'Entropy': ent_vec, 'Hit': hit_vec, 'Bin': cat.astype(str)})
+                grouped = df_m.groupby('Bin')
+                mins = grouped['Entropy'].min().values
+                maxs = grouped['Entropy'].max().values
+                centers = (mins + maxs) / 2.0
+                hit_rates = grouped['Hit'].mean().values.astype(float)
+                counts = grouped['Hit'].count().values.astype(int)
+
+                # Sort by centers for monotonic x
+                order = np.argsort(centers)
+                centers = centers[order]
+                hit_rates = hit_rates[order]
+                counts = counts[order]
+                mins = mins[order]
+                maxs = maxs[order]
+
+                plt.plot(centers, hit_rates, marker='o', label=label)
+
+                for c, hr, ct, mn, mx in zip(centers, hit_rates, counts, mins, maxs):
+                    rows.append({'Modality': label,
+                                 'Entropy_min': float(mn),
+                                 'Entropy_max': float(mx),
+                                 'Entropy_center': float(c),
+                                 'HitRate': float(hr),
+                                 'Count': int(ct)})
+            except Exception as e:
+                logger.warning(f"qcut failed for modality {label}: {e}; falling back to uniform bins")
+                # Uniform bins fallback
+                mn, mx = float(ent_vec.min()), float(ent_vec.max())
+                edges = np.linspace(mn, mx + eps, n_bins + 1)
+                centers = 0.5 * (edges[:-1] + edges[1:])
+                hit_rates = []
+                counts = []
+                for b in range(n_bins):
+                    mask = (ent_vec >= edges[b]) & (ent_vec < edges[b+1]) if b < n_bins - 1 else (ent_vec >= edges[b]) & (ent_vec <= edges[b+1])
+                    if np.sum(mask) > 0:
+                        hit_rates.append(float(hit_vec[mask].mean()))
+                        counts.append(int(np.sum(mask)))
+                    else:
+                        hit_rates.append(0.0)
+                        counts.append(0)
+                plt.plot(centers, hit_rates, marker='o', label=label)
+                for c, hr, ct, lo, hi in zip(centers, hit_rates, counts, edges[:-1], edges[1:]):
+                    rows.append({'Modality': label,
+                                 'Entropy_min': float(lo),
+                                 'Entropy_max': float(hi),
+                                 'Entropy_center': float(c),
+                                 'HitRate': float(hr),
+                                 'Count': int(ct)})
+
+        plt.title('Event-Hit@1(pair) vs Entropy (per-modality bins)')
+        plt.xlabel('Entropy (bin centers, top-k)')
+        plt.ylabel('Event-Hit@1(pair)')
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+
+        fig_path = self.output_dir / 'entropy_vs_event_hit_curve.png'
+        csv_path = self.output_dir / 'entropy_vs_event_hit_by_bin.csv'
+        plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        pd.DataFrame(rows).to_csv(csv_path, index=False)
+        logger.info(f"  - Entropy vs Event-Hit curve: {fig_path}")
+        logger.info(f"  - Entropy vs Event-Hit CSV: {csv_path}")
     
     def generate_decision_summary(self, single_df: pd.DataFrame, pairs_df: pd.DataFrame,
                                 hubness_summary: Dict, methods_df: pd.DataFrame):
@@ -1313,7 +1584,13 @@ class MultimodalChoiceAnalyzer:
         
         # Step 4: Modality pair analysis
         pairs_df = self.compute_modality_pair_analysis()
-        
+
+        # Extra: entropy/margin/overlap diagnostics to explain similarity across modalities
+        try:
+            self.compute_entropy_diagnostics()
+        except Exception as e:
+            logger.warning(f"Entropy diagnostics failed: {e}")
+
         # Step 5: Hubness analysis
         hubness_df, hubness_summary = self.compute_hubness_analysis()
         
@@ -1323,6 +1600,12 @@ class MultimodalChoiceAnalyzer:
         # Step 7: Create visualizations
         self.create_visualizations(single_df, pairs_df, hubness_df, methods_df, hubness_summary)
         
+        # Step 7.1: Entropy vs Event-Hit curve
+        try:
+            self.create_entropy_vs_event_hit_curve()
+        except Exception as e:
+            logger.warning(f"Entropy vs Event-Hit curve failed: {e}")
+
         # Step 8: Generate decision summary
         decision_summary = self.generate_decision_summary(single_df, pairs_df, hubness_summary, methods_df)
         
@@ -1339,6 +1622,210 @@ class MultimodalChoiceAnalyzer:
         for file_path in self.output_dir.glob("*"):
             logger.info(f"  - {file_path.name}")
         logger.info("="*60)
+
+    def compute_entropy_diagnostics(self, tau_list: List[float] = [1.0, 0.5, 0.2, 0.1]):
+        """Compute diagnostics to understand why entropy distributions look similar across modalities.
+
+        Saves:
+          - entropy_diagnostics_summary.csv
+          - top1_top2_margin_distribution.png
+          - entropy_cross_modality_scatter.png
+          - topk_overlap_jaccard.png
+          - entropy_temperature_sweep.csv, temperature_sweep_entropy.png
+        """
+        logger.info("Computing entropy diagnostics (margins, overlaps, temperature sweep)...")
+
+        modalities = ['T', 'I', 'A', 'S']
+        Q = len(self.query_ids)
+        N = len(self.candidate_meta['candidate_ids'])
+        k = min(self.top_k, N)
+
+        def topk_indices_row(r, kk=k):
+            return np.argpartition(r, -kk)[-kk:] if r.shape[0] > kk else np.arange(r.shape[0])
+
+        # Collect per-modality vectors
+        ent_topk = {}
+        ent_full = {}
+        perp_topk = {}
+        margin_top2 = {}
+        topk_idx_list = {}
+
+        for m in modalities:
+            P = self.probs[m]  # [Q, N]
+            H_topk = np.zeros(Q)
+            H_full = np.zeros(Q)
+            M_margin = np.zeros(Q)
+            idx_list = []
+            for qi in range(Q):
+                r = P[qi]
+                idx = topk_indices_row(r)
+                sub = r[idx]
+                sub = sub / (sub.sum() + 1e-12)
+                H_topk[qi] = entropy(sub + 1e-12)
+                H_full[qi] = entropy(r + 1e-12)
+                srt = np.sort(r)[::-1]
+                M_margin[qi] = (srt[0] - srt[1]) if srt.shape[0] > 1 else 1.0
+                idx_list.append(set(idx.tolist()))
+            ent_topk[m] = H_topk
+            ent_full[m] = H_full
+            perp_topk[m] = np.exp(H_topk)
+            margin_top2[m] = M_margin
+            topk_idx_list[m] = idx_list
+
+        # Pairwise correlations and Jaccard overlaps
+        def pairwise_stats(vec_map, name):
+            rows = []
+            for a, b, label in [('T', 'I', 'Text-Visual'), ('T', 'A', 'Text-Audio'), ('I', 'A', 'Visual-Audio'), 
+                                ('T', 'S', 'Text-Transcript'), ('I', 'S', 'Visual-Transcript'), ('A', 'S', 'Audio-Transcript')]:
+                rho, _ = spearmanr(vec_map[a], vec_map[b])
+                rows.append({'Pair': label, f'{name}_Spearman': 0.0 if np.isnan(rho) else float(rho)})
+            return rows
+
+        corr_entropy_rows = pairwise_stats(ent_topk, 'EntropyTopK')
+        corr_margin_rows = pairwise_stats(margin_top2, 'MarginTop2')
+
+        # Jaccard per query then average
+        jacc_rows = []
+        for a, b, label in [('T', 'I', 'Text-Visual'), ('T', 'A', 'Text-Audio'), ('I', 'A', 'Visual-Audio'),
+                            ('T', 'S', 'Text-Transcript'), ('I', 'S', 'Visual-Transcript'), ('A', 'S', 'Audio-Transcript')]:
+            jacc = []
+            A = topk_idx_list[a]
+            B = topk_idx_list[b]
+            for qi in range(Q):
+                inter = len(A[qi] & B[qi])
+                union = len(A[qi] | B[qi])
+                jacc.append(inter / union if union > 0 else 0.0)
+            jacc_rows.append({'Pair': label,
+                              'TopK_Jaccard_mean': float(np.mean(jacc)),
+                              'TopK_Jaccard_std': float(np.std(jacc))})
+
+        # Summarize per-modality
+        rows_modal = []
+        for m, label in [('T', 'Text'), ('I', 'Visual'), ('A', 'Audio'), ('S', 'Transcript')]:
+            rows_modal.append({
+                'Modality': label,
+                'H_topk_mean': float(ent_topk[m].mean()),
+                'H_topk_std': float(ent_topk[m].std()),
+                'H_full_mean': float(ent_full[m].mean()),
+                'H_full_std': float(ent_full[m].std()),
+                'Perplexity_mean': float(perp_topk[m].mean()),
+                'Perplexity_std': float(perp_topk[m].std()),
+                'Top2_Margin_mean': float(margin_top2[m].mean()),
+                'Top2_Margin_std': float(margin_top2[m].std()),
+            })
+
+        # Save summary CSV
+        summary_df = pd.DataFrame(rows_modal)
+        corr_df = pd.DataFrame(corr_entropy_rows).merge(pd.DataFrame(corr_margin_rows), on='Pair')
+        jacc_df = pd.DataFrame(jacc_rows)
+        # Write individual CSVs
+        summary_df.to_csv(self.output_dir / 'entropy_diagnostics_summary.csv', index=False)
+        corr_df.to_csv(self.output_dir / 'entropy_cross_modality_correlation.csv', index=False)
+        jacc_df.to_csv(self.output_dir / 'topk_overlap_jaccard.csv', index=False)
+
+        # Plots: margin distributions
+        try:
+            plt.figure(figsize=(10, 6))
+            for m, label, color in [('T', 'Text', 'tab:blue'), ('I', 'Visual', 'tab:orange'), ('A', 'Audio', 'tab:green'), ('S', 'Transcript', 'tab:red')]:
+                sns.kdeplot(margin_top2[m], label=label, fill=True, alpha=0.25, color=color)
+            plt.title('Top-1 vs Top-2 Margin Distribution')
+            plt.xlabel('Margin (p1 - p2)')
+            plt.ylabel('Density')
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(self.output_dir / 'top1_top2_margin_distribution.png', dpi=300, bbox_inches='tight')
+            plt.close()
+        except Exception as e:
+            logger.warning(f"Plot margin distribution failed: {e}")
+
+        # Plots: entropy cross-modality scatter
+        try:
+            fig, axes = plt.subplots(2, 3, figsize=(18, 8))
+            pairs = [(('T', 'I'), 'Text vs Visual'), (('T', 'A'), 'Text vs Audio'), (('I', 'A'), 'Visual vs Audio'),
+                     (('T', 'S'), 'Text vs Transcript'), (('I', 'S'), 'Visual vs Transcript'), (('A', 'S'), 'Audio vs Transcript')]
+            axes = axes.flatten()
+            for ax, ((a, b), title) in zip(axes, pairs):
+                ax.scatter(ent_topk[a], ent_topk[b], alpha=0.3, s=8)
+                rho, _ = spearmanr(ent_topk[a], ent_topk[b])
+                ax.set_title(f'{title} (Spearman={0.0 if np.isnan(rho) else rho:.2f})')
+                ax.set_xlabel('H_topk ' + a)
+                ax.set_ylabel('H_topk ' + b)
+                ax.grid(True, alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(self.output_dir / 'entropy_cross_modality_scatter.png', dpi=300, bbox_inches='tight')
+            plt.close()
+        except Exception as e:
+            logger.warning(f"Plot entropy scatter failed: {e}")
+
+        # Plots: top-k overlap Jaccard
+        try:
+            fig, axes = plt.subplots(2, 3, figsize=(18, 8), sharey=True)
+            pairs = [('T', 'I', 'Text-Visual'), ('T', 'A', 'Text-Audio'), ('I', 'A', 'Visual-Audio'),
+                     ('T', 'S', 'Text-Transcript'), ('I', 'S', 'Visual-Transcript'), ('A', 'S', 'Audio-Transcript')]
+            axes = axes.flatten()
+            for ax, (a, b, label) in zip(axes, pairs):
+                jacc = []
+                for qi in range(Q):
+                    inter = len(topk_idx_list[a][qi] & topk_idx_list[b][qi])
+                    union = len(topk_idx_list[a][qi] | topk_idx_list[b][qi])
+                    jacc.append(inter / union if union > 0 else 0.0)
+                ax.hist(jacc, bins=30, alpha=0.7, edgecolor='black')
+                ax.set_title(f'{label} (mean={np.mean(jacc):.2f})')
+                ax.set_xlabel('Jaccard')
+                if label in ['Text-Visual', 'Text-Transcript']:
+                    ax.set_ylabel('Count')
+                ax.grid(True, alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(self.output_dir / 'topk_overlap_jaccard.png', dpi=300, bbox_inches='tight')
+            plt.close()
+        except Exception as e:
+            logger.warning(f"Plot top-k overlap failed: {e}")
+
+        # Temperature sweep using raw similarity scores
+        try:
+            tau_records = []
+            for tau in tau_list:
+                probs_tau = {}
+                for m in modalities:
+                    S = self.scores[m]
+                    probs_tau[m] = self._softmax(S / max(tau, 1e-6), axis=1)
+                # Apply self-exclusion so it matches baseline handling
+                probs_tau = self._apply_self_exclusion_to(probs_tau)
+
+                # Compute mean top-k entropy per modality
+                for m, label in [('T', 'Text'), ('I', 'Visual'), ('A', 'Audio'), ('S', 'Transcript')]:
+                    Hs = []
+                    Pm = probs_tau[m]
+                    for qi in range(Q):
+                        r = Pm[qi]
+                        idx = topk_indices_row(r)
+                        sub = r[idx]
+                        sub = sub / (sub.sum() + 1e-12)
+                        Hs.append(entropy(sub + 1e-12))
+                    tau_records.append({'Tau': tau, 'Modality': label,
+                                        'H_topk_mean': float(np.mean(Hs)),
+                                        'H_topk_std': float(np.std(Hs))})
+
+            tau_df = pd.DataFrame(tau_records)
+            tau_df.to_csv(self.output_dir / 'entropy_temperature_sweep.csv', index=False)
+
+            # Plot temperature sweep
+            plt.figure(figsize=(10, 6))
+            for label in ['Text', 'Visual', 'Audio', 'Transcript']:
+                sub = tau_df[tau_df['Modality'] == label]
+                plt.plot(sub['Tau'], sub['H_topk_mean'], marker='o', label=label)
+            plt.gca().invert_xaxis()  # smaller tau to the right visually
+            plt.title('Top-k Entropy vs Temperature (smaller tau = sharper)')
+            plt.xlabel('Tau')
+            plt.ylabel('Mean H_topk')
+            plt.legend()
+            plt.grid(True, alpha=0.3)
+            plt.tight_layout()
+            plt.savefig(self.output_dir / 'temperature_sweep_entropy.png', dpi=300, bbox_inches='tight')
+            plt.close()
+        except Exception as e:
+            logger.warning(f"Temperature sweep failed: {e}")
 
 
 def main():

@@ -1,12 +1,13 @@
 import os
 import json
 import librosa
+import numpy as np
 import torch
 import torchaudio
 import pandas as pd
 import argparse
 from tqdm import tqdm
-from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2Model, WhisperProcessor, WhisperForConditionalGeneration
+from transformers import Wav2Vec2FeatureExtractor, Wav2Vec2Model, WhisperProcessor, WhisperForConditionalGeneration, ClapModel, ClapProcessor
 import warnings
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -29,9 +30,27 @@ def initialize_wav2vec_model(model_name):
     
     return feature_extractor, model, hidden_dim
 
+def is_clap_model(model_name):
+    """Check if the model is a CLAP model"""
+    return "clap" in model_name.lower()
+
 def get_model_mark(model_name):
     """Extract model mark from model name for file suffixes"""
     return model_name.replace("/", "-").replace("_", "-")
+
+def initialize_clap_model(model_name):
+    """Initialize CLAP model with configurable model name"""
+    print(f"Loading CLAP model: {model_name}")
+    processor = ClapProcessor.from_pretrained(model_name)
+    model = ClapModel.from_pretrained(model_name)
+    model.to(device)
+    model.eval()
+    
+    # CLAP models typically output 512-dimensional features
+    hidden_dim = 512
+    print(f"CLAP hidden dimension: {hidden_dim}")
+    
+    return processor, model, hidden_dim
 
 print(f"Using device: {device}")
 
@@ -57,18 +76,20 @@ def load_frame_timestamps(timestamp_file):
                 timestamps.append((frame_name, start_time, end_time))
     return timestamps
 
-def extract_frame_features(video_id, audio_path, frame_timestamps, wav2vec_feature_extractor, wav2vec_model, hidden_dim):
-    """Extract audio features from frame-aligned segments using wav2vec2"""
+def extract_frame_features(video_id, audio_path, frame_timestamps, model_processor, audio_model, hidden_dim, model_name):
+    """Extract audio features from frame-aligned segments using CLAP or Wav2Vec2"""
     try:
-        # Load full audio
-        audio, sr = librosa.load(audio_path, sr=16000)
+        # Load full audio with appropriate sampling rate
+        is_clap = is_clap_model(model_name)
+        target_sr = 48000 if is_clap else 16000
+        audio, sr = librosa.load(audio_path, sr=target_sr)
         
         frame_features = []
         
         for i, (frame_name, start_time, end_time) in enumerate(frame_timestamps):
             # Extract segment
-            start_sample = int(start_time * sr)
-            end_sample = int(end_time * sr)
+            start_sample = int(start_time * target_sr)
+            end_sample = int(end_time * target_sr)
             
             # Ensure valid segment bounds
             start_sample = max(0, start_sample)
@@ -76,27 +97,47 @@ def extract_frame_features(video_id, audio_path, frame_timestamps, wav2vec_featu
             
             if end_sample <= start_sample:
                 # Invalid segment, use zeros
-                segment_length = int(0.5 * sr)  # 0.5 second default
-                segment = torch.zeros(segment_length, dtype=torch.float32)
+                segment_length = int(0.5 * target_sr)  # 0.5 second default
+                if is_clap:
+                    segment = torch.zeros(segment_length, dtype=torch.float32).numpy()
+                else:
+                    segment = torch.zeros(segment_length, dtype=torch.float32)
             else:
                 segment = audio[start_sample:end_sample]
-                # Convert to torch tensor for wav2vec
-                segment = torch.tensor(segment, dtype=torch.float32)
-            
-            # Process through wav2vec (ensure minimum length)
-            if len(segment) < 400:  # Wav2Vec2 minimum length
-                segment = torch.cat([segment, torch.zeros(400 - len(segment))])
+                if not is_clap:
+                    # Convert to torch tensor for wav2vec
+                    segment = torch.tensor(segment, dtype=torch.float32)
             
             try:
-                # Process with Wav2Vec2
-                segment = segment.unsqueeze(0).to(device)
-                with torch.no_grad():
-                    wav2vec_outputs = wav2vec_model(segment)
-                    # Use mean pooling over sequence length to get fixed-size features
-                    features = wav2vec_outputs.last_hidden_state.mean(dim=1)  # [1, hidden_dim]
-                    frame_features.append(features.cpu())
+                if is_clap:
+                    # Process with CLAP
+                    # Ensure minimum length for CLAP (typically needs at least some audio)
+                    min_samples = int(0.1 * target_sr)  # 0.1 seconds at 48kHz = 4800 samples
+                    if len(segment) < min_samples:
+                        padding = min_samples - len(segment)
+                        segment = np.pad(segment, (0, padding), mode='constant', constant_values=0)
+                    
+                    inputs = model_processor(audios=segment, return_tensors="pt", sampling_rate=target_sr)
+                    inputs = {k: v.to(device) for k, v in inputs.items()}
+                    
+                    with torch.no_grad():
+                        features = audio_model.get_audio_features(**inputs)  # [1, hidden_dim]
+                        frame_features.append(features.cpu())
+                else:
+                    # Process through wav2vec (ensure minimum length)
+                    if len(segment) < 400:  # Wav2Vec2 minimum length
+                        segment = torch.cat([segment, torch.zeros(400 - len(segment))])
+                    
+                    segment = segment.unsqueeze(0).to(device)
+                    with torch.no_grad():
+                        wav2vec_outputs = audio_model(segment)
+                        # Use mean pooling over sequence length to get fixed-size features
+                        features = wav2vec_outputs.last_hidden_state.mean(dim=1)  # [1, hidden_dim]
+                        frame_features.append(features.cpu())
+                        
             except Exception as e:
-                print(f"Wav2Vec2 error for {video_id}, {frame_name}: {e}")
+                model_type = "CLAP" if is_clap else "Wav2Vec2"
+                print(f"{model_type} error for {video_id}, {frame_name}: {e}")
                 # Fallback: zero features
                 frame_features.append(torch.zeros(1, hidden_dim))
         
@@ -163,7 +204,7 @@ def generate_frame_transcripts(video_id, audio_path, frame_timestamps, whisper_p
         # Return empty transcripts
         return [""] * 16
 
-def process_frame_aligned_audio(video_id, audio_path, frame_timestamps, wav2vec_feature_extractor, wav2vec_model, hidden_dim, skip_transcripts=False, whisper_processor=None, whisper_model=None, skip_features=False):
+def process_frame_aligned_audio(video_id, audio_path, frame_timestamps, model_processor, audio_model, hidden_dim, skip_transcripts=False, whisper_processor=None, whisper_model=None, skip_features=False, model_name=None):
     """Wrapper function to process audio features and/or transcripts"""
     
     # Initialize defaults
@@ -172,7 +213,7 @@ def process_frame_aligned_audio(video_id, audio_path, frame_timestamps, wav2vec_
     
     # Extract features if not skipping
     if not skip_features:
-        frame_features = extract_frame_features(video_id, audio_path, frame_timestamps, wav2vec_feature_extractor, wav2vec_model, hidden_dim)
+        frame_features = extract_frame_features(video_id, audio_path, frame_timestamps, model_processor, audio_model, hidden_dim, model_name)
     else:
         # Use zero features when skipping
         frame_features = torch.zeros(16, hidden_dim)
@@ -186,24 +227,37 @@ def process_frame_aligned_audio(video_id, audio_path, frame_timestamps, wav2vec_
     
     return frame_features, frame_transcripts
 
-def process_global_audio(audio_path, wav2vec_model, hidden_dim):
-    """Process full audio file for global features"""
+def process_global_audio(audio_path, audio_model, hidden_dim, model_processor=None, model_name=None):
+    """Process full audio file for global features using CLAP or Wav2Vec2"""
     try:
-        # Load full audio
-        audio, sr = librosa.load(audio_path, sr=16000)
+        # Load full audio with appropriate sampling rate
+        is_clap = is_clap_model(model_name) if model_name else False
+        target_sr = 48000 if is_clap else 16000
+        audio, sr = librosa.load(audio_path, sr=target_sr)
         
-        # Process through wav2vec
-        audio_tensor = torch.tensor(audio, dtype=torch.float32).unsqueeze(0).to(device)
-        
-        with torch.no_grad():
-            wav2vec_outputs = wav2vec_model(audio_tensor)
-            # Use mean pooling over sequence length to get fixed-size features
-            global_features = wav2vec_outputs.last_hidden_state.mean(dim=1)  # [1, hidden_dim]
+        if is_clap and model_processor:
+            # Process with CLAP
+            inputs = model_processor(audios=audio, return_tensors="pt", sampling_rate=target_sr)
+            inputs = {k: v.to(device) for k, v in inputs.items()}
             
-        return global_features.cpu().squeeze(0)  # [hidden_dim]
+            with torch.no_grad():
+                global_features = audio_model.get_audio_features(**inputs)  # [1, hidden_dim]
+                
+            return global_features.cpu().squeeze(0)  # [hidden_dim]
+        else:
+            # Process through wav2vec
+            audio_tensor = torch.tensor(audio, dtype=torch.float32).unsqueeze(0).to(device)
+            
+            with torch.no_grad():
+                wav2vec_outputs = audio_model(audio_tensor)
+                # Use mean pooling over sequence length to get fixed-size features
+                global_features = wav2vec_outputs.last_hidden_state.mean(dim=1)  # [1, hidden_dim]
+                
+            return global_features.cpu().squeeze(0)  # [hidden_dim]
         
     except Exception as e:
-        print(f"Error processing global audio {audio_path}: {e}")
+        model_type = "CLAP" if (is_clap_model(model_name) if model_name else False) else "Wav2Vec2"
+        print(f"Error processing global audio {audio_path} with {model_type}: {e}")
         return torch.zeros(hidden_dim)
 
 def load_existing_results(dataset_name, model_mark, skip_transcripts=False):
@@ -306,18 +360,23 @@ def load_existing_results(dataset_name, model_mark, skip_transcripts=False):
     
     return existing_frame_features, existing_global_features, existing_frame_transcripts, existing_video_ids
 
-def process_dataset(dataset_name, wav2vec_model_name, skip_transcripts=False, skip_features=False):
+def process_dataset(dataset_name, model_name, skip_transcripts=False, skip_features=False):
     """Process dataset for frame-level and global audio features with resume capability"""
     
-    # Initialize wav2vec model conditionally
-    wav2vec_feature_extractor, wav2vec_model, hidden_dim = None, None, None
-    model_mark = get_model_mark(wav2vec_model_name)
+    # Initialize audio model conditionally
+    model_processor, audio_model, hidden_dim = None, None, None
+    model_mark = get_model_mark(model_name)
     
     if not skip_features:
-        wav2vec_feature_extractor, wav2vec_model, hidden_dim = initialize_wav2vec_model(wav2vec_model_name)
+        if is_clap_model(model_name):
+            model_processor, audio_model, hidden_dim = initialize_clap_model(model_name)
+        else:
+            model_processor, audio_model, hidden_dim = initialize_wav2vec_model(model_name)
     else:
         # Still need hidden_dim for tensor shapes when skipping features
-        if "CAiRE" in wav2vec_model_name:
+        if is_clap_model(model_name):
+            hidden_dim = 512  # CLAP models
+        elif "CAiRE" in model_name:
             hidden_dim = 1024
         else:
             hidden_dim = 768  # Default for facebook models
@@ -378,11 +437,11 @@ def process_dataset(dataset_name, wav2vec_model_name, skip_transcripts=False, sk
                 continue
             
             # Process frame-level audio
-            frame_features, frame_transcripts = process_frame_aligned_audio(video_id, audio_path, frame_timestamps, wav2vec_feature_extractor, wav2vec_model, hidden_dim, skip_transcripts, whisper_processor, whisper_model, skip_features)
+            frame_features, frame_transcripts = process_frame_aligned_audio(video_id, audio_path, frame_timestamps, model_processor, audio_model, hidden_dim, skip_transcripts, whisper_processor, whisper_model, skip_features, model_name)
             
             # Process global audio
             if not skip_features:
-                global_features = process_global_audio(audio_path, wav2vec_model, hidden_dim)
+                global_features = process_global_audio(audio_path, audio_model, hidden_dim, model_processor, model_name)
             else:
                 global_features = torch.zeros(hidden_dim)
             
@@ -489,7 +548,7 @@ def main():
                         choices=['FakeSV', 'FakeTT', 'FVC'],
                         help='Dataset name (default: FakeSV)')
     parser.add_argument('--wav2vec_model', type=str, default='CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-all-age',
-                        help='Wav2Vec2 model name (default: CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-all-age)')
+                        help='Audio model name - supports both Wav2Vec2 and CLAP models (e.g., laion/clap-htsat-fused)')
     parser.add_argument('--skip_transcripts', action='store_true',
                         help='Skip transcript generation and only extract audio features')
     parser.add_argument('--skip_features', action='store_true',
@@ -498,8 +557,9 @@ def main():
     args = parser.parse_args()
     
     model_mark = get_model_mark(args.wav2vec_model)
+    model_type = "CLAP" if is_clap_model(args.wav2vec_model) else "Wav2Vec2"
     print(f"Processing dataset: {args.dataset}")
-    print(f"Using Wav2Vec2 model: {args.wav2vec_model}")
+    print(f"Using {model_type} model: {args.wav2vec_model}")
     print(f"Model mark for files: {model_mark}")
     print(f"Expected directory structure:")
     print(f"  - data/{args.dataset}/frames_16/ (video frame directories with timestamps)")
