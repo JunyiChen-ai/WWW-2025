@@ -233,9 +233,40 @@ class MultimodalChoiceAnalyzer:
                 audio_source = "frames_mean_pool"
                 audio_file_path = str(audio_file)
             else:
-                logger.error(f"No audio features file found (tried both global and frames)")
-                logger.error(f"  Global file: audio_features_global_{self.audio_model}.pt")
-                logger.error(f"  Frames file: audio_features_frames_{self.audio_model}.pt")
+                # If model-specific files don't exist, try without model suffix
+                logger.warning(f"Model-specific audio features not found, trying without model suffix")
+                
+                # Try global without model suffix
+                audio_file_fallback = feature_dir / "audio_features_global.pt"
+                if audio_file_fallback.exists():
+                    logger.info("Loading global audio features without model suffix")
+                    raw_audio = torch.load(audio_file_fallback, map_location='cpu')
+                    for video_id, features in raw_audio.items():
+                        if features.numel() > 0:
+                            self.audio_features[video_id] = features.numpy()
+                    logger.info(f"Loaded global audio features (no model suffix) for {len(self.audio_features)} videos")
+                    audio_source = "global_no_model"
+                    audio_file_path = str(audio_file_fallback)
+                else:
+                    # Try frames without model suffix
+                    logger.warning(f"Global audio features without model suffix not found: {audio_file_fallback}")
+                    audio_file_fallback = feature_dir / "audio_features_frames.pt"
+                    if audio_file_fallback.exists():
+                        logger.info("Loading frame-level audio features without model suffix with mean pooling")
+                        raw_audio = torch.load(audio_file_fallback, map_location='cpu')
+                        for video_id, frames in raw_audio.items():
+                            if frames.shape[0] > 0:
+                                pooled = torch.mean(frames, dim=0)
+                                self.audio_features[video_id] = pooled.numpy()
+                        logger.info(f"Loaded and pooled frame-level audio features (no model suffix) for {len(self.audio_features)} videos")
+                        audio_source = "frames_mean_pool_no_model"
+                        audio_file_path = str(audio_file_fallback)
+                    else:
+                        logger.error(f"No audio features file found (tried all variants)")
+                        logger.error(f"  Global file: audio_features_global_{self.audio_model}.pt")
+                        logger.error(f"  Frames file: audio_features_frames_{self.audio_model}.pt")
+                        logger.error(f"  Global file (no model): audio_features_global.pt")
+                        logger.error(f"  Frames file (no model): audio_features_frames.pt")
 
         # Report which audio branch was used and the L2 norm stats
         if len(self.audio_features) > 0:
@@ -2238,6 +2269,13 @@ and structural inconsistencies"""
         except Exception as e:
             logger.warning(f"kNN Jaccard overlap plot failed: {e}")
 
+        # Step 7.7: Principal angles between modality subspaces (single axis, three lines)
+        try:
+            # Default: no extra preprocessing for this plot
+            self.create_principal_angles_plot(R=64)
+        except Exception as e:
+            logger.warning(f"Principal angles plot failed: {e}")
+
         # Step 8: Generate decision summary
         decision_summary = self.generate_decision_summary(single_df, pairs_df, hubness_summary, methods_df)
         
@@ -2254,6 +2292,101 @@ and structural inconsistencies"""
         for file_path in self.output_dir.glob("*"):
             logger.info(f"  - {file_path.name}")
         logger.info("="*60)
+
+    def create_principal_angles_plot(self, R: int = 64, do_l2: bool = False):
+        """Plot cos(theta_r) for principal angles between T–V, T–A, V–A subspaces.
+
+        Steps:
+          1) 可选每样本 L2（默认关闭）；不做去均值、不做去主成分。
+          2) 用 QR 分解得到样本空间的正交基 Q，取前 R 列作为 U_T, U_V, U_A。
+          3) For each pair (U_A, U_B): SVD of U_A^T U_B → singular values = cos(theta_r).
+          4) Plot three lines on one axis across r=1..R_eff. Cache intermediates/results.
+        """
+        if not hasattr(self, 'query_ids') or not self.query_ids:
+            raise RuntimeError("Please call prepare_analysis_data() before plotting principal angles.")
+
+        # Determine cache file
+        N = len(self.query_ids)
+        cache_name = f"principal_angles_raw_{self.text_model_short}_{self.audio_model}_N{N}_R{R}_l2{int(do_l2)}.npz"
+        cache_file = self.cache_dir / cache_name
+
+        if self.use_cache and cache_file.exists():
+            try:
+                data = np.load(cache_file)
+                cos_TV = data['cos_TV']
+                cos_TA = data['cos_TA']
+                cos_VA = data['cos_VA']
+                R_eff = int(data['R_eff'])
+                logger.info(f"Loaded principal angles from cache: {cache_file}")
+            except Exception as e:
+                logger.warning(f"Failed to load principal angles cache: {e}; recomputing.")
+                cos_TV = cos_TA = cos_VA = None
+        else:
+            cos_TV = cos_TA = cos_VA = None
+
+        # Compute if not cached
+        if cos_TV is None:
+            ids = list(self.query_ids)
+            # Stack features for the same ordered ids
+            XT = np.stack([self.text_embeddings[i] for i in ids], axis=0)
+            XV = np.stack([self.visual_features[i] for i in ids], axis=0)
+            XA = np.stack([self.audio_features[i] for i in ids], axis=0)
+
+            # Optional per-sample L2 normalization
+            if do_l2:
+                eps = 1e-12
+                XTp = XT / (np.linalg.norm(XT, axis=1, keepdims=True) + eps)
+                XVp = XV / (np.linalg.norm(XV, axis=1, keepdims=True) + eps)
+                XAp = XA / (np.linalg.norm(XA, axis=1, keepdims=True) + eps)
+            else:
+                XTp, XVp, XAp = XT, XV, XA
+
+            # Orthonormal bases via QR decomposition (sample space)
+            QT, _ = np.linalg.qr(XTp, mode='reduced')
+            QV, _ = np.linalg.qr(XVp, mode='reduced')
+            QA, _ = np.linalg.qr(XAp, mode='reduced')
+            rT = min(R, QT.shape[1])
+            rV = min(R, QV.shape[1])
+            rA = min(R, QA.shape[1])
+            R_eff = int(min(rT, rV, rA))
+            if R_eff < 1:
+                raise RuntimeError("Effective R is < 1; not enough rank for principal angles.")
+            UT = QT[:, :R_eff]
+            UV = QV[:, :R_eff]
+            UA = QA[:, :R_eff]
+
+            # Cosines of principal angles via singular values of cross-basis inner products
+            cos_TV = np.linalg.svd(UT.T @ UV, compute_uv=False)
+            cos_TA = np.linalg.svd(UT.T @ UA, compute_uv=False)
+            cos_VA = np.linalg.svd(UV.T @ UA, compute_uv=False)
+
+            # Cache results
+            try:
+                np.savez_compressed(cache_file,
+                                    cos_TV=cos_TV, cos_TA=cos_TA, cos_VA=cos_VA,
+                                    R_eff=np.array(R_eff), R_req=np.array(R))
+                logger.info(f"Cached principal angles to {cache_file}")
+            except Exception as e:
+                logger.warning(f"Failed to cache principal angles: {e}")
+
+        # Plot single-axis with up to three lines
+        r_axis = np.arange(1, len(cos_TV) + 1)
+        plt.figure(figsize=(7.5, 5.5))
+        plt.plot(r_axis, cos_TV, label='Text–Vision', linewidth=2)
+        plt.plot(r_axis, cos_TA, label='Text–Audio', linewidth=2)
+        plt.plot(r_axis, cos_VA, label='Vision–Audio', linewidth=2)
+        plt.xlabel('Subspace dimension r')
+        plt.ylabel('cos(θ_r)')
+        plt.title('Principal Angle Cosines between Modality Subspaces')
+        plt.ylim(0.0, 1.0)
+        plt.xlim(1, len(r_axis))
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+        out_path = self.output_dir / 'principal_angles_three_modalities.png'
+        plt.savefig(out_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        logger.info(f"  - Principal angles plot saved: {out_path} (R_req={R}, R_eff={len(r_axis)}, L2={do_l2})")
 
     def compute_entropy_diagnostics(self, tau_list: List[float] = [1.0, 0.5, 0.2, 0.1]):
         """Compute diagnostics to understand why entropy distributions look similar across modalities.
