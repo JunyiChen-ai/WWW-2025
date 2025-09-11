@@ -4,6 +4,7 @@ import subprocess
 import glob
 import shutil
 import logging
+import argparse
 from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -81,13 +82,20 @@ def extract_frames(video_path, output_folder, num_frames, save_timestamps=True):
         logging.warning(f"Warning: Video {video_name} only created {len(created_frames)} frames instead of expected {num_frames} frames")
 
 def process_dataset(dataset_name, num_frames):
-    input_folder = f'data/{dataset_name}/videos'
-    output_folder = f'data/{dataset_name}/frames_{num_frames}'
-
-    if not os.path.exists(input_folder):
-        logging.error(f"Error: Input folder does not exist: {input_folder}")
+    # Handle different video directory naming conventions
+    video_dirs = [f'data/{dataset_name}/videos', f'data/{dataset_name}/video']
+    input_folder = None
+    
+    for video_dir in video_dirs:
+        if os.path.exists(video_dir):
+            input_folder = video_dir
+            break
+    
+    if input_folder is None:
+        logging.error(f"Error: No video folder found for {dataset_name}. Tried: {video_dirs}")
         return False
 
+    output_folder = f'data/{dataset_name}/frames_{num_frames}'
     os.makedirs(output_folder, exist_ok=True)
 
     video_paths = glob.glob(os.path.join(input_folder, '*.mp4'))
@@ -103,13 +111,28 @@ def process_dataset(dataset_name, num_frames):
     return True
 
 def main():
-    num_frames = 16
-    datasets = ["FakeSV"]  # Only process FakeSV for now
+    parser = argparse.ArgumentParser(description='Extract frames from videos')
+    parser.add_argument('--datasets', nargs='+', default=['FakeSV'], 
+                       choices=['FakeSV', 'FakeTT', 'FVC', 'TwitterVideo'],
+                       help='Datasets to process (default: FakeSV)')
+    parser.add_argument('--num_frames', type=int, default=16,
+                       help='Number of frames to extract (default: 16)')
+    args = parser.parse_args()
+    
+    datasets = args.datasets
+    num_frames = args.num_frames
+    
+    logging.info(f"Processing datasets: {datasets}")
+    logging.info(f"Extracting {num_frames} frames per video")
     
     processed_count = 0
     for dataset in datasets:
+        logging.info(f"Starting processing of {dataset} dataset...")
         if process_dataset(dataset, num_frames):
             processed_count += 1
+            logging.info(f"Successfully completed {dataset} dataset")
+        else:
+            logging.error(f"Failed to process {dataset} dataset")
     
     if processed_count == 0:
         logging.error("No datasets were processed successfully")

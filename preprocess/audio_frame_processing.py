@@ -260,6 +260,14 @@ def process_global_audio(audio_path, audio_model, hidden_dim, model_processor=No
         print(f"Error processing global audio {audio_path} with {model_type}: {e}")
         return torch.zeros(hidden_dim)
 
+def create_dummy_audio_features(video_id, hidden_dim):
+    """为没有音频的视频创建dummy features，维度与模型输出一致"""
+    print(f"Generating dummy audio features for {video_id} (dim: {hidden_dim})")
+    frame_features = torch.zeros(16, hidden_dim)  # 16帧特征
+    global_features = torch.zeros(hidden_dim)     # 全局特征
+    frame_transcripts = [""] * 16                 # 空frame转录
+    return frame_features, global_features, frame_transcripts
+
 def load_existing_results(dataset_name, model_mark, skip_transcripts=False):
     """Load existing processing results to enable resume functionality"""
     existing_frame_features = []
@@ -424,8 +432,18 @@ def process_dataset(dataset_name, model_name, skip_transcripts=False, skip_featu
                 
             # Check if audio file exists
             if not os.path.exists(audio_path):
-                print(f"ERROR: Audio file not found for {video_id}: {audio_path}")
-                continue
+                if dataset_name == 'TwitterVideo':
+                    print(f"INFO: No audio found for {video_id}, generating dummy features")
+                    frame_features, global_features, frame_transcripts = create_dummy_audio_features(video_id, hidden_dim)
+                    # Store dummy results
+                    all_frame_features.append(frame_features)
+                    all_global_features.append(global_features)
+                    all_frame_transcripts.append(frame_transcripts)
+                    all_video_ids.append(video_id)
+                    continue
+                else:
+                    print(f"ERROR: Audio file not found for {video_id}: {audio_path}")
+                    continue
             
             # Load frame timestamps
             frame_timestamps = load_frame_timestamps(timestamp_file)
@@ -545,7 +563,7 @@ def process_dataset(dataset_name, model_name, skip_transcripts=False, skip_featu
 def main():
     parser = argparse.ArgumentParser(description='Process audio features for video dataset')
     parser.add_argument('--dataset', type=str, default='FakeSV', 
-                        choices=['FakeSV', 'FakeTT', 'FVC'],
+                        choices=['FakeSV', 'FakeTT', 'FVC', 'TwitterVideo'],
                         help='Dataset name (default: FakeSV)')
     parser.add_argument('--wav2vec_model', type=str, default='CAiRE/SER-wav2vec2-large-xlsr-53-eng-zho-all-age',
                         help='Audio model name - supports both Wav2Vec2 and CLAP models (e.g., laion/clap-htsat-fused)')

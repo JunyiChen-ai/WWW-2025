@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import argparse
 from tqdm import tqdm
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -73,7 +74,12 @@ def process_batch(batch, pipe):
 
 # Main processing function
 def process_dataset(dataset_name):
-    src_file = f'data/{dataset_name}/data_complete.jsonl'
+    # Handle different data file formats
+    if dataset_name == 'TwitterVideo':
+        src_file = f'data/{dataset_name}/data.json'
+    else:
+        src_file = f'data/{dataset_name}/data_complete.jsonl'
+    
     src_df = pd.read_json(src_file, lines=True, dtype={'video_id': str})
 
     dst_file = f'data/{dataset_name}/transcript.jsonl'
@@ -104,10 +110,36 @@ def process_dataset(dataset_name):
 
     print(f"Processing {dataset_name} complete!")
 
-# Process each dataset
-datasets = ["FakeSV", "FakeTT", "FVC"]
-for dataset_name in datasets:
-    print(f"Starting to process {dataset_name}...")
-    process_dataset(dataset_name)
+def main():
+    parser = argparse.ArgumentParser(description='Generate global transcripts for video datasets')
+    parser.add_argument('--datasets', nargs='+', default=['FakeSV', 'FakeTT', 'FVC'],
+                       choices=['FakeSV', 'FakeTT', 'FVC', 'TwitterVideo'],
+                       help='Datasets to process (default: FakeSV FakeTT FVC)')
+    args = parser.parse_args()
+    
+    datasets = args.datasets
+    print(f"Processing datasets: {datasets}")
+    
+    processed_count = 0
+    failed_datasets = []
+    
+    for dataset_name in datasets:
+        try:
+            print(f"\n=== Starting {dataset_name} ===")
+            process_dataset(dataset_name)
+            processed_count += 1
+            print(f"=== Completed {dataset_name} successfully ===")
+        except Exception as e:
+            print(f"=== Failed to process {dataset_name}: {e} ===")
+            failed_datasets.append(dataset_name)
+    
+    print(f"\n=== Global Transcript Generation Complete ===")
+    print(f"Successfully processed: {processed_count}/{len(datasets)} datasets")
+    
+    if failed_datasets:
+        print(f"Failed datasets: {failed_datasets}")
+    else:
+        print("All datasets processed successfully!")
 
-print("All datasets processed!")
+if __name__ == "__main__":
+    main()

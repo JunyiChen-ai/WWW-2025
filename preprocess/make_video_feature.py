@@ -10,6 +10,7 @@ import os
 import numpy as np
 import torch
 import av
+import argparse
 from PIL import Image
 
 NUM_FRAMES = 16
@@ -96,6 +97,14 @@ def process_dataset(dataset_name):
             "model_id": "openai/clip-vit-large-patch14",
             "use_chinese_clip": False,
             "output_file": "vit_tensor.pt"
+        },
+        "TwitterVideo": {
+            "src_file": f"data/{dataset_name}/data.json",
+            "output_dir": f"data/{dataset_name}/fea",
+            "video_dir": f"data/{dataset_name}/video",
+            "model_id": "openai/clip-vit-large-patch14",
+            "use_chinese_clip": False,
+            "output_file": "vit_tensor.pt"
         }
     }
     
@@ -149,6 +158,37 @@ def process_dataset(dataset_name):
     torch.save(save_dict, output_path)
     print(f"Saved features to {output_path}")
 
-# Process all three datasets
-for dataset_name in ["FakeSV", "FakeTT", "FVC"]:
-    process_dataset(dataset_name)
+def main():
+    parser = argparse.ArgumentParser(description='Extract video features using CLIP models')
+    parser.add_argument('--datasets', nargs='+', default=['FakeSV', 'FakeTT', 'FVC'],
+                       choices=['FakeSV', 'FakeTT', 'FVC', 'TwitterVideo'],
+                       help='Datasets to process (default: FakeSV FakeTT FVC)')
+    args = parser.parse_args()
+    
+    datasets = args.datasets
+    
+    print(f"Processing datasets: {datasets}")
+    
+    processed_count = 0
+    failed_datasets = []
+    
+    for dataset_name in datasets:
+        try:
+            print(f"\n=== Starting {dataset_name} ===")
+            process_dataset(dataset_name)
+            processed_count += 1
+            print(f"=== Completed {dataset_name} successfully ===")
+        except Exception as e:
+            print(f"=== Failed to process {dataset_name}: {str(e)} ===")
+            failed_datasets.append(dataset_name)
+    
+    print(f"\n=== Feature Extraction Complete ===")
+    print(f"Successfully processed: {processed_count}/{len(datasets)} datasets")
+    
+    if failed_datasets:
+        print(f"Failed datasets: {failed_datasets}")
+    else:
+        print("All datasets processed successfully!")
+
+if __name__ == "__main__":
+    main()

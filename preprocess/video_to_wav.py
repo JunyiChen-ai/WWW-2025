@@ -1,5 +1,6 @@
 import os
 import subprocess
+import argparse
 from tqdm import tqdm
 
 def convert_mp4_to_wav(input_folder, output_folder, suffix="_full"):
@@ -10,11 +11,17 @@ def convert_mp4_to_wav(input_folder, output_folder, suffix="_full"):
     # Get all mp4 files
     mp4_files = [f for f in os.listdir(input_folder) if f.endswith('.mp4')]
     
+    if not mp4_files:
+        print(f"No MP4 files found in {input_folder}")
+        return []
+    
     # Store names of files that couldn't be converted
     unconverted_files = []
     
+    print(f"Found {len(mp4_files)} MP4 files to convert")
+    
     # Create progress bar using tqdm
-    for filename in tqdm(mp4_files, desc="Conversion progress"):
+    for filename in tqdm(mp4_files, desc="Converting videos to audio"):
         input_path = os.path.join(input_folder, filename)
         output_filename = os.path.splitext(filename)[0] + suffix + '.wav'
         output_path = os.path.join(output_folder, output_filename)
@@ -42,26 +49,76 @@ def convert_mp4_to_wav(input_folder, output_folder, suffix="_full"):
 
     # Print names of files that couldn't be converted
     if unconverted_files:
-        print("\nThe following files could not be converted:")
+        print(f"\n{len(unconverted_files)} files could not be converted:")
         for file in unconverted_files:
-            print(file)
+            print(f"  - {file}")
+        return unconverted_files
     else:
-        print("\nAll files have been successfully converted!")
+        print(f"\nAll {len(mp4_files)} files have been successfully converted!")
+        return []
 
-# Process only FakeSV dataset
-datasets = ["FakeSV"]
-
-for dataset in datasets:
-    print(f"\nProcessing {dataset} dataset...")
-    input_folder = f'data/{dataset}/videos'
-    output_folder = f'data/{dataset}/audios'
+def process_dataset(dataset_name, suffix="_full"):
+    """Process a single dataset"""
+    print(f"\nProcessing {dataset_name} dataset...")
     
-    # Check if input folder exists
-    if not os.path.exists(input_folder):
-        print(f"Input folder for {dataset} does not exist. Skipping...")
-        continue
-        
-    convert_mp4_to_wav(input_folder, output_folder, suffix="_full")
-    print(f"{dataset} conversion complete!")
+    # Handle different video directory naming conventions
+    video_dirs = [f'data/{dataset_name}/videos', f'data/{dataset_name}/video']
+    input_folder = None
+    
+    for video_dir in video_dirs:
+        if os.path.exists(video_dir):
+            input_folder = video_dir
+            break
+    
+    if input_folder is None:
+        print(f"Error: No video folder found for {dataset_name}. Tried: {video_dirs}")
+        return False
+    
+    output_folder = f'data/{dataset_name}/audios'
+    
+    print(f"Input folder: {input_folder}")
+    print(f"Output folder: {output_folder}")
+    
+    unconverted_files = convert_mp4_to_wav(input_folder, output_folder, suffix)
+    
+    if not unconverted_files:
+        print(f"{dataset_name} conversion completed successfully!")
+        return True
+    else:
+        print(f"{dataset_name} conversion completed with {len(unconverted_files)} errors")
+        return False
 
-print("\nAll datasets processed!")
+def main():
+    parser = argparse.ArgumentParser(description='Convert MP4 videos to WAV audio files')
+    parser.add_argument('--datasets', nargs='+', default=['FakeSV'],
+                       choices=['FakeSV', 'FakeTT', 'FVC', 'TwitterVideo'],
+                       help='Datasets to process (default: FakeSV)')
+    parser.add_argument('--suffix', default='_full',
+                       help='Suffix to add to output filenames (default: _full)')
+    args = parser.parse_args()
+    
+    datasets = args.datasets
+    suffix = args.suffix
+    
+    print(f"Processing datasets: {datasets}")
+    print(f"Output suffix: {suffix}")
+    
+    processed_count = 0
+    failed_datasets = []
+    
+    for dataset in datasets:
+        if process_dataset(dataset, suffix):
+            processed_count += 1
+        else:
+            failed_datasets.append(dataset)
+    
+    print(f"\n=== Processing Complete ===")
+    print(f"Successfully processed: {processed_count}/{len(datasets)} datasets")
+    
+    if failed_datasets:
+        print(f"Failed datasets: {failed_datasets}")
+    else:
+        print("All datasets processed successfully!")
+
+if __name__ == "__main__":
+    main()

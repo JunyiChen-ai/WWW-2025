@@ -2251,6 +2251,12 @@ and structural inconsistencies"""
         except Exception as e:
             logger.warning(f"Similarity Concentration & Neighborhood figure failed: {e}")
 
+        # Step 7.3b: Entropy cross-modality scatter (Text/Visual/Audio only, tri-ax, single figure)
+        try:
+            self.create_entropy_scatter_triax()
+        except Exception as e:
+            logger.warning(f"Entropy scatter (tri-ax T/V/A) failed: {e}")
+
         # Step 7.4: Single-plot NSI to show modality quality and variance
         try:
             self.create_modality_nsi_boxplot()
@@ -2292,6 +2298,85 @@ and structural inconsistencies"""
         for file_path in self.output_dir.glob("*"):
             logger.info(f"  - {file_path.name}")
         logger.info("="*60)
+
+    def create_entropy_scatter_triax(self):
+        """Plot a single 3D scatter: H_topk(Text) vs H_topk(Visual) vs H_topk(Audio).
+
+        - No subplots, no transcript, no Spearman.
+        - Saves to entropy_cross_modality_triax_TIA.png
+        """
+        logger.info("Creating tri-ax entropy scatter (Text/Visual/Audio, single figure)...")
+
+        from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 - needed for 3D projection
+
+        eps = 1e-12
+
+        def entropy_top_k_row(r, k=self.top_k):
+            idx = np.argpartition(r, -k)[-k:] if r.shape[0] > k else np.arange(r.shape[0])
+            sub = r[idx]
+            sub = sub / (sub.sum() + eps)
+            return float(entropy(sub + eps))
+
+        # Compute H_topk for T/I/A
+        H_T = np.apply_along_axis(lambda row: entropy_top_k_row(row), 1, self.probs['T']).astype(np.float32)
+        H_I = np.apply_along_axis(lambda row: entropy_top_k_row(row), 1, self.probs['I']).astype(np.float32)
+        H_A = np.apply_along_axis(lambda row: entropy_top_k_row(row), 1, self.probs['A']).astype(np.float32)
+
+        # Axis limits: tight around data with small margin
+        vmax = float(max(H_T.max(initial=0.0), H_I.max(initial=0.0), H_A.max(initial=0.0)))
+        vmin = 0.0
+        margin = 0.03
+
+        # Smaller canvas to reduce outer whitespace
+        fig = plt.figure(figsize=(5.6, 4.6))
+        ax = fig.add_subplot(111, projection='3d')
+        # Single-color scatter; compact points
+        ax.scatter(H_T, H_I, H_A, s=5, alpha=0.28, c='#1f77b4')
+
+        # Simple, informative axis labels. Use native zlabel at axis top with spacing.
+        ax.set_xlabel('Text', labelpad=8)
+        ax.set_ylabel('Visual', labelpad=8)
+        ax.set_zlabel('Audio', labelpad=12)
+        try:
+            ax.zaxis.set_rotate_label(False)
+            # Prefer native placement just above axis tip
+            ax.zaxis.set_label_coords(0.5, 1.02)
+            ax.zaxis._axinfo['label']['space_factor'] = 1.5
+        except Exception:
+            pass
+        # Slightly larger label size for readability (x/y)
+        ax.xaxis.label.set_size(10)
+        ax.yaxis.label.set_size(10)
+        # Do not expand coordinate ranges; keep tight to data
+        ax.set_xlim(vmin, vmax)
+        ax.set_ylim(vmin, vmax)
+        ax.set_zlim(vmin, vmax)
+
+        # No manual 3D text; rely on native zlabel above.
+        # Compress coordinate space (not whole canvas): adjust box aspect
+        try:
+            ax.set_box_aspect((1, 1, 0.7))  # slightly compressed Z for compactness
+        except Exception:
+            pass
+        # Fewer ticks for cleaner look
+        try:
+            from matplotlib.ticker import MaxNLocator
+            ax.xaxis.set_major_locator(MaxNLocator(nbins=3, prune='both'))
+            ax.yaxis.set_major_locator(MaxNLocator(nbins=3, prune='both'))
+            ax.zaxis.set_major_locator(MaxNLocator(nbins=3, prune='both'))
+        except Exception:
+            pass
+        ax.tick_params(labelsize=8, pad=2)
+        # Rotate to improve z-label visibility
+        ax.view_init(elev=18, azim=30)
+        ax.grid(True)
+        # Keep some room for zlabel while staying compact
+        fig.subplots_adjust(left=0.07, right=0.94, bottom=0.08, top=0.96)
+
+        out = self.output_dir / 'entropy_cross_modality_triax_TIA.png'
+        plt.savefig(out, dpi=300, bbox_inches='tight')
+        plt.close()
+        logger.info(f"  - Entropy tri-ax scatter (T/V/A) saved: {out}")
 
     def create_principal_angles_plot(self, R: int = 64, do_l2: bool = False):
         """Plot cos(theta_r) for principal angles between T–V, T–A, V–A subspaces.
