@@ -14,6 +14,7 @@ from tqdm import tqdm
 import torch
 from transformers import AutoTokenizer, AutoModel
 from sklearn.metrics.pairwise import cosine_similarity
+from scipy.stats import entropy
 import logging
 import sys
 from datetime import datetime
@@ -32,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 class FullDatasetRetrieval:
     def __init__(self, dataset: str = "FakeSV", model_name: str = None, filter_k: int = None, 
-                 use_pool: bool = False, txt_only: bool = False, no_audio: bool = False):
+                 use_pool: bool = False, txt_only: bool = False, no_audio: bool = False,
+                 use_uncertainty_weighted: bool = True, top_k: int = 10):
         """
         Initialize full dataset retrieval system
         
@@ -56,6 +58,8 @@ class FullDatasetRetrieval:
         self.use_pool = use_pool
         self.txt_only = txt_only
         self.no_audio = no_audio
+        self.use_uncertainty_weighted = use_uncertainty_weighted
+        self.top_k = top_k
         
         # Dataset-specific paths
         self.data_dir = Path(f"data/{dataset}")
@@ -66,6 +70,8 @@ class FullDatasetRetrieval:
         logger.info(f"Initializing {dataset} dataset retrieval with model: {model_name}")
         if filter_k is not None:
             logger.info(f"Will filter top-{filter_k} similar training samples per test sample")
+        if use_uncertainty_weighted:
+            logger.info(f"Using uncertainty weighted log pooling for sample selection (top_k={top_k})")
         if txt_only:
             logger.info("Text-only mode: skipping visual and audio processing")
         elif no_audio:
@@ -193,7 +199,7 @@ class FullDatasetRetrieval:
         self.load_original_timestamps()
     
     def load_original_timestamps(self):
-        """Load original data to get publish timestamps"""
+        """Load original data to get publish timestamps and event info"""
         from datetime import datetime
         
         # Dataset-specific original data files
@@ -206,6 +212,7 @@ class FullDatasetRetrieval:
             publish_time_field = 'publish_time'
         
         self.timestamp_lookup = {}
+        self.event_lookup = {}
         
         if orig_file.exists():
             with open(orig_file, 'r', encoding='utf-8') as f:
@@ -214,6 +221,11 @@ class FullDatasetRetrieval:
                         item = json.loads(line)
                         video_id = item.get('video_id')
                         publish_time = item.get(publish_time_field)
+                        event = item.get('event', '')
+                        
+                        # Store event info
+                        if video_id:
+                            self.event_lookup[video_id] = event
                         
                         if video_id and publish_time:
                             try:
@@ -235,6 +247,7 @@ class FullDatasetRetrieval:
                                 }
             
             logger.info(f"Loaded timestamps for {len(self.timestamp_lookup)} videos")
+            logger.info(f"Loaded event info for {len(self.event_lookup)} videos")
         else:
             logger.warning(f"Original data file not found: {orig_file}")
     
@@ -264,13 +277,30 @@ class FullDatasetRetrieval:
         
         # Load audio features (unless text-only or no-audio)
         if not self.txt_only and not self.no_audio:
-            audio_file = feature_dir / "audio_features_frames.pt"
-            if audio_file.exists():
-                self.audio_features = torch.load(audio_file, map_location='cpu')
-                logger.info(f"Loaded audio features for {len(self.audio_features)} videos")
+            # Choose audio feature file based on use_pool setting
+            if self.use_pool:
+                # Use global features for pooled mode
+                audio_files_to_try = [
+                    "audio_features_global.pt",  # Default for FakeSV, FakeTT
+                    "audio_features_global_laion-clap-htsat-fused.pt",  # TwitterVideo
+                ]
             else:
-                self.audio_features = {}
-                logger.warning(f"Audio features file not found: {audio_file}")
+                # Use frame features for detailed mode
+                audio_files_to_try = [
+                    "audio_features_frames.pt",  # Default for FakeSV, FakeTT
+                    "audio_features_frames_laion-clap-htsat-fused.pt",  # TwitterVideo
+                ]
+            
+            self.audio_features = {}
+            for audio_filename in audio_files_to_try:
+                audio_file = feature_dir / audio_filename
+                if audio_file.exists():
+                    self.audio_features = torch.load(audio_file, map_location='cpu')
+                    logger.info(f"Loaded audio features from {audio_filename} for {len(self.audio_features)} videos")
+                    break
+            
+            if not self.audio_features:
+                logger.warning(f"No audio features file found in {feature_dir}. Tried: {audio_files_to_try}")
         else:
             self.audio_features = {}
             if self.no_audio:
@@ -453,6 +483,28 @@ class FullDatasetRetrieval:
         n = np.linalg.norm(x, axis=axis, keepdims=True)
         return x / (n + eps)
     
+    def _softmax(self, x: np.ndarray, axis: int = -1, eps: float = 1e-12) -> np.ndarray:
+        """Softmax function with numerical stability"""
+        x_max = np.max(x, axis=axis, keepdims=True)
+        exp_x = np.exp(x - x_max)
+        return exp_x / (np.sum(exp_x, axis=axis, keepdims=True) + eps)
+    
+    def _entropy_top_k(self, r: np.ndarray, k: int = None, eps: float = 1e-12) -> float:
+        """Compute entropy for top-k elements"""
+        if k is None:
+            k = self.top_k
+        
+        if len(r) > k:
+            top_k_idx = np.argpartition(r, -k)[-k:]
+            top_k_probs = r[top_k_idx]
+        else:
+            top_k_probs = r
+        
+        top_k_probs = top_k_probs / (top_k_probs.sum() + eps)
+        # Compute entropy
+        top_k_probs = top_k_probs + eps
+        return -np.sum(top_k_probs * np.log(top_k_probs))
+    
     def compute_frame_similarity(self, query_frames: np.ndarray, candidate_frames: np.ndarray) -> float:
         """
         Compute frame-level similarity between query and candidate videos
@@ -519,7 +571,7 @@ class FullDatasetRetrieval:
     def fused_scores_sample_gating(self, q: Dict[str, np.ndarray], bank: Dict[str, np.ndarray], 
                                   eps: float = 1e-12) -> np.ndarray:
         """
-        Multimodal fusion using sample-adaptive gating (optimized version)
+        Multimodal fusion using sample-adaptive gating or uncertainty weighted log pooling
         Supports text-only mode for simplified similarity computation
         
         Args:
@@ -527,10 +579,13 @@ class FullDatasetRetrieval:
             bank: Bank features {'T': text_bank, 'V': visual_bank, 'A': audio_bank}
             
         Returns:
-            Fused scores for all samples in bank
+            Fused scores or probabilities for all samples in bank
         """
         # For text-only mode, return simple cosine similarity
         if self.txt_only:
+            if self.use_uncertainty_weighted:
+                logger.warning("Uncertainty weighted pooling requires multiple modalities. Falling back to regular similarity for text-only mode.")
+            
             q_text = self.l2_normalize(q['T'])
             bank_text = self.l2_normalize(bank['T'], axis=1)
             return np.dot(bank_text, q_text)
@@ -552,36 +607,106 @@ class FullDatasetRetrieval:
             else:
                 bank_norm[m] = bank[m]  # Already normalized from cache
         
-        # Step 2: Compute similarities and Z-normalize per modality
-        Z = {}
+        # Step 2: Compute similarities for each modality
+        S = {}  # Raw similarities per modality
         for m in bank_norm:
             if m == 'T':
                 # Text: simple dot product (already normalized)
-                s = np.dot(bank_norm[m], q_norm[m])
+                S[m] = np.dot(bank_norm[m], q_norm[m])
             else:
                 # Visual/Audio: choose between pooled and frame-level similarity
                 if self.use_pool:
-                    # Pooled mode: average pool features, re-normalize, then compute cosine similarity
-                    q_pooled = np.mean(q_norm[m], axis=0)  # [D]
-                    q_pooled = q_pooled / (np.linalg.norm(q_pooled) + eps)  # Re-normalize after pooling
-                    
-                    bank_pooled = np.mean(bank_norm[m], axis=1)  # [N, D]
-                    bank_pooled = bank_pooled / (np.linalg.norm(bank_pooled, axis=1, keepdims=True) + eps)  # Re-normalize
-                    
-                    s = np.dot(bank_pooled, q_pooled)  # Now it's cosine similarity
+                    # Check if features are already global (1D) or need pooling (2D)
+                    if q_norm[m].ndim == 1:
+                        # Global features: direct cosine similarity (audio when use_pool=True)
+                        S[m] = np.dot(bank_norm[m], q_norm[m])
+                    else:
+                        # Frame features: average pool features, re-normalize, then compute cosine similarity
+                        q_pooled = np.mean(q_norm[m], axis=0)  # [D]
+                        q_pooled = q_pooled / (np.linalg.norm(q_pooled) + eps)  # Re-normalize after pooling
+                        
+                        bank_pooled = np.mean(bank_norm[m], axis=1)  # [N, D]
+                        bank_pooled = bank_pooled / (np.linalg.norm(bank_pooled, axis=1, keepdims=True) + eps)  # Re-normalize
+                        
+                        S[m] = np.dot(bank_pooled, q_pooled)  # Now it's cosine similarity
                 else:
                     # Frame-level mode: vectorized frame-level similarity
-                    s = self.compute_batch_frame_similarity(q_norm[m], bank_norm[m])
+                    S[m] = self.compute_batch_frame_similarity(q_norm[m], bank_norm[m])
+        
+        # Choose fusion strategy
+        if self.use_uncertainty_weighted:
+            return self._uncertainty_weighted_log_pool_fusion(S, eps)
+        else:
+            return self._sample_adaptive_gating_fusion(S, eps)
+    
+    def _uncertainty_weighted_log_pool_fusion(self, S: Dict[str, np.ndarray], eps: float = 1e-12) -> np.ndarray:
+        """
+        Uncertainty Weighted Log Pool fusion implementation
+        Strictly following analyze_multimodal_choice.py implementation
+        
+        Args:
+            S: Raw similarities per modality {'T': [N], 'V': [N], 'A': [N]}
+            eps: Small constant for numerical stability
             
-            # Z-standardization across samples (handle case where std is 0)
-            std_val = s.std()
+        Returns:
+            Fused probabilities for all samples in bank
+        """
+        # Note: In analyze_multimodal_choice.py, this operates on [Q, N] matrices where Q is queries
+        # Here we're processing a single query at a time, so our arrays are [N] (candidates)
+        # We need to treat this as a [1, N] case and compute query-specific weights
+        
+        # Step 1: Convert similarities to probabilities using softmax
+        temp = 0.1  # Temperature parameter for softmax
+        P = {}
+        for m in S:
+            P[m] = self._softmax(S[m] / temp)  # [N]
+        
+        # Step 2: Compute certainty scores (inverse of entropy) using top-k elements
+        # Following analyze_multimodal_choice.py: compute entropy for this specific query's distribution
+        C = {}
+        for m in P:
+            # Compute entropy of top-k probabilities for this query's distribution
+            ent = self._entropy_top_k(P[m])
+            # Certainty is inverse of entropy (scalar for this query)
+            C[m] = 1.0 / (ent + eps)
+        
+        # Step 3: Normalize weights across modalities for this query
+        total_certainty = sum(C.values())
+        W = {m: C[m] / (total_certainty + eps) for m in C}
+        
+        # Step 4: Log-linear pooling (same as original)
+        fused_log = np.zeros_like(P[list(P.keys())[0]])
+        for m in P:
+            fused_log += W[m] * np.log(P[m] + eps)
+        
+        # Step 5: Convert back to probabilities
+        fused = np.exp(fused_log)
+        fused = fused / (fused.sum() + eps)  # Normalize
+        
+        return fused
+    
+    def _sample_adaptive_gating_fusion(self, S: Dict[str, np.ndarray], eps: float = 1e-12) -> np.ndarray:
+        """
+        Original sample-adaptive gating fusion (fallback)
+        
+        Args:
+            S: Raw similarities per modality
+            eps: Small constant for numerical stability
+            
+        Returns:
+            Fused scores for all samples in bank
+        """
+        # Z-standardization across samples (handle case where std is 0)
+        Z = {}
+        for m in S:
+            std_val = S[m].std()
             if std_val < eps:
                 # If all similarities are the same, just center them
-                Z[m] = s - s.mean()
+                Z[m] = S[m] - S[m].mean()
             else:
-                Z[m] = (s - s.mean()) / (std_val + eps)
+                Z[m] = (S[m] - S[m].mean()) / (std_val + eps)
         
-        # Step 3: Sample-adaptive gating (vectorized)
+        # Sample-adaptive gating (vectorized)
         pos = [np.maximum(Z[m], 0.0) for m in Z]  # [·]₊
         
         # Vectorized computation
@@ -589,8 +714,7 @@ class FullDatasetRetrieval:
         num = np.sum(pos_array * pos_array, axis=0)  # Element-wise square and sum
         den = np.sum(pos_array, axis=0)  # Sum across modalities
             
-        S = num / (den + eps)  # Final fused scores
-        return S
+        return num / (den + eps)  # Final fused scores
         
     def prepare_data(self, splits: Dict[str, Set[str]], filtered_train_ids: Set[str] = None):
         """Prepare data for retrieval"""
@@ -842,6 +966,9 @@ class FullDatasetRetrieval:
                 query_features, query_split, query_video_id, memory_true_data, memory_fake_data
             )
             
+            # Get event from original data if available (for LongCLIP/English datasets)
+            event_info = self.event_lookup.get(query_video_id, '')
+            
             result = {
                 'query_video': {
                     'video_id': query_video_id,
@@ -849,6 +976,7 @@ class FullDatasetRetrieval:
                     'split': query_split,
                     'title': query_item.get('title', ''),
                     'keywords': query_item.get('keywords', '') or query_item.get('event', ''),
+                    'event': event_info,  # Add event field from original data
                     'description': query_item.get('description', ''),
                     'temporal_evolution': query_item.get('temporal_evolution', ''),
                     'entity_claims': query_item.get('entity_claims', {}),
@@ -928,7 +1056,10 @@ class FullDatasetRetrieval:
             
         # Compute multimodal similarities
         fused_scores = self.fused_scores_sample_gating(query_features, filtered_bank)
+        
+        # Always use argmax to select best candidate (both uncertainty weighted and traditional)
         best_idx = np.argmax(fused_scores)
+            
         memory_idx = filtered_indices[best_idx]
         
         # Compute individual modality similarities for output
@@ -942,7 +1073,14 @@ class FullDatasetRetrieval:
             visual_sim = 0.0
             
         if 'A' in query_features and 'A' in filtered_bank:
-            audio_sim = self.compute_frame_similarity(query_features['A'], filtered_bank['A'][best_idx])
+            if self.use_pool and query_features['A'].ndim == 1:
+                # Global audio features: direct cosine similarity
+                query_audio_norm = self.l2_normalize(query_features['A'])
+                bank_audio_norm = self.l2_normalize(filtered_bank['A'][best_idx])
+                audio_sim = float(np.dot(bank_audio_norm, query_audio_norm))
+            else:
+                # Frame-level audio features: use frame similarity
+                audio_sim = self.compute_frame_similarity(query_features['A'], filtered_bank['A'][best_idx])
         else:
             audio_sim = 0.0
         
@@ -956,6 +1094,7 @@ class FullDatasetRetrieval:
             'annotation': best_item['annotation'],
             'title': best_item.get('title', ''),
             'keywords': best_item.get('keywords', '') or best_item.get('event', ''),
+            'event': self.event_lookup.get(best_item['video_id'], ''),  # Add event field
             'description': best_item.get('description', ''),
             'temporal_evolution': best_item.get('temporal_evolution', ''),
             'entity_claims': best_item.get('entity_claims', {}),
@@ -1030,7 +1169,10 @@ class FullDatasetRetrieval:
         logger.info(f"Similarity computation took {time.time() - retrieval_start:.2f} seconds")
         
         # Build output filename with appropriate suffixes
-        filename_parts = [f"full_dataset_retrieval_{self.model_short_name}"]
+        filename_parts = []
+        if self.use_uncertainty_weighted:
+            filename_parts.append("uncertainty")
+        filename_parts.append(f"full_dataset_retrieval_{self.model_short_name}")
         if self.filter_k is not None:
             filename_parts.append(f"k{self.filter_k}")
         if self.use_pool:
@@ -1121,7 +1263,10 @@ class FullDatasetRetrieval:
         stats['test_to_memory_train_avg_fake_similarity'] = float(np.mean(test_to_memory_train_fake_similarities)) if test_to_memory_train_fake_similarities else 0.0
         
         # Build stats filename with same suffixes
-        stats_parts = [f"full_dataset_stats_{self.model_short_name}"]
+        stats_parts = []
+        if self.use_uncertainty_weighted:
+            stats_parts.append("uncertainty")
+        stats_parts.append(f"full_dataset_stats_{self.model_short_name}")
         if self.filter_k is not None:
             stats_parts.append(f"k{self.filter_k}")
         if self.use_pool:
@@ -1161,6 +1306,10 @@ if __name__ == "__main__":
                        help='Use text-only mode (skip visual and audio processing)')
     parser.add_argument('--no-audio', action='store_true',
                        help='Skip audio processing (keep text + visual)')
+    parser.add_argument('--disable-uncertainty-weighted', action='store_true',
+                       help='Disable uncertainty weighted log pooling (use original sample-adaptive gating)')
+    parser.add_argument('--top-k', type=int, default=10,
+                       help='Top-k elements for entropy computation in uncertainty weighting (default: 10)')
     
     args = parser.parse_args()
     
@@ -1174,6 +1323,8 @@ if __name__ == "__main__":
         filter_k=args.filter_k, 
         use_pool=args.use_pool,
         txt_only=args.txt_only,
-        no_audio=args.no_audio
+        no_audio=args.no_audio,
+        use_uncertainty_weighted=not args.disable_uncertainty_weighted,
+        top_k=args.top_k
     )
     retriever.run_retrieval()

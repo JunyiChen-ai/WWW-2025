@@ -40,6 +40,7 @@ load_dotenv()
 class VideoDescriptionExtractor:
     def __init__(self, 
                  data_dir: str,
+                 dataset: str = None,
                  api_key: str = None,
                  model: str = "gpt-4o-mini",
                  temperature: float = 0.3,
@@ -52,6 +53,7 @@ class VideoDescriptionExtractor:
         
         Args:
             data_dir: Path to the data directory containing video data and images
+            dataset: Dataset name (e.g., 'FakeSV', 'FakeTT', 'TwitterVideo')
             api_key: OpenAI API key
             model: Model to use (default: gpt-4o-mini)
             temperature: Sampling temperature
@@ -71,6 +73,10 @@ class VideoDescriptionExtractor:
         self.rate_limit_delay = rate_limit_delay
         self.resume = resume
         self.max_concurrent = max_concurrent
+        
+        # Dataset and language settings
+        self.dataset = dataset
+        self.use_chinese = dataset and dataset.lower() == 'fakesv'
         
         # Data paths
         self.data_dir = Path(data_dir)
@@ -285,11 +291,8 @@ class VideoDescriptionExtractor:
         
         publish_time = self.format_timestamp(video_data.get('publish_time', 0) or video_data.get('publish_time_norm', 0))
         
-        # Create Chinese prompt for FakeSV dataset, English prompt for others
-        # Check if this is likely Chinese content based on keywords/title
-        is_chinese = any('\u4e00' <= char <= '\u9fff' for char in (keywords_or_event + title))
-        
-        if is_chinese:
+        # Use Chinese prompt for FakeSV dataset, English prompt for all others
+        if self.use_chinese:
             prompt = f"""分析这个短视频的内容并提取视频描述信息。
 
 视频信息：
@@ -624,6 +627,7 @@ async def main():
     try:
         extractor = VideoDescriptionExtractor(
             data_dir=str(data_dir),
+            dataset=args.dataset,
             api_key=args.api_key,
             model=args.model,
             temperature=args.temperature,
