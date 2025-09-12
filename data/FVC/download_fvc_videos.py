@@ -58,6 +58,12 @@ def extract_metadata_with_ytdlp(url):
             url
         ]
         
+        # Add cookies support if cookies.txt exists
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        cookies_file = os.path.join(base_dir, 'cookies.txt')
+        if os.path.exists(cookies_file):
+            cmd.extend(['--cookies', cookies_file])
+        
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         
         if result.returncode == 0:
@@ -105,6 +111,12 @@ def download_video_mp4(url, output_path, real_id):
             url
         ]
         
+        # Add cookies support if cookies.txt exists
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        cookies_file = os.path.join(base_dir, 'cookies.txt')
+        if os.path.exists(cookies_file):
+            cmd.extend(['--cookies', cookies_file])
+        
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         
         if result.returncode == 0:
@@ -137,8 +149,8 @@ def is_critical_error(error_msg):
         'account associated with this video has been terminated',
         'Private video',
         'This video has been removed',
-        'This video has been removed by the uploader',
-        'only available for registered users'  # Facebook login required
+        'This video has been removed by the uploader'
+        # 'only available for registered users'  # Facebook login required
     ]
     
     for pattern in critical_patterns:

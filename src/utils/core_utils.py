@@ -79,13 +79,13 @@ def load_model(model_name: str, **kargs):
 
 def get_dataset(model_name: str, dataset_name: str, **kargs):
     dataset = None
-    if dataset_name not in ['FakeSV', 'FakeTT', 'FVC']:
+    if dataset_name not in ['FakeSV', 'FakeTT', 'FVC', 'TwitterVideo']:
         raise NotImplementedError(f"Dataset {dataset_name} not implemented")
     match model_name:
         case _:
             try:
         # Attempt to import the module
-                if model_name in ['ExMRD', 'ExMRD_Evidential', 'ExMRD_Defer', 'ExMRD_Retrieval']:
+                if model_name in ['ExMRD', 'ExMRD_Evidential', 'ExMRD_Defer', 'ExMRD_Retrieval', 'TextOnlyBaseline']:
                     module = importlib.import_module("data.ExMRD_data")
                 else:
                     module = importlib.import_module("data.baseline_data")
@@ -100,6 +100,9 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
                     dataset_class = getattr(module, f'{dataset_name}Dataset_Defer')
                 elif model_name == 'ExMRD_Retrieval':
                     dataset_class = getattr(module, f'{dataset_name}Dataset_Retrieval')
+                elif model_name == 'TextOnlyBaseline':
+                    # Reuse Retrieval datasets for TextOnlyBaseline
+                    dataset_class = getattr(module, f'{dataset_name}Dataset_Retrieval')
                 else:
                     dataset_class = getattr(module, f'{dataset_name}Dataset_{model_name}')
             except AttributeError:
@@ -111,8 +114,8 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
                 dataset_params_blacklist = ['tokenizer_name']
                 
                 # Add dataset-specific parameter filtering
-                if dataset_name == 'FakeTT':
-                    # FakeTT dataset doesn't support these FakeSV-specific parameters
+                if dataset_name in ['FakeTT', 'TwitterVideo']:
+                    # FakeTT and TwitterVideo datasets don't support these FakeSV-specific parameters
                     dataset_params_blacklist.extend(['include_piyao'])
                     
                 filtered_kargs = {k: v for k, v in kargs.items() if k not in dataset_params_blacklist}
@@ -128,13 +131,13 @@ def get_dataset(model_name: str, dataset_name: str, **kargs):
 
 def get_data_collator(model_name: str, dataset_name: str, **kargs):
     collator = None
-    if dataset_name not in ['FakeSV', 'FakeTT', 'FVC']:
+    if dataset_name not in ['FakeSV', 'FakeTT', 'FVC', 'TwitterVideo']:
         raise NotImplementedError(f"Dataset {dataset_name} not implemented")
     match model_name:
         case _:
             try:
                 # Attempt to import the module
-                if model_name in ['ExMRD', 'ExMRD_Evidential', 'ExMRD_Defer', 'ExMRD_Retrieval']:
+                if model_name in ['ExMRD', 'ExMRD_Evidential', 'ExMRD_Defer', 'ExMRD_Retrieval', 'TextOnlyBaseline']:
                     module = importlib.import_module("data.ExMRD_data")
                 else:
                     module = importlib.import_module("data.baseline_data")
@@ -148,6 +151,9 @@ def get_data_collator(model_name: str, dataset_name: str, **kargs):
                 elif model_name == 'ExMRD_Defer':
                     collator_class = getattr(module, f'{dataset_name}Collator_Defer')
                 elif model_name == 'ExMRD_Retrieval':
+                    collator_class = getattr(module, f'{dataset_name}Collator_Retrieval')
+                elif model_name == 'TextOnlyBaseline':
+                    # Reuse Retrieval collators for TextOnlyBaseline
                     collator_class = getattr(module, f'{dataset_name}Collator_Retrieval')
                 else:
                     collator_class = getattr(module, f'{dataset_name}Collator_{model_name}')

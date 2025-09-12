@@ -326,7 +326,7 @@ class ExMRD_Evidential(nn.Module):
         
         # Feature projection layers
         self.text_proj = nn.Linear(768, hid_dim)  # Chinese CLIP BERT hidden size is 768
-        self.audio_proj = nn.Linear(768, hid_dim)  # Audio features are 768-dim
+        self.audio_proj = nn.LazyLinear(hid_dim)  # Audio features dimension detected dynamically
         self.visual_proj = nn.Linear(1024, hid_dim)  # ViT features are 1024-dim
         
         if self.use_evidential:
@@ -355,7 +355,7 @@ class ExMRD_Evidential(nn.Module):
         """
         Forward pass with optional modalities:
         - entity_text_input: tokenized entity claims text (if use_text=True)
-        - audio_features: (B, seq_len, 768) audio features (if use_audio=True)
+        - audio_features: (B, seq_len, audio_dim) audio features (if use_audio=True)
         - visual_features: (B, 16, 1024) visual features (if use_image=True)
         """
         # Get modality flags
@@ -379,8 +379,8 @@ class ExMRD_Evidential(nn.Module):
         
         # Audio encoding if enabled
         if use_audio and 'audio_features' in inputs:
-            audio_feats = inputs['audio_features']  # (B, seq_len, 768)
-            audio_feats = torch.mean(audio_feats, dim=1)  # (B, 768)
+            audio_feats = inputs['audio_features']  # (B, seq_len, audio_dim)
+            audio_feats = torch.mean(audio_feats, dim=1)  # (B, audio_dim)
             audio_features = self.audio_proj(audio_feats)  # (B, hid_dim)
         
         # Visual encoding if enabled

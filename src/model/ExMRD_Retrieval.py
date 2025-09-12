@@ -484,7 +484,7 @@ class ExMRD_Retrieval(nn.Module):
         
         # Feature projection layers
         self.text_proj = nn.Linear(768, hid_dim)  # Chinese CLIP BERT hidden size is 768
-        self.audio_proj = nn.Linear(768, hid_dim)  # Audio features are 768-dim
+        self.audio_proj = nn.LazyLinear(hid_dim)  # Audio features dimension detected dynamically
         self.visual_proj = nn.Linear(1024, hid_dim)  # ViT features are 1024-dim
         
         # Modality-specific FFN modules
@@ -526,7 +526,7 @@ class ExMRD_Retrieval(nn.Module):
         """
         Forward pass with retrieval-augmented features:
         - entity_text_input: tokenized entity claims text (if use_text=True)
-        - audio_features: (B, seq_len, 768) audio features (if use_audio=True)
+        - audio_features: (B, seq_len, audio_dim) audio features (if use_audio=True)
         - visual_features: (B, 16, 1024) visual features (if use_image=True)
         - positive_text_features: positive retrieval text features
         - negative_text_features: negative retrieval text features
@@ -591,7 +591,7 @@ class ExMRD_Retrieval(nn.Module):
         
         # Audio encoding if enabled - keep as sequence
         if use_audio and 'audio_features' in inputs:
-            audio_feats = inputs['audio_features']  # (B, seq_len, 768)
+            audio_feats = inputs['audio_features']  # (B, seq_len, audio_dim)
             audio_seq = self.audio_proj(audio_feats)  # (B, seq_len, hid_dim)
         
         # Visual encoding if enabled - keep as sequence

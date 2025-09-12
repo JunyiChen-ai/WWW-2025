@@ -154,11 +154,32 @@ class Trainer():
             
         self.model = load_model(cfg.model, **model_params)
         self.model.to(self.device)
-        
-        # Print full model parameters after initialization (will show after first forward pass)
+
+        # Warm-up a dummy forward to initialize any Lazy layers (e.g., audio proj)
+        try:
+            dummy_batch = next(iter(self.train_dataloader))
+            
+            def to_device(obj):
+                import torch
+                from collections.abc import Mapping
+                if isinstance(obj, torch.Tensor):
+                    return obj.to(self.device)
+                if isinstance(obj, Mapping):
+                    return {k: to_device(v) for k, v in obj.items()}
+                return obj
+            # Prepare inputs by moving tensors to device; exclude labels and ID lists
+            inputs = {k: v for k, v in dummy_batch.items() if k not in ['labels', 'vids', 'positive_video_ids', 'negative_video_ids']}
+            inputs = to_device(inputs)
+            with torch.no_grad():
+                _ = self.model(**inputs)
+        except Exception as e:
+            # If warm-up fails, continue; parameters will initialize on first real forward
+            logger.warning(f"Warm-up forward failed (lazy init may happen later): {e}")
+
+        # Print full model parameters after warm-up
         from model.ExMRD import print_full_model_params
         print_full_model_params(self.model)
-        
+
         self.optimizer = get_optimizer(self.model, **dict(cfg.opt))
         num_epoch = cfg.num_epoch
         self.scheduler = get_scheduler(self.optimizer, steps_per_epoch=steps_per_epoch, num_epoch=num_epoch, **dict(cfg.sche))
