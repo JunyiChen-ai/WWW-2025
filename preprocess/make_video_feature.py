@@ -5,6 +5,7 @@ from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 import cv2
 from PIL import Image
+import re
 from tqdm import tqdm
 import os
 import numpy as np
@@ -17,6 +18,7 @@ NUM_FRAMES = 16
 
 def robust_frame_extraction(video_path, num_frames):
     pil_images = []
+    decoded_count = 0
     
     try:
         with av.open(video_path) as container:
@@ -34,6 +36,7 @@ def robust_frame_extraction(video_path, num_frames):
                 for frame in container.decode(video=0):
                     pil_image = frame.to_image()
                     pil_images.append(pil_image)
+                    decoded_count += 1
                     break  # We only need the first frame at each timestamp
     
     except Exception as e:
@@ -43,6 +46,12 @@ def robust_frame_extraction(video_path, num_frames):
     if len(pil_images) < num_frames:
         last_frame = pil_images[-1] if pil_images else Image.new('RGB', (224, 224), color='black')
         pil_images.extend([last_frame] * (num_frames - len(pil_images)))
+
+    # Minimal quality log for FVC only: how many frames were filled (i.e., not decoded)
+    if '/FVC/' in video_path:
+        filled = max(0, num_frames - decoded_count)
+        if filled > 0:
+            print(f"[AV INFO] video={video_path} decoded={decoded_count}/{num_frames}, filled={filled}/{num_frames}")
     
     return pil_images[:num_frames]  # Ensure the correct number of frames is returned
 
@@ -85,7 +94,7 @@ def process_dataset(dataset_name):
         "FakeTT": {
             "src_file": f"data/{dataset_name}/data_complete.jsonl",
             "output_dir": f"data/{dataset_name}/fea",
-            "video_dir": f"data/{dataset_name}/videos",
+            "video_dir": f"data/{dataset_name}/video",
             "model_id": "openai/clip-vit-large-patch14",
             "use_chinese_clip": False,
             "output_file": "vit_tensor.pt"
@@ -93,7 +102,7 @@ def process_dataset(dataset_name):
         "FVC": {
             "src_file": f"data/{dataset_name}/data_complete.jsonl",
             "output_dir": f"data/{dataset_name}/fea",
-            "video_dir": f"data/{dataset_name}/videos",
+            "video_dir": f"data/{dataset_name}/video",
             "model_id": "openai/clip-vit-large-patch14",
             "use_chinese_clip": False,
             "output_file": "vit_tensor.pt"

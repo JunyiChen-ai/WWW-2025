@@ -83,8 +83,9 @@ class VideoDescriptionExtractor:
         if not self.data_dir.exists():
             raise ValueError(f"Data directory does not exist: {data_dir}")
         
-        # Output file paths
+        # Output file path (single source of truth)
         self.output_file = self.data_dir / "llm_video_descriptions.jsonl"
+        # Deprecated: no separate checkpoint/temp; we resume by reading output_file
         self.checkpoint_file = self.data_dir / "llm_checkpoint.json"
         self.temp_file = self.data_dir / "llm_temp_results.jsonl"
         
@@ -98,7 +99,9 @@ class VideoDescriptionExtractor:
         
         # Processing state
         self.processed_videos = set()
-        self.all_results = []
+        self.all_results = []  # kept for backward compatibility; not required now
+        # Async write lock for safe concurrent appends
+        self._write_lock = asyncio.Lock()
         
         # Shutdown flag
         self.shutdown_requested = False
@@ -107,49 +110,55 @@ class VideoDescriptionExtractor:
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
         
-        # Load checkpoint if exists
+        # Resume by reading existing output file to find already processed IDs
         if self.resume:
-            self.load_checkpoint()
+            self.load_existing_outputs()
     
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully"""
         logger.info("\n=== Shutdown requested, saving progress... ===")
         self.shutdown_requested = True
     
-    def load_checkpoint(self):
-        """Load checkpoint if exists"""
-        if self.checkpoint_file.exists():
-            with open(self.checkpoint_file, 'r', encoding='utf-8') as f:
-                checkpoint = json.load(f)
-                self.processed_videos = set(checkpoint.get('processed_videos', []))
-                self.stats = checkpoint.get('stats', self.stats)
-                logger.info(f"Resumed from checkpoint: {len(self.processed_videos)} videos already processed")
-        
-        # Load temp results
-        if self.temp_file.exists():
-            with open(self.temp_file, 'r', encoding='utf-8') as f:
+    def load_existing_outputs(self):
+        """Initialize processed_videos by scanning the existing output file."""
+        if not self.output_file.exists():
+            logger.info("No existing output file found; starting fresh")
+            return
+        count = 0
+        try:
+            with open(self.output_file, 'r', encoding='utf-8') as f:
                 for line in f:
-                    result = json.loads(line)
-                    self.all_results.append(result)
-                logger.info(f"Loaded {len(self.all_results)} existing results")
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        item = json.loads(line)
+                    except Exception:
+                        continue
+                    vid = item.get('video_id') or item.get('vid')
+                    if vid:
+                        self.processed_videos.add(vid)
+                        count += 1
+            logger.info(f"Resuming from output file: {count} videos already present")
+        except Exception as e:
+            logger.warning(f"Failed to read existing outputs: {e}. Starting fresh.")
     
-    def save_checkpoint(self):
-        """Save current progress to checkpoint"""
-        checkpoint = {
-            'processed_videos': list(self.processed_videos),
-            'stats': self.stats,
-            'timestamp': datetime.now().isoformat()
-        }
-        with open(self.checkpoint_file, 'w', encoding='utf-8') as f:
-            json.dump(checkpoint, f, ensure_ascii=False, indent=2)
-        logger.info(f"Checkpoint saved: {len(self.processed_videos)} videos processed")
+    async def append_result(self, result: Dict):
+        """Append one result to output file immediately (write-as-you-go)."""
+        # Avoid duplicates
+        vid = result.get('video_id')
+        if vid in self.processed_videos:
+            return
+        async with self._write_lock:
+            with open(self.output_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(result, ensure_ascii=False) + '\n')
+            self.processed_videos.add(vid)
+        # Stats
+        self.stats["successful"] += 1
     
+    # Deprecated method retained for compatibility; no-op now
     def save_temp_result(self, result: Dict):
-        """Save result to temporary file immediately"""
-        with open(self.temp_file, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(result, ensure_ascii=False) + '\n')
-        self.all_results.append(result)
-        self.processed_videos.add(result['video_id'])
+        pass
     
     def load_video_data(self, data_filename: str = "data.json") -> List[Dict]:
         """Load video data from data file (supports both .json and .jsonl)"""
@@ -430,7 +439,7 @@ Return in JSON format:
     async def process_videos_concurrent(self, videos: List[Dict]) -> List[Dict]:
         """Process videos with controlled concurrency"""
         semaphore = asyncio.Semaphore(self.max_concurrent)
-        checkpoint_interval = 20  # Save checkpoint every N videos
+        # Write-as-you-go; no checkpoints
         
         async def process_with_semaphore(video_data):
             async with semaphore:
@@ -449,11 +458,7 @@ Return in JSON format:
                 
                 # Save immediately if successful
                 if result:
-                    self.save_temp_result(result)
-                    
-                    # Save checkpoint periodically
-                    if len(self.processed_videos) % checkpoint_interval == 0:
-                        self.save_checkpoint()
+                    await self.append_result(result)
                 
                 # Rate limiting
                 await asyncio.sleep(self.rate_limit_delay)
@@ -471,14 +476,13 @@ Return in JSON format:
             logger.info("All videos already processed!")
             return self.all_results
         
-        # Process in batches for better checkpoint management
+        # Process in batches for progress control
         batch_size = 50
         all_results = []
         
         for batch_start in range(0, len(videos_to_process), batch_size):
             if self.shutdown_requested:
-                logger.info("Processing interrupted. Saving checkpoint...")
-                self.save_checkpoint()
+                logger.info("Processing interrupted. Partial results already appended to output.")
                 break
                 
             batch_end = min(batch_start + batch_size, len(videos_to_process))
@@ -505,31 +509,17 @@ Return in JSON format:
                     
                     pbar.update(1)
             
-            # Save checkpoint after each batch
-            self.save_checkpoint()
             logger.info(f"Batch complete. Processed {len(self.processed_videos)}/{len(videos)} total videos")
         
         return self.all_results
     
+    # Deprecated: results are appended as they are produced
     def save_final_results(self):
-        """Save all results to final output file"""
-        logger.info(f"Saving {len(self.all_results)} results to {self.output_file}")
-        
-        with open(self.output_file, 'w', encoding='utf-8') as f:
-            for result in self.all_results:
-                f.write(json.dumps(result, ensure_ascii=False) + '\n')
-        
-        logger.info(f"Results saved to: {self.output_file}")
+        logger.info("Write-as-you-go enabled: results already saved to output file")
     
     def cleanup_temp_files(self):
-        """Clean up temporary files after successful completion"""
-        if self.temp_file.exists():
-            self.temp_file.unlink()
-            logger.info("Cleaned up temporary result file")
-        
-        if self.checkpoint_file.exists():
-            self.checkpoint_file.unlink()
-            logger.info("Cleaned up checkpoint file")
+        """No temp/checkpoint files in write-as-you-go mode"""
+        return
     
     async def run(self, sample_size: Optional[int] = None, data_filename: str = "data.json"):
         """Run the video description extraction pipeline"""
@@ -561,18 +551,13 @@ Return in JSON format:
                 logger.info("Run again to continue processing from where it stopped.")
                 return
             
-            # Save final results
-            logger.info("All videos processed successfully!")
-            self.save_final_results()
-            
-            # Clean up temporary files
+            # Finalization
+            logger.info("All videos processed successfully! Results already saved to output file.")
             self.cleanup_temp_files()
             
         except Exception as e:
             logger.error(f"Error during processing: {e}")
-            # Save checkpoint on error
-            self.save_checkpoint()
-            logger.info("Checkpoint saved. Run again to continue from where it stopped.")
+            logger.info("Run again to continue; processed items are persisted in output file.")
             raise
         
         # Print final statistics

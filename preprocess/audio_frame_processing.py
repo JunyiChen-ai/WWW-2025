@@ -432,8 +432,8 @@ def process_dataset(dataset_name, model_name, skip_transcripts=False, skip_featu
                 
             # Check if audio file exists
             if not os.path.exists(audio_path):
-                if dataset_name == 'TwitterVideo':
-                    print(f"INFO: No audio found for {video_id}, generating dummy features")
+                if dataset_name in ['TwitterVideo', 'FVC']:
+                    print(f"INFO: No audio found for {video_id} in {dataset_name}, generating dummy features")
                     frame_features, global_features, frame_transcripts = create_dummy_audio_features(video_id, hidden_dim)
                     # Store dummy results
                     all_frame_features.append(frame_features)
