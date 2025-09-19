@@ -232,7 +232,15 @@ class Trainer():
         logger.info(f"{Fore.MAGENTA}===============================")
     
     def run_eval_only(self):
-        """Run evaluation only mode - load model and evaluate on test set with detailed predictions"""
+        """Run evaluation only mode - load model and evaluate on test set.
+        Besides saving human-readable predictions, also save arrays for analysis:
+        - prob: (n, K) probability matrix (rows sum to 1)
+        - y: (n,) ground-truth labels
+        And derived:
+        - confidence: top-1 probability per sample
+        - y_hat: argmax over classes
+        - p_true: probability assigned to the true class
+        """
         logger.info(f"{Fore.GREEN}=== EVALUATION ONLY MODE ===")
         
         # Check if checkpoint exists
@@ -248,8 +256,8 @@ class Trainer():
         logger.info(f"Loading model from: {best_model_path}")
         self.model.load_state_dict(torch.load(best_model_path, weights_only=False))
         
-        # Run evaluation on test set with detailed predictions
-        predictions = self._eval_with_predictions()
+        # Run evaluation on test set with detailed predictions and arrays
+        predictions, prob, y = self._eval_with_predictions()
         
         # Save predictions to result folder
         result_dir = Path(f"result/{self.dataset_name}")
@@ -266,6 +274,30 @@ class Trainer():
         
         logger.info(f"{Fore.GREEN}Predictions saved to: {predictions_file}")
         logger.info(f"{Fore.GREEN}Total predictions: {len(predictions)}")
+
+        # Also save prob/y and derived arrays to draw/<dataset>/ for downstream analysis
+        try:
+            project_root = Path(__file__).resolve().parent.parent
+            draw_dir = project_root / 'draw' / self.dataset_name
+            draw_dir.mkdir(parents=True, exist_ok=True)
+
+            # Ensure numpy arrays
+            prob_np = np.asarray(prob)
+            y_np = np.asarray(y)
+            confidence_np = prob_np.max(axis=1)
+            y_hat_np = prob_np.argmax(axis=1)
+            p_true_np = prob_np[np.arange(len(y_np)), y_np]
+
+            # Save as .npy files for compactness and fidelity
+            np.save(draw_dir / 'prob.npy', prob_np)
+            np.save(draw_dir / 'y.npy', y_np)
+            np.save(draw_dir / 'confidence.npy', confidence_np)
+            np.save(draw_dir / 'y_hat.npy', y_hat_np)
+            np.save(draw_dir / 'p_true.npy', p_true_np)
+
+            logger.info(f"{Fore.GREEN}Saved eval arrays to: {draw_dir}")
+        except Exception as e:
+            logger.warning(f"{Fore.YELLOW}Failed to save eval arrays to draw directory: {e}")
         
         # Run defer analysis if this is a defer model
         defer_analysis = {}
@@ -307,9 +339,15 @@ class Trainer():
             logger.info(f"{Fore.YELLOW}No confidence values found in predictions - skipping confidence analysis")
         
     def _eval_with_predictions(self):
-        """Evaluate model on test set and return detailed predictions"""
+        """Evaluate model on test set and return:
+        - predictions: list of dicts (for human-readable inspection)
+        - prob: numpy array of shape (n, K)
+        - y: numpy array of shape (n,)
+        """
         self.model.eval()
         predictions = []
+        prob_list = []
+        y_list = []
         
         logger.info(f"{Fore.YELLOW}Running detailed evaluation on test set...")
         
@@ -365,6 +403,10 @@ class Trainer():
                         pred = output
                     defer_info = None
             
+            # Accumulate batch probabilities and labels
+            prob_list.append(pred.detach().cpu().float().numpy())
+            y_list.append(labels.detach().cpu().long().numpy())
+
             _, preds = torch.max(pred, 1)
             
             # Store predictions for each sample in the batch
@@ -444,7 +486,16 @@ class Trainer():
         logger.info(f"{Fore.GREEN}Fake(1) F1: {metrics['f1_fake']:.4f}, P: {metrics['prec_fake']:.4f}, R: {metrics['rec_fake']:.4f}")
         logger.info(f"{Fore.GREEN}===========================")
         
-        return predictions
+        # Stack arrays
+        try:
+            prob_all = np.concatenate(prob_list, axis=0)
+            y_all = np.concatenate(y_list, axis=0)
+        except Exception as e:
+            logger.warning(f"{Fore.YELLOW}Failed to concatenate prob/y arrays: {e}")
+            prob_all = np.vstack(prob_list) if prob_list else np.empty((0, 0))
+            y_all = np.hstack(y_list) if y_list else np.empty((0,), dtype=int)
+
+        return predictions, prob_all, y_all
         
     def _eval_defer_analysis(self, predictions):
         """Analyze defer model predictions with detailed statistics"""

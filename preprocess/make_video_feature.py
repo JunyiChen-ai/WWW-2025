@@ -86,7 +86,7 @@ def process_dataset(dataset_name):
         "FakeSV": {
             "src_file": f"data/{dataset_name}/data_complete.jsonl",
             "output_dir": f"data/{dataset_name}/fea",
-            "video_dir": f"data/{dataset_name}/videos",
+            "video_dir": f"data/{dataset_name}/video",
             "model_id": "OFA-Sys/chinese-clip-vit-large-patch14",
             "use_chinese_clip": True,
             "output_file": "vit_tensor.pt"

@@ -25,6 +25,7 @@ class FakeSVDataset_ExMRD(FakeSVDataset):
         # Load features based on modality controls
         self.fea_frames = None
         self.audio_features = None
+        self.audio_dim = 768
         self.entity_data = None
         
         if self.use_image:
@@ -491,6 +492,381 @@ class FakeSVCollator_Defer(FakeSVCollator_ExMRD):
         # Add LLM prediction probabilities
         p_dm = torch.stack([item['p_dm'] for item in batch])  # (batch_size, 2)
         result['p_dm'] = p_dm
+        
+        return result
+
+
+class FVCDataset_Retrieval(Dataset):
+    """Dataset for retrieval-augmented training with positive/negative samples for FVC (FakeTT-like format)."""
+
+    def __init__(self, fold: int, split: str, retrieval_path: str = None,
+                 filter_k: int = None, description: bool = True, temp_evolution: bool = True,
+                 use_text: bool = True, use_image: bool = True, use_audio: bool = True, **kwargs):
+        from pathlib import Path
+        import json as _json
+        super().__init__()
+
+        self.filter_k = filter_k
+        self.description = description
+        self.temp_evolution = temp_evolution
+        self.use_text = use_text
+        self.use_image = use_image
+        self.use_audio = use_audio
+
+        # Load FVC base data in FakeTT-like format
+        self.data = self._get_data(fold, split)
+
+        # Load retrieval data
+        if retrieval_path is None:
+            retrieval_path = "text_similarity_results/uncertainty_full_dataset_retrieval_LongCLIP-GmP-ViT-L-14.json"
+        retrieval_file = Path(retrieval_path)
+        if not retrieval_file.exists():
+            retrieval_file = Path(f"data/FVC/{retrieval_path}")
+        if not retrieval_file.exists():
+            raise FileNotFoundError(f"Retrieval file not found: {retrieval_path}")
+        with open(retrieval_file, 'r', encoding='utf-8') as f:
+            retrieval_data = _json.load(f)
+        self.retrieval_mapping = {}
+        for item in retrieval_data:
+            video_id = str(item['query_video']['video_id'])
+            self.retrieval_mapping[video_id] = {
+                'positive_video_id': str(item['similar_true']['video_id']),
+                'negative_video_id': str(item['similar_fake']['video_id']),
+                'positive_data': item['similar_true'],
+                'negative_data': item['similar_fake']
+            }
+
+        # Load features based on modality controls
+        self.fea_frames = None
+        self.audio_features = None
+        if self.use_image:
+            self.fea_frames = torch.load('data/FVC/fea/vit_tensor.pt', weights_only=True)
+        if self.use_audio:
+            # Prefer most recent audio_features_frames*.pt (model-mark suffix), fall back if none
+            fea_dir = Path('data/FVC/fea')
+            candidates = sorted(fea_dir.glob('audio_features_frames*.pt'), key=lambda p: p.stat().st_mtime, reverse=True)
+            audio_path = candidates[0] if candidates else fea_dir / 'audio_features_frames.pt'
+            if audio_path.exists():
+                self.audio_features = torch.load(str(audio_path), weights_only=True)
+                # Infer audio feature dim from first entry
+                try:
+                    first_key = next(iter(self.audio_features.keys()))
+                    first_val = self.audio_features[first_key]
+                    if hasattr(first_val, 'shape') and len(first_val.shape) == 2:
+                        self.audio_dim = int(first_val.shape[1])
+                except Exception:
+                    pass
+                print(f"Loaded FVC audio features from: {audio_path} (dim={self.audio_dim})")
+            else:
+                print("Warning: Audio features not found for FVC, using dummy features")
+                self.audio_features = None
+
+        # Load LLM video descriptions (REQUIRED)
+        try:
+            llm_data = []
+            with open('data/FVC/llm_video_descriptions.jsonl', 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.strip():
+                        item = _json.loads(line)
+                        item['video_id'] = str(item['video_id'])
+                        llm_data.append(item)
+            self.entity_data = pd.DataFrame(llm_data)
+            print(f"Loaded LLM descriptions: {len(self.entity_data)} samples")
+        except Exception as e:
+            raise FileNotFoundError(f"REQUIRED: Could not load LLM descriptions for FVC: {e}.")
+
+        # Filter dataset to only include samples with retrieval data and required features
+        available_retrieval_ids = set(self.retrieval_mapping.keys())
+        data_ids = set(self.data['video_id'])
+        available_ids = data_ids & available_retrieval_ids
+        if self.use_image and self.fea_frames is not None:
+            available_ids &= set(self.fea_frames.keys())
+        if self.use_audio and self.audio_features is not None:
+            available_ids &= set(self.audio_features.keys())
+
+        print(f"Using {len(available_ids)} samples with retrieval data and features (FVC)")
+        original_length = len(self.data)
+        self.data = self.data[self.data['video_id'].isin(available_ids)].reset_index(drop=True)
+        print(f"FVC Retrieval dataset: {original_length} -> {len(self.data)} samples (removed {original_length - len(self.data)})")
+
+    def _get_data(self, fold, split):
+        if fold in ['temporal']:
+            return self._get_temporal_data(split)
+        elif fold in [1, 2, 3, 4, 5]:
+            return self._get_fold_data(fold, split)
+        else:
+            raise NotImplementedError(f"Invalid fold: {fold}")
+
+    def _get_complete_data(self):
+        # FVC aligned to FakeTT format; data.json is JSONL lines
+        data = pd.read_json('data/FVC/data.json', orient='records', lines=True, dtype={'video_id': 'str'})
+        replace_values = {'fake': 1, 'real': 0}
+        data['label'] = data['annotation'].replace(replace_values)
+        if 'event' in data.columns:
+            data['event'], _ = pd.factorize(data['event'])
+        else:
+            data['event'] = 0
+        return data
+
+    def _get_fold_data(self, fold, split):
+        if split == 'train':
+            vid_path = f'data/FVC/vids/vid_fold_no_{fold}.txt'
+        elif split == 'test':
+            vid_path = f'data/FVC/vids/vid_fold_{fold}.txt'
+        else:
+            raise ValueError(f"Invalid split: {split}")
+        with open(vid_path, 'r') as fr:
+            vids = [line.strip() for line in fr.readlines()]
+        data = self._get_complete_data()
+        data = data[data['video_id'].isin(vids)]
+        return data
+
+    def _get_temporal_data(self, split: str):
+        vid_path = f'data/FVC/vids/vid_time3_{split}.txt'
+        with open(vid_path, 'r') as fr:
+            vids = [line.strip() for line in fr.readlines()]
+        data = self._get_complete_data()
+        data = data[data['video_id'].isin(vids)]
+        return data
+
+    def __len__(self):
+        return len(self.data)
+
+    def _construct_text_representation(self, row_data):
+        # Reuse FakeTT-style text assembly
+        text_parts = []
+        if 'title' in row_data and pd.notna(row_data['title']) and row_data['title']:
+            text_parts.append(str(row_data['title']))
+        if 'event' in row_data and pd.notna(row_data['event']) and row_data['event']:
+            text_parts.append(str(row_data['event']))
+        elif 'keywords' in row_data and pd.notna(row_data['keywords']) and row_data['keywords']:
+            text_parts.append(str(row_data['keywords']))
+        if self.description and 'description' in row_data and pd.notna(row_data['description']) and row_data['description']:
+            text_parts.append(str(row_data['description']))
+        if self.temp_evolution and 'temporal_evolution' in row_data and pd.notna(row_data['temporal_evolution']) and row_data['temporal_evolution']:
+            text_parts.append(str(row_data['temporal_evolution']))
+        return ' '.join(text_parts)
+
+    def __getitem__(self, idx):
+        item = self.data.iloc[idx]
+        vid = item['video_id']
+        label = torch.tensor(item['label'], dtype=torch.long)
+
+        visual_features = None
+        audio_features = None
+        concatenated_text = None
+
+        if self.use_image:
+            if self.fea_frames is None or vid not in self.fea_frames:
+                print(f"Warning: Video features not found for {vid}, skipping...")
+                return self.__getitem__((idx + 1) % len(self.data))
+            visual_features = torch.Tensor(self.fea_frames[vid])
+
+        if self.use_audio:
+            if self.audio_features is None or vid not in self.audio_features:
+                audio_features = torch.zeros(16, self.audio_dim)
+            else:
+                audio_features = torch.Tensor(self.audio_features[vid])
+
+        if self.use_text:
+            entity_row = self.entity_data[self.entity_data['video_id'] == vid]
+            if len(entity_row) == 0:
+                raise ValueError(f"No LLM description found for video {vid}. LLM descriptions are mandatory.")
+            entity_row = entity_row.iloc[0]
+            concatenated_text = self._construct_text_representation(entity_row)
+
+        # Retrieval samples
+        positive_features = {}
+        negative_features = {}
+        positive_video_id = None
+        negative_video_id = None
+        if vid in self.retrieval_mapping:
+            retrieval_info = self.retrieval_mapping[vid]
+            pos_vid = retrieval_info['positive_video_id']
+            neg_vid = retrieval_info['negative_video_id']
+            positive_video_id = pos_vid
+            negative_video_id = neg_vid
+            if self.use_image and self.fea_frames is not None:
+                if pos_vid in self.fea_frames:
+                    positive_features['visual'] = torch.Tensor(self.fea_frames[pos_vid])
+                if neg_vid in self.fea_frames:
+                    negative_features['visual'] = torch.Tensor(self.fea_frames[neg_vid])
+            if self.use_audio and self.audio_features is not None:
+                if pos_vid in self.audio_features:
+                    positive_features['audio'] = torch.Tensor(self.audio_features[pos_vid])
+                if neg_vid in self.audio_features:
+                    negative_features['audio'] = torch.Tensor(self.audio_features[neg_vid])
+            if self.use_text:
+                pos_data = retrieval_info['positive_data']
+                neg_data = retrieval_info['negative_data']
+                positive_features['text'] = self._construct_text_representation(pos_data)
+                negative_features['text'] = self._construct_text_representation(neg_data)
+
+        return {
+            'vid': vid,
+            'label': label,
+            'concatenated_text': concatenated_text,
+            'visual_features': visual_features,
+            'audio_features': audio_features,
+            'use_text': self.use_text,
+            'use_image': self.use_image,
+            'use_audio': self.use_audio,
+            'positive_features': positive_features,
+            'negative_features': negative_features,
+            'positive_video_id': positive_video_id,
+            'negative_video_id': negative_video_id,
+        }
+
+
+class FVCCollator_Retrieval:
+    """Collator for FVC retrieval dataset that includes positive/negative samples"""
+    
+    def __init__(self, tokenizer_name, **kwargs):
+        self.tokenizer_name = tokenizer_name
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        self.max_text_len = self._infer_max_len(tokenizer_name)
+        logger.info(f"[{self.__class__.__name__}] tokenizer={self.tokenizer_name} max_text_len={self.max_text_len}")
+
+    def _infer_max_len(self, name):
+        max_len = None
+        try:
+            cfg = AutoConfig.from_pretrained(name)
+            max_len = getattr(cfg, 'max_position_embeddings', None)
+        except Exception:
+            pass
+        if max_len is None:
+            max_len = getattr(self.tokenizer, 'model_max_length', None)
+        if not isinstance(max_len, int) or max_len <= 0 or max_len > 100000:
+            nm = str(name).lower()
+            max_len = 77 if 'clip' in nm else 512
+        return max_len
+    
+    def __call__(self, batch):
+        vids = [item['vid'] for item in batch]
+        labels = torch.stack([item['label'] for item in batch])
+        
+        # Get modality flags from first item (should be same for all)
+        use_text = batch[0]['use_text']
+        use_image = batch[0]['use_image'] 
+        use_audio = batch[0]['use_audio']
+        
+        # Initialize return dict
+        result = {
+            'vids': vids,
+            'labels': labels,
+            'use_text': use_text,
+            'use_image': use_image,
+            'use_audio': use_audio,
+        }
+        
+        # Process text features if enabled
+        if use_text:
+            concatenated_texts = [item['concatenated_text'] for item in batch]
+            max_len = self.max_text_len
+            entity_text_input = self.tokenizer(
+                concatenated_texts, 
+                padding=True, 
+                truncation=True, 
+                return_tensors='pt', 
+                max_length=max_len
+            )
+            result['entity_text_input'] = entity_text_input
+            
+        # Process visual features if enabled
+        if use_image:
+            visual_features = torch.stack([item['visual_features'] for item in batch])
+            result['visual_features'] = visual_features
+            
+        # Process audio features if enabled
+        if use_audio:
+            audio_features = torch.stack([item['audio_features'] for item in batch])
+            result['audio_features'] = audio_features
+        
+        # Process positive and negative text features if enabled
+        if use_text:
+            positive_texts = []
+            negative_texts = []
+            
+            for item in batch:
+                pos_text = item['positive_features'].get('text', '')
+                neg_text = item['negative_features'].get('text', '')
+                positive_texts.append(pos_text)
+                negative_texts.append(neg_text)
+            
+            # Tokenize positive texts
+            positive_text_input = self.tokenizer(
+                positive_texts, 
+                padding=True, 
+                truncation=True, 
+                return_tensors='pt', 
+                max_length=self.max_text_len
+            )
+            result['positive_text_input'] = positive_text_input
+            
+            # Tokenize negative texts
+            negative_text_input = self.tokenizer(
+                negative_texts, 
+                padding=True, 
+                truncation=True, 
+                return_tensors='pt', 
+                max_length=self.max_text_len
+            )
+            result['negative_text_input'] = negative_text_input
+        
+        # Process positive and negative visual features if enabled
+        if use_image:
+            positive_visual_features = []
+            negative_visual_features = []
+            
+            for item in batch:
+                pos_visual = item['positive_features'].get('visual')
+                neg_visual = item['negative_features'].get('visual')
+                
+                if pos_visual is not None:
+                    positive_visual_features.append(pos_visual)
+                else:
+                    positive_visual_features.append(torch.zeros(16, 1024))
+                    
+                if neg_visual is not None:
+                    negative_visual_features.append(neg_visual)
+                else:
+                    negative_visual_features.append(torch.zeros(16, 1024))
+            
+            result['positive_visual_features'] = torch.stack(positive_visual_features)
+            result['negative_visual_features'] = torch.stack(negative_visual_features)
+        
+        # Process positive and negative audio features if enabled
+        if use_audio:
+            positive_audio_features = []
+            negative_audio_features = []
+            # Infer audio dim from batch audio_features if available; else default 768
+            inferred_dim = 768
+            try:
+                if 'audio_features' in batch[0] and isinstance(batch[0]['audio_features'], torch.Tensor):
+                    inferred_dim = int(batch[0]['audio_features'].shape[1])
+            except Exception:
+                pass
+            
+            for item in batch:
+                pos_audio = item['positive_features'].get('audio')
+                neg_audio = item['negative_features'].get('audio')
+                
+                if pos_audio is not None:
+                    positive_audio_features.append(pos_audio)
+                else:
+                    positive_audio_features.append(torch.zeros(16, inferred_dim))
+                    
+                if neg_audio is not None:
+                    negative_audio_features.append(neg_audio)
+                else:
+                    negative_audio_features.append(torch.zeros(16, inferred_dim))
+            
+            result['positive_audio_features'] = torch.stack(positive_audio_features)
+            result['negative_audio_features'] = torch.stack(negative_audio_features)
+        
+        # Add video IDs for debugging
+        result['positive_video_ids'] = [item['positive_video_id'] for item in batch]
+        result['negative_video_ids'] = [item['negative_video_id'] for item in batch]
         
         return result
 
