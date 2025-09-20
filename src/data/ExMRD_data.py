@@ -500,6 +500,7 @@ class FVCDataset_Retrieval(Dataset):
     """Dataset for retrieval-augmented training with positive/negative samples for FVC (FakeTT-like format)."""
 
     def __init__(self, fold: int, split: str, retrieval_path: str = None,
+                 retrieval_path_5fold: str = None,
                  filter_k: int = None, description: bool = True, temp_evolution: bool = True,
                  use_text: bool = True, use_image: bool = True, use_audio: bool = True, **kwargs):
         from pathlib import Path
@@ -516,14 +517,61 @@ class FVCDataset_Retrieval(Dataset):
         # Load FVC base data in FakeTT-like format
         self.data = self._get_data(fold, split)
 
-        # Load retrieval data
+        # Load retrieval data (5-fold preference when fold in [1..5])
         if retrieval_path is None:
             retrieval_path = "text_similarity_results/uncertainty_full_dataset_retrieval_LongCLIP-GmP-ViT-L-14.json"
-        retrieval_file = Path(retrieval_path)
-        if not retrieval_file.exists():
-            retrieval_file = Path(f"data/FVC/{retrieval_path}")
-        if not retrieval_file.exists():
-            raise FileNotFoundError(f"Retrieval file not found: {retrieval_path}")
+        # Prefer 5-fold path when fold in [1..5]
+        if isinstance(fold, int) and 1 <= fold <= 5 and retrieval_path_5fold:
+            retrieval_path = retrieval_path_5fold
+        retrieval_file = None
+        if isinstance(fold, int) and 1 <= fold <= 5:
+            dataset_root = Path('data/FVC')
+            rp = Path(retrieval_path)
+            base_dir = None
+            if rp.is_dir():
+                base_dir = rp
+            elif not rp.is_absolute() and (dataset_root / rp).is_dir():
+                base_dir = (dataset_root / rp)
+            if base_dir is not None:
+                candidate = base_dir / f"fold_{fold}.json"
+                if candidate.exists():
+                    retrieval_file = candidate
+                else:
+                    logger.warning(f"\x1b[31m[5-fold] fold_{fold}.json not found under directory: {base_dir}. Will search fallbacks.\x1b[0m")
+            else:
+                parent = rp.parent if rp.name else rp
+                candidate = (parent / f"fold_{fold}.json") if parent else None
+                if candidate and candidate.exists():
+                    retrieval_file = candidate
+                else:
+                    tsr = dataset_root / 'text_similarity_results'
+                    if tsr.exists():
+                        matches = list(tsr.rglob(f"*/fold_{fold}.json"))
+                        if matches:
+                            matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                            retrieval_file = matches[0]
+                            logger.warning(f"\x1b[31m[5-fold] Using auto-matched fold file: {retrieval_file}\x1b[0m")
+                        else:
+                            legacy = list(tsr.rglob(f"ret_*_f{fold}*.json"))
+                            if legacy:
+                                legacy.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                                retrieval_file = legacy[0]
+                                logger.warning(f"\x1b[31m[5-fold] Using legacy-matched file: {retrieval_file}\x1b[0m")
+            if retrieval_file is None:
+                direct = Path(retrieval_path)
+                if not direct.exists():
+                    direct = dataset_root / retrieval_path
+                if direct.exists():
+                    retrieval_file = direct
+                    logger.warning(f"\x1b[31m[5-fold] Fold file not found. Falling back to: {retrieval_file}\x1b[0m")
+                else:
+                    raise FileNotFoundError(f"Retrieval file not found for 5-fold (fold {fold}). Checked directory and fallbacks.")
+        else:
+            retrieval_file = Path(retrieval_path)
+            if not retrieval_file.exists():
+                retrieval_file = Path(f"data/FVC/{retrieval_path}")
+            if not retrieval_file.exists():
+                raise FileNotFoundError(f"Retrieval file not found: {retrieval_path}")
         with open(retrieval_file, 'r', encoding='utf-8') as f:
             retrieval_data = _json.load(f)
         self.retrieval_mapping = {}
@@ -874,23 +922,69 @@ class FVCCollator_Retrieval:
 class FakeSVDataset_Retrieval(FakeSVDataset_ExMRD):
     """Dataset for retrieval-augmented training with positive/negative samples"""
     
-    def __init__(self, fold: int, split: str, retrieval_path: str = None, 
+    def __init__(self, fold: int, split: str, retrieval_path: str = None,
+                 retrieval_path_5fold: str = None,
                  filter_k: int = None, **kwargs):
         super(FakeSVDataset_Retrieval, self).__init__(fold, split, filter_k=filter_k, **kwargs)
         
         self.filter_k = filter_k
         
-        # Load retrieval data
+        # Load retrieval data (5-fold preference when fold in [1..5])
         if retrieval_path is None:
             retrieval_path = "text_similarity_results/full_dataset_retrieval_chinese-clip-vit-large-patch14.json"
-        
-        retrieval_file = Path(retrieval_path)
-        if not retrieval_file.exists():
-            # Try with data/FakeSV/ prefix
-            retrieval_file = Path(f"data/FakeSV/{retrieval_path}")
-        
-        if not retrieval_file.exists():
-            raise FileNotFoundError(f"Retrieval file not found: {retrieval_path}")
+        # Prefer 5-fold path when fold in [1..5]
+        if isinstance(fold, int) and 1 <= fold <= 5 and retrieval_path_5fold:
+            retrieval_path = retrieval_path_5fold
+
+        retrieval_file = None
+        if isinstance(fold, int) and 1 <= fold <= 5:
+            dataset_root = Path('data/FakeSV')
+            rp = Path(retrieval_path)
+            base_dir = None
+            if rp.is_dir():
+                base_dir = rp
+            elif not rp.is_absolute() and (dataset_root / rp).is_dir():
+                base_dir = (dataset_root / rp)
+            if base_dir is not None:
+                candidate = base_dir / f"fold_{fold}.json"
+                if candidate.exists():
+                    retrieval_file = candidate
+                else:
+                    logger.warning(f"\x1b[31m[5-fold] fold_{fold}.json not found under directory: {base_dir}. Will search fallbacks.\x1b[0m")
+            else:
+                parent = rp.parent if rp.name else rp
+                candidate = (parent / f"fold_{fold}.json") if parent else None
+                if candidate and candidate.exists():
+                    retrieval_file = candidate
+                else:
+                    tsr = dataset_root / 'text_similarity_results'
+                    if tsr.exists():
+                        matches = list(tsr.rglob(f"*/fold_{fold}.json"))
+                        if matches:
+                            matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                            retrieval_file = matches[0]
+                            logger.warning(f"\x1b[31m[5-fold] Using auto-matched fold file: {retrieval_file}\x1b[0m")
+                        else:
+                            legacy = list(tsr.rglob(f"ret_*_f{fold}*.json"))
+                            if legacy:
+                                legacy.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                                retrieval_file = legacy[0]
+                                logger.warning(f"\x1b[31m[5-fold] Using legacy-matched file: {retrieval_file}\x1b[0m")
+            if retrieval_file is None:
+                direct = Path(retrieval_path)
+                if not direct.exists():
+                    direct = dataset_root / retrieval_path
+                if direct.exists():
+                    retrieval_file = direct
+                    logger.warning(f"\x1b[31m[5-fold] Fold file not found. Falling back to: {retrieval_file}\x1b[0m")
+                else:
+                    raise FileNotFoundError(f"Retrieval file not found for 5-fold (fold {fold}). Checked directory and fallbacks.")
+        else:
+            retrieval_file = Path(retrieval_path)
+            if not retrieval_file.exists():
+                retrieval_file = Path(f"data/FakeSV/{retrieval_path}")
+            if not retrieval_file.exists():
+                raise FileNotFoundError(f"Retrieval file not found: {retrieval_path}")
         
         with open(retrieval_file, 'r', encoding='utf-8') as f:
             retrieval_data = json.load(f)
@@ -1088,7 +1182,8 @@ class FakeSVCollator_Retrieval(FakeSVCollator_ExMRD):
 class FakeTTDataset_Retrieval(FakeTTDataset):
     """Dataset for retrieval-augmented training with positive/negative samples for FakeTT"""
     
-    def __init__(self, fold: int, split: str, retrieval_path: str = None, 
+    def __init__(self, fold: int, split: str, retrieval_path: str = None,
+                 retrieval_path_5fold: str = None,
                  filter_k: int = None, description: bool = True, temp_evolution: bool = True,
                  use_text: bool = True, use_image: bool = True, use_audio: bool = True, **kwargs):
         super(FakeTTDataset_Retrieval, self).__init__(**kwargs)
@@ -1102,17 +1197,73 @@ class FakeTTDataset_Retrieval(FakeTTDataset):
         self.use_image = use_image
         self.use_audio = use_audio
         
-        # Load retrieval data
+        # Load retrieval data (5-fold preference when fold in [1..5])
         if retrieval_path is None:
             retrieval_path = "text_similarity_results/full_dataset_retrieval_LongCLIP-GmP-ViT-L-14.json"
-        
-        retrieval_file = Path(retrieval_path)
-        if not retrieval_file.exists():
-            # Try with data/FakeTT/ prefix
-            retrieval_file = Path(f"data/FakeTT/{retrieval_path}")
-        
-        if not retrieval_file.exists():
-            raise FileNotFoundError(f"Retrieval file not found: {retrieval_path}")
+        # Prefer 5-fold path when fold in [1..5]
+        if isinstance(fold, int) and 1 <= fold <= 5 and retrieval_path_5fold:
+            retrieval_path = retrieval_path_5fold
+
+        # Resolve fold-specific file if 5-fold; otherwise keep temporal behavior
+        retrieval_file = None
+        if isinstance(fold, int) and 1 <= fold <= 5:
+            # 1) If retrieval_path is a directory, prefer <dir>/fold_{fold}.json
+            rp = Path(retrieval_path)
+            dataset_root = Path('data/FakeTT')
+            # Resolve directory-style base
+            base_dir = None
+            if rp.is_dir():
+                base_dir = rp
+            elif not rp.is_absolute() and (dataset_root / rp).is_dir():
+                base_dir = (dataset_root / rp)
+            if base_dir is not None:
+                candidate = base_dir / f"fold_{fold}.json"
+                if candidate.exists():
+                    retrieval_file = candidate
+                else:
+                    logger.warning(f"\x1b[31m[5-fold] fold_{fold}.json not found under directory: {base_dir}. Will search fallbacks.\x1b[0m")
+            else:
+                # 2) If retrieval_path is a file, check its parent for fold_{fold}.json
+                parent = rp.parent if rp.name else rp
+                candidate = (parent / f"fold_{fold}.json") if parent else None
+                if candidate and candidate.exists():
+                    retrieval_file = candidate
+                else:
+                    # Also try under dataset default 5fold subfolders
+                    tsr = dataset_root / 'text_similarity_results'
+                    if tsr.exists():
+                        matches = list(tsr.rglob(f"*/fold_{fold}.json"))
+                        if matches:
+                            # pick latest by mtime and warn
+                            matches.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                            retrieval_file = matches[0]
+                            logger.warning(f"\x1b[31m[5-fold] Using auto-matched fold file: {retrieval_file}\x1b[0m")
+                        else:
+                            # Try legacy pattern ret_*_f{fold}*.json
+                            legacy = list(tsr.rglob(f"ret_*_f{fold}*.json"))
+                            if legacy:
+                                legacy.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+                                retrieval_file = legacy[0]
+                                logger.warning(f"\x1b[31m[5-fold] Using legacy-matched file: {retrieval_file}\x1b[0m")
+
+            if retrieval_file is None:
+                # Final fallback: original retrieval_path (warn)
+                direct = Path(retrieval_path)
+                if not direct.exists():
+                    # Try with dataset prefix
+                    direct = dataset_root / retrieval_path
+                if direct.exists():
+                    retrieval_file = direct
+                    logger.warning(f"\x1b[31m[5-fold] Fold file not found. Falling back to: {retrieval_file}\x1b[0m")
+                else:
+                    raise FileNotFoundError(f"Retrieval file not found for 5-fold (fold {fold}). Checked directory and fallbacks.")
+        else:
+            # Temporal/other: keep original behavior
+            retrieval_file = Path(retrieval_path)
+            if not retrieval_file.exists():
+                retrieval_file = Path(f"data/FakeTT/{retrieval_path}")
+            if not retrieval_file.exists():
+                raise FileNotFoundError(f"Retrieval file not found: {retrieval_path}")
         
         import json
         with open(retrieval_file, 'r', encoding='utf-8') as f:

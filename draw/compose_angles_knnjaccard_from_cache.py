@@ -11,21 +11,51 @@ Inputs (defaults):
     expected keys: scores_T, scores_I, scores_A
 
 Output:
-  analysis/{dataset}/draw/angles_and_knnjaccard_combined.png
+  analysis/{dataset}/draw/angles_and_knnjaccard_combined.pdf
 
 Examples:
   python draw/compose_angles_knnjaccard_from_cache.py --dataset FakeSV
   python draw/compose_angles_knnjaccard_from_cache.py \
       --angles-cache analysis/FakeSV/multimodal_choice/cache/principal_angles_raw_OFA-Sys...npz \
       --prepared-cache analysis/FakeSV/multimodal_choice/cache/prepared_data.npz \
-      --k-values 5,10,20 --output analysis/FakeSV/draw/angles_and_knnjaccard_combined.png
+      --k-values 5,10,20 --output analysis/FakeSV/draw/angles_and_knnjaccard_combined.pdf
 """
 
 import argparse
 from pathlib import Path
 import sys
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib import cm
+
+# =====================
+# Global plot parameters (small but legible; macaron palette)
+# =====================
+FIGSIZE = (5.2, 2.0)  # compact but with clear separation
+FONT_SIZE = 9
+AXES_LABEL_SIZE = 10
+TICK_LABEL_SIZE = 9
+LEGEND_SIZE = 9
+GRID_ALPHA = 0.25
+LINE_WIDTH = 1.8
+
+# Pastel (macaron) colors for the three lines
+LINE_COLORS = ['#A8D8EA', '#FFD8A8', '#CDEAC0']  # TV, TA, VA
+
+# Heatmap colormap (pastel)
+HEATMAP_CMAP = 'Pastel1'
+
+# PDF font embedding
+PDF_FONTTYPE = 42  # embed TrueType for crisp text
+
+# Layout tweaks
+LEFT_MARGIN = 0.10
+WSPACE = 0.3  # inter-panel spacing
+HSPACE = 0.02
+
+# Whether to show a colorbar for the heatmap
+SHOW_HEATMAP_COLORBAR = False
 
 
 def find_latest_angles_cache(cache_dir: Path) -> Path | None:
@@ -51,7 +81,7 @@ def main():
     parser.add_argument('--angles-cache', type=str, default=None, help='Path to principal_angles_*.npz')
     parser.add_argument('--prepared-cache', type=str, default=None, help='Path to prepared_data.npz')
     parser.add_argument('--k-values', type=str, default='5,10,20', help='Comma-separated k list for Jaccard')
-    parser.add_argument('--output', type=str, default=None, help='Output PNG path')
+    parser.add_argument('--output', type=str, default=None, help='Output PDF path')
     parser.add_argument('--r-start', type=int, default=10, help='Start plotting from subspace dim r (1-based)')
     args = parser.parse_args()
 
@@ -75,7 +105,7 @@ def main():
         prepared_path = Path(args.prepared_cache)
 
     if args.output is None:
-        out_path = draw_out / 'angles_and_knnjaccard_combined.png'
+        out_path = draw_out / 'angles_and_knnjaccard_combined.pdf'
     else:
         out_path = Path(args.output)
         out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -116,39 +146,58 @@ def main():
         jacc_means[i, 2] = mean_knn_jaccard(S_I, S_A, k)
 
     # Compose figure
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    # Global styling
+    mpl.rcParams.update({
+        'pdf.fonttype': PDF_FONTTYPE,
+        'font.size': FONT_SIZE,
+        'axes.labelsize': AXES_LABEL_SIZE,
+        'xtick.labelsize': TICK_LABEL_SIZE,
+        'ytick.labelsize': TICK_LABEL_SIZE,
+        'legend.fontsize': LEGEND_SIZE,
+    })
+
+    fig, axes = plt.subplots(1, 2, figsize=FIGSIZE)
 
     # Left: principal angle cosines (dynamic y-limit close to max)
     cos_TV_sel = cos_TV[start_idx:start_idx+len(r_axis)]
     cos_TA_sel = cos_TA[start_idx:start_idx+len(r_axis)]
     cos_VA_sel = cos_VA[start_idx:start_idx+len(r_axis)]
-    axes[0].plot(r_axis, cos_TV_sel, label='Text–Vision', linewidth=2, color='#e76f51')
-    axes[0].plot(r_axis, cos_TA_sel, label='Text–Audio', linewidth=2, color='#b38e2e')
-    axes[0].plot(r_axis, cos_VA_sel, label='Vision–Audio', linewidth=2, color='#2a9d8f')
+    axes[0].plot(r_axis, cos_TV_sel, label='T–V', linewidth=LINE_WIDTH, color=LINE_COLORS[0])
+    axes[0].plot(r_axis, cos_TA_sel, label='T–A', linewidth=LINE_WIDTH, color=LINE_COLORS[1])
+    axes[0].plot(r_axis, cos_VA_sel, label='V–A', linewidth=LINE_WIDTH, color=LINE_COLORS[2])
     axes[0].set_xlabel('Subspace dimension r')
     axes[0].set_ylabel('cos(θ_r)')
-    axes[0].set_title('Principal Angle Cosines between Modality Subspaces')
     y_max = float(max(cos_TV_sel.max(initial=0.0), cos_TA_sel.max(initial=0.0), cos_VA_sel.max(initial=0.0)))
     axes[0].set_ylim(0.0, min(1.0, y_max + 0.02))
-    axes[0].grid(True, alpha=0.3)
-    axes[0].legend()
+    axes[0].grid(True, alpha=GRID_ALPHA)
+    # Compact legend in upper-right of the left subplot
+    axes[0].legend(frameon=False, loc='upper right')
 
     # Right: heatmap of kNN Jaccard
-    im = axes[1].imshow(jacc_means, cmap='RdYlBu_r', aspect='auto')
-    axes[1].set_title('kNN Jaccard Overlap (Cross-modal)')
+    im = axes[1].imshow(jacc_means, cmap=HEATMAP_CMAP, aspect='auto')
+    # X label restored per request; align with x-ticks
     axes[1].set_xlabel('Modality Pairs')
-    axes[1].set_ylabel('k Values')
+    axes[1].set_ylabel('')
     axes[1].set_xticks(range(len(pair_names)))
-    axes[1].set_xticklabels(pair_names, rotation=45, ha='right')
+    axes[1].set_xticklabels(['T–V', 'T–A', 'V–A'], rotation=0, ha='center')
     axes[1].set_yticks(range(len(k_list)))
     axes[1].set_yticklabels([f'k={k}' for k in k_list])
+    # Per-cell numeric annotations for readability
     for i in range(len(k_list)):
         for j in range(len(pair_names)):
-            axes[1].text(j, i, f'{jacc_means[i, j]:.3f}', ha='center', va='center', color='black', fontweight='bold')
-    fig.colorbar(im, ax=axes[1], fraction=0.046, pad=0.04)
+            val = jacc_means[i, j]
+            axes[1].text(j, i, f'{val:.3f}', ha='center', va='center',
+                         color='black', fontsize=7, fontweight='bold')
+    # Optional compact colorbar
+    if SHOW_HEATMAP_COLORBAR:
+        fig.colorbar(im, ax=axes[1], fraction=0.04, pad=0.02)
+
+    # Remove titles per request
+    for ax in axes:
+        ax.set_title("")
 
     plt.tight_layout()
-    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.savefig(out_path, bbox_inches='tight')
     plt.close()
     print(f"Saved combined figure to {out_path}\n  angles_cache={angles_path}\n  prepared_cache={prepared_path}")
 

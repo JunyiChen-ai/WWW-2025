@@ -26,8 +26,9 @@ sys.path.insert(0, project_root)
 
 
 class OptunaTuner:
-    def __init__(self, dataset: str = "FakeTT", study_name: str = None, n_trials: int = 1000):
+    def __init__(self, dataset: str = "FakeTT", split: str = "temporal", study_name: str = None, n_trials: int = 1000):
         self.dataset = dataset
+        self.split = split  # 'temporal' or '5-fold'
         if study_name is None:
             study_name = f"{dataset.lower()}_exmrd_retrieval"
         self.study_name = study_name
@@ -35,8 +36,8 @@ class OptunaTuner:
         self.best_params = None
         self.best_accuracy = 0.0
         
-        # Create results directory
-        self.results_dir = Path("optuna_results")
+        # Create results directory (grouped by split)
+        self.results_dir = Path("optuna_results") / ("5-fold" if split == "5-fold" else "temporal")
         self.results_dir.mkdir(exist_ok=True)
         
         # Setup logging
@@ -75,6 +76,11 @@ class OptunaTuner:
                 'retrieval_path': "text_similarity_results/full_dataset_retrieval_LongCLIP-GmP-ViT-L-14.json"
             }
             self.text_encoder = "zer0int/LongCLIP-GmP-ViT-L-14"
+
+        # If tuning 5-fold, provide a default 5-fold retrieval folder (users can override via config later)
+        if self.split == '5-fold':
+            # Default to 'uw' subfolder which is the default generator output with uncertainty enabled
+            self.fixed_params['retrieval_path_5fold'] = 'text_similarity_results/uw'
         
     def suggest_hyperparameters(self, trial: optuna.Trial) -> Dict[str, Any]:
         """Suggest hyperparameters for current trial"""
@@ -162,7 +168,7 @@ class OptunaTuner:
             'seed': seed,
             'model': 'ExMRD_Retrieval',
             'dataset': self.dataset,
-            'type': 'temporal',
+            'type': self.split,
             'patience': 5,  # Fixed patience
             'eval_only': False
         }
@@ -318,20 +324,23 @@ def main():
                        help='Dataset to tune on (default: FakeTT)')
     parser.add_argument('--trials', type=int, default=2000,
                        help='Number of trials (default: 2000)')
+    parser.add_argument('--split', type=str, default='temporal', choices=['temporal', '5-fold'],
+                        help='Which split to tune: temporal or 5-fold (default: temporal)')
     args = parser.parse_args()
     
     # Configuration
     DATASET = args.dataset
+    SPLIT = args.split
     N_TRIALS = args.trials
-    STUDY_NAME = f"{DATASET.lower()}_exmrd_retrieval_accuracy"
+    STUDY_NAME = f"{DATASET.lower()}_exmrd_retrieval_accuracy_{'5fold' if SPLIT=='5-fold' else 'temporal'}"
     
-    print(f"🚀 Starting Optuna Hyperparameter Tuning for ExMRD_Retrieval on {DATASET}")
+    print(f"🚀 Starting Optuna Hyperparameter Tuning for ExMRD_Retrieval on {DATASET} [{SPLIT}]")
     print(f"📊 Objective: Maximize Test Set Accuracy")
     print(f"🔬 Number of trials: {N_TRIALS}")
     print(f"📁 Study name: {STUDY_NAME}")
     
     # Create and run tuner
-    tuner = OptunaTuner(dataset=DATASET, study_name=STUDY_NAME, n_trials=N_TRIALS)
+    tuner = OptunaTuner(dataset=DATASET, split=SPLIT, study_name=STUDY_NAME, n_trials=N_TRIALS)
     tuner.run_optimization()
     
     print(f"✅ Optimization completed!")

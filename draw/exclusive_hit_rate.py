@@ -27,6 +27,7 @@ from pathlib import Path
 import sys
 import numpy as np
 import pandas as pd
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import logging
 
@@ -40,6 +41,47 @@ from preprocess.analyze_multimodal_choice import MultimodalChoiceAnalyzer
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# =====================
+# Global plot parameters
+# =====================
+# Figure size kept very small while fonts are large
+FIGSIZE = (4.0, 1.4)  # width, height in inches (narrow and small)
+
+# Font sizes (use large values given tiny figure)
+FONT_SIZE = 6
+AXES_LABEL_SIZE = 10
+# Separate x/y tick sizes so y-tick can be a bit smaller
+XTICK_LABEL_SIZE = 9
+YTICK_LABEL_SIZE = 8
+
+# Bar appearance
+BAR_EDGE_WIDTH = 0.6
+BAR_ALPHA = 0.9
+# Macaron (pastel) color scheme per source
+BAR_COLORS = {
+    'T': '#A8D8EA',  # pastel blue
+    'V': '#FFD8A8',  # pastel orange
+    'A': '#CDEAC0',  # pastel green
+}
+BAR_EDGE_COLOR = '#444444'
+
+# Grid appearance
+GRID_ALPHA = 0.25
+
+# PDF vector font type (42 embeds TrueType, better compatibility)
+PDF_FONTTYPE = 42
+
+# Axis labels
+Y_LABEL = 'Hit@1'
+
+# Spacing controls
+# Move plot area closer to the left edge
+LEFT_MARGIN = 0.06  # fraction of figure width (0..1)
+# Bring y-label closer to tick labels
+YLABEL_PAD = 2.0
+# Reduce gap between y-tick labels and the axis
+YTICK_PAD = 1.0
 
 
 def compute_hit_vector(analyzer: MultimodalChoiceAnalyzer, probs: np.ndarray) -> np.ndarray:
@@ -123,27 +165,46 @@ def compute_exclusive_rates(analyzer: MultimodalChoiceAnalyzer, denominator: str
 
 
 def plot_bar(df: pd.DataFrame, out_path: Path):
+    # Apply global styles
+    mpl.rcParams.update({
+        'pdf.fonttype': PDF_FONTTYPE,
+        'font.size': FONT_SIZE,
+        'axes.labelsize': AXES_LABEL_SIZE,
+        'xtick.labelsize': XTICK_LABEL_SIZE,
+        'ytick.labelsize': YTICK_LABEL_SIZE,
+    })
+
     labels = df['Source'].tolist()
     values = df['Exclusive_Hit_Rate'].tolist()
 
-    plt.figure(figsize=(6.5, 5))
-    color_map = {'T': 'tab:blue', 'V': 'tab:orange', 'A': 'tab:red'}
-    bars = plt.bar(labels, values, color=[color_map.get(s, 'gray') for s in labels], alpha=0.8)
-    plt.ylabel('Exclusive Hit Rate')
-    plt.ylim(0, max(0.001, max(values) * 1.2))
-    # Title without denominator info per request
-    plt.title('Exclusive Hit Rate per Source (Event-Hit@1(pair))')
-    plt.grid(axis='y', alpha=0.3)
+    plt.figure(figsize=FIGSIZE)
+    bars = plt.bar(
+        labels,
+        values,
+        color=[BAR_COLORS.get(s, '#E0E0E0') for s in labels],
+        alpha=BAR_ALPHA,
+        edgecolor=BAR_EDGE_COLOR,
+        linewidth=BAR_EDGE_WIDTH,
+    )
+    ax = plt.gca()
+    ax.set_ylabel(Y_LABEL, labelpad=YLABEL_PAD)
+    # Tight headroom, keep visible margin
+    ymax = max(0.001, max(values) * 1.1)
+    ax.set_ylim(0, ymax)
+    # No title per request
+    # Grid only on Y for readability
+    ax.grid(axis='y', alpha=GRID_ALPHA)
+    # Make y-tick labels slightly smaller and closer to axis
+    ax.tick_params(axis='y', labelsize=YTICK_LABEL_SIZE, pad=YTICK_PAD)
+    ax.tick_params(axis='x', labelsize=XTICK_LABEL_SIZE)
 
-    # Annotate percentages above bars
-    for bar, v in zip(bars, values):
-        h = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width() / 2.0, h + (0.01 if h > 0 else 0.002), f'{v*100:.1f}%',
-                 ha='center', va='bottom', fontsize=10)
+    # No numeric annotations on bars per request
 
     plt.tight_layout()
+    # Nudge plot toward the left by shrinking left margin
+    plt.gcf().subplots_adjust(left=LEFT_MARGIN)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.savefig(out_path, bbox_inches='tight')
     plt.close()
 
 
@@ -183,7 +244,7 @@ def main():
     df.to_csv(csv_path, index=False)
     logger.info(f'Saved CSV: {csv_path}')
 
-    fig_path = out_dir / 'exclusive_hit_rate.png'
+    fig_path = out_dir / 'exclusive_hit_rate.pdf'
     plot_bar(df, fig_path)
     logger.info(f'Saved figure: {fig_path}')
 

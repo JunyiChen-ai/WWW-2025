@@ -281,7 +281,7 @@ class FullDatasetRetrieval:
             if self.use_pool:
                 # Use global features for pooled mode
                 audio_files_to_try = [
-                    "audio_features_global.pt",  # Default for FakeSV, FakeTT
+                    # "audio_features_global.pt",  # Default for FakeSV, FakeTT
                     "audio_features_global_laion-clap-htsat-fused.pt",  # TwitterVideo
                 ]
             else:
@@ -477,6 +477,142 @@ class FullDatasetRetrieval:
             logger.info(f"Created splits for {self.dataset}: Train: {len(splits['train'])}, Valid: {len(splits['valid'])}, Test: {len(splits['test'])}")
         
         return splits
+
+    def get_fold_splits(self, fold: int) -> Dict[str, Set[str]]:
+        """Get five-fold split video IDs from vids directory.
+        Memory bank = vid_fold_no_{fold}.txt; Test = vid_fold_{fold}.txt; Valid = empty set.
+        """
+        vid_dir = self.data_dir / "vids"
+        train_file = vid_dir / f"vid_fold_no_{fold}.txt"
+        test_file = vid_dir / f"vid_fold_{fold}.txt"
+
+        splits = {'train': set(), 'valid': set(), 'test': set()}
+        if train_file.exists():
+            with open(train_file, 'r') as f:
+                splits['train'] = set(line.strip() for line in f if line.strip())
+            logger.info(f"Fold {fold}: Train (fold_no) split: {len(splits['train'])} videos")
+        else:
+            logger.warning(f"Fold {fold}: train file not found: {train_file}")
+
+        if test_file.exists():
+            with open(test_file, 'r') as f:
+                splits['test'] = set(line.strip() for line in f if line.strip())
+            logger.info(f"Fold {fold}: Test (fold) split: {len(splits['test'])} videos")
+        else:
+            logger.warning(f"Fold {fold}: test file not found: {test_file}")
+
+        # Valid remains empty in 5-fold usage
+        return splits
+
+    def _run_retrieval_for_fold(self, fold: int, subfolder_dir: Path):
+        """Run retrieval for a specific fold and save to subfolder/fold_{fold}.json"""
+        start_time = time.time()
+        logger.info(f"Starting 5-fold retrieval generation for fold {fold}...")
+
+        # Use five-fold splits
+        splits = self.get_fold_splits(fold)
+
+        # Apply filtering to training set if specified (uses text encoder)
+        filtered_train_ids = self.filter_training_set(splits)
+
+        # Prepare data with filtered training set
+        self.prepare_data(splits, filtered_train_ids)
+
+        # Prepare texts for encoding
+        true_texts = [self.create_text_representation(item) for item in self.memory_true_data]
+        fake_texts = [self.create_text_representation(item) for item in self.memory_fake_data]
+        query_texts = [self.create_text_representation(item) for item in self.query_data]
+
+        # Encode texts
+        logger.info("Encoding queries (5-fold)...")
+        query_embeddings = self.encode_texts(query_texts)
+        logger.info("Encoding true memory bank (5-fold)...")
+        true_embeddings = self.encode_texts(true_texts) if true_texts else np.array([])
+        logger.info("Encoding fake memory bank (5-fold)...")
+        fake_embeddings = self.encode_texts(fake_texts) if fake_texts else np.array([])
+
+        # Compute similarities
+        results = self.find_similar_videos(
+            query_embeddings, true_embeddings, fake_embeddings,
+            self.query_data,
+            self.memory_true_data, self.memory_fake_data,
+            batch_size=64
+        )
+
+        # Save results to subfolder/fold_{fold}.json (overwrite)
+        output_file = subfolder_dir / f"fold_{fold}.json"
+        with open(output_file, 'w', encoding='utf-8') as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
+        logger.info(f"Saved 5-fold retrieval results to {output_file}")
+
+        # Generate concise stats file: stats_f{fold}.json in same folder
+        stats = {
+            'total_queries': len(results),
+            'memory_bank_size': len(self.memory_true_data) + len(self.memory_fake_data),
+            'memory_true_count': len(self.memory_true_data),
+            'memory_fake_count': len(self.memory_fake_data),
+            'excluded_self_count': sum(1 for r in results if r['excluded_self']),
+            'splits': {}
+        }
+        for result in results:
+            split = result['query_video']['split']
+            stats['splits'][split] = stats['splits'].get(split, 0) + 1
+
+        true_similarities = []
+        fake_similarities = []
+        test_to_memory_true_similarities = []
+        test_to_memory_fake_similarities = []
+        test_to_memory_train_true_similarities = []
+        test_to_memory_train_fake_similarities = []
+
+        memory_bank_splits = {}
+        for item in self.memory_true_data + self.memory_fake_data:
+            video_id = item['video_id']
+            if hasattr(self, 'query_splits') and video_id in self.query_splits:
+                memory_bank_splits[video_id] = self.query_splits[video_id]
+
+        for result in results:
+            if result['similar_true']:
+                true_similarities.append(result['similar_true']['similarity_score'])
+                if result['query_video']['split'] == 'test':
+                    test_to_memory_true_similarities.append(result['similar_true']['similarity_score'])
+                    vid = result['similar_true']['video_id']
+                    if vid in memory_bank_splits and memory_bank_splits[vid] == 'train':
+                        test_to_memory_train_true_similarities.append(result['similar_true']['similarity_score'])
+            if result['similar_fake']:
+                fake_similarities.append(result['similar_fake']['similarity_score'])
+                if result['query_video']['split'] == 'test':
+                    test_to_memory_fake_similarities.append(result['similar_fake']['similarity_score'])
+                    vid = result['similar_fake']['video_id']
+                    if vid in memory_bank_splits and memory_bank_splits[vid] == 'train':
+                        test_to_memory_train_fake_similarities.append(result['similar_fake']['similarity_score'])
+
+        stats['avg_true_similarity'] = float(np.mean(true_similarities)) if true_similarities else 0.0
+        stats['avg_fake_similarity'] = float(np.mean(fake_similarities)) if fake_similarities else 0.0
+        stats['test_to_memory_avg_true_similarity'] = float(np.mean(test_to_memory_true_similarities)) if test_to_memory_true_similarities else 0.0
+        stats['test_to_memory_avg_fake_similarity'] = float(np.mean(test_to_memory_fake_similarities)) if test_to_memory_fake_similarities else 0.0
+        stats['test_to_memory_train_avg_true_similarity'] = float(np.mean(test_to_memory_train_true_similarities)) if test_to_memory_train_true_similarities else 0.0
+        stats['test_to_memory_train_avg_fake_similarity'] = float(np.mean(test_to_memory_train_fake_similarities)) if test_to_memory_train_fake_similarities else 0.0
+
+        stats_file = subfolder_dir / f"stats_f{fold}.json"
+        with open(stats_file, 'w', encoding='utf-8') as f:
+            json.dump(stats, f, ensure_ascii=False, indent=2)
+
+        logger.info("="*60)
+        logger.info(f"FIVE-FOLD RETRIEVAL SUMMARY (fold {fold})")
+        logger.info("="*60)
+        logger.info(f"Total queries: {stats['total_queries']}")
+        logger.info(f"Memory bank size: {stats['memory_bank_size']} (True: {stats['memory_true_count']}, Fake: {stats['memory_fake_count']})")
+        logger.info(f"Self-exclusions: {stats['excluded_self_count']}")
+        logger.info(f"Split distribution: {stats['splits']}")
+        logger.info(f"Average similarities - True: {stats['avg_true_similarity']:.4f}, Fake: {stats['avg_fake_similarity']:.4f}")
+        logger.info(f"Test-to-Memory average similarities - True: {stats['test_to_memory_avg_true_similarity']:.4f}, Fake: {stats['test_to_memory_avg_fake_similarity']:.4f}")
+        logger.info(f"Test-to-Memory-Train average similarities - True: {stats['test_to_memory_train_avg_true_similarity']:.4f}, Fake: {stats['test_to_memory_train_avg_fake_similarity']:.4f}")
+        logger.info(f"Results saved to: {output_file}")
+        logger.info(f"Statistics saved to: {stats_file}")
+
+        total_time = time.time() - start_time
+        logger.info(f"Fold {fold} execution time: {total_time:.2f} seconds")
     
     def l2_normalize(self, x: np.ndarray, axis: int = -1, eps: float = 1e-12) -> np.ndarray:
         """L2 normalization for features"""
@@ -1310,6 +1446,9 @@ if __name__ == "__main__":
                        help='Disable uncertainty weighted log pooling (use original sample-adaptive gating)')
     parser.add_argument('--top-k', type=int, default=10,
                        help='Top-k elements for entropy computation in uncertainty weighting (default: 10)')
+    # Five-fold generation toggle (temporal behavior remains unchanged when this is not set)
+    parser.add_argument('--5-fold', dest='five_fold', action='store_true',
+                       help='Enable five-fold retrieval generation (writes fold_{n}.json under mechanism subfolders)')
     
     args = parser.parse_args()
     
@@ -1327,4 +1466,37 @@ if __name__ == "__main__":
         use_uncertainty_weighted=not args.disable_uncertainty_weighted,
         top_k=args.top_k
     )
-    retriever.run_retrieval()
+
+    if args.five_fold:
+        # Five-fold generation: do not alter temporal outputs
+        # Preload data/model/features once for efficiency
+        retriever.load_entity_data()
+        retriever.load_multimodal_features()
+        retriever.load_model()
+
+        # Determine mechanism subfolder name: uw, k{filter_k}, default (exclude pool token as requested)
+        sub_tokens = []
+        if not args.disable_uncertainty_weighted:
+            sub_tokens.append('uw')
+        if args.filter_k is not None:
+            sub_tokens.append(f'k{args.filter_k}')
+        subfolder = 'default' if not sub_tokens else '_'.join(sub_tokens)
+
+        # Create subfolder
+        mech_dir = retriever.output_dir / subfolder
+        mech_dir.mkdir(parents=True, exist_ok=True)
+
+        # Check fold files existence to ensure 5-fold is defined for the dataset
+        vids_dir = retriever.data_dir / 'vids'
+        has_folds = all((vids_dir / f'vid_fold_{i}.txt').exists() and (vids_dir / f'vid_fold_no_{i}.txt').exists() for i in range(1, 6))
+        if not has_folds:
+            logger.error(f"Five-fold files not found under {vids_dir}. Expected vid_fold_{n}.txt and vid_fold_no_{n}.txt for n=1..5")
+            sys.exit(1)
+
+        for fold in range(1, 6):
+            logger.info(f"Generating 5-fold retrieval for fold {fold} -> {mech_dir / f'fold_{fold}.json'}")
+            retriever._run_retrieval_for_fold(fold=fold, subfolder_dir=mech_dir)
+        logger.info("Completed five-fold retrieval generation.")
+    else:
+        # Original temporal behavior
+        retriever.run_retrieval()

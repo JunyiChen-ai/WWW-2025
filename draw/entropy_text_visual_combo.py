@@ -28,6 +28,7 @@ import argparse
 from pathlib import Path
 import sys
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 try:
@@ -112,13 +113,13 @@ def main():
     ap.add_argument('--top-k', type=int, default=10, help='Top-k for entropy (must match analysis)')
     ap.add_argument('--n-bins', type=int, default=10, help='Number of entropy bins for histogram')
     ap.add_argument('--output', type=str, default=None,
-                    help='Output PNG (default: analysis/<dataset>/draw/text_visual_entropy_combo.png)')
+                    help='Output PDF (default: analysis/<dataset>/draw/text_visual_entropy_combo.pdf)')
     args = ap.parse_args()
 
     if args.cache is None:
         args.cache = f"analysis/{args.dataset}/multimodal_choice/cache/prepared_data.npz"
     if args.output is None:
-        args.output = f"analysis/{args.dataset}/draw/text_visual_entropy_combo.png"
+        args.output = f"analysis/{args.dataset}/draw/text_visual_entropy_combo.pdf"
 
     cache_path = Path(args.cache)
     out_path = Path(args.output)
@@ -170,33 +171,73 @@ def main():
     rates_T = binned_hit_rates(H_T, hit_T)
     rates_I = binned_hit_rates(H_I, hit_I)
 
+    # =====================
+    # Global small-but-legible style and pastel colors
+    # =====================
+    FIGSIZE = (4.8, 1.9)
+    FONT_SIZE = 9
+    AXES_LABEL_SIZE = 10
+    TICK_LABEL_SIZE = 9
+    LEGEND_SIZE = 9
+    GRID_ALPHA = 0.25
+    PDF_FONTTYPE = 42
+    # Macaron colors for Text / Visual (consistent across both panels)
+    COLOR_T = '#A8D8EA'  # pastel blue
+    COLOR_V = '#FFD8A8'  # pastel orange
+
+    mpl.rcParams.update({
+        'pdf.fonttype': PDF_FONTTYPE,
+        'font.size': FONT_SIZE,
+        'axes.labelsize': AXES_LABEL_SIZE,
+        'xtick.labelsize': TICK_LABEL_SIZE,
+        'ytick.labelsize': TICK_LABEL_SIZE,
+        'legend.fontsize': LEGEND_SIZE,
+    })
+
     # Compose figure
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    fig, axes = plt.subplots(1, 2, figsize=FIGSIZE)
 
-    # Left: scatter H_T vs H_I
-    axes[0].scatter(H_T, H_I, alpha=0.25, s=8)
-    axes[0].set_xlabel('H_topk T (Text)')
-    axes[0].set_ylabel('H_topk I (Visual)')
-    axes[0].set_title(f'Text vs Visual (Spearman={rho_TI:.2f})')
-    axes[0].grid(True, alpha=0.3)
+    # Left: scatter H_T vs H_I, colored by lower-entropy modality
+    mask_visual = H_I < H_T  # Visual lower entropy
+    mask_text = ~mask_visual  # Text lower or equal
+    axes[0].scatter(H_T[mask_text], H_I[mask_text], alpha=0.6, s=8, c=COLOR_T, label='Text')
+    axes[0].scatter(H_T[mask_visual], H_I[mask_visual], alpha=0.6, s=8, c=COLOR_V, label='Visual')
+    # Clear, concise axis labels
+    axes[0].set_xlabel('Text Entropy')
+    axes[0].set_ylabel('Visual Entropy')
+    # Remove title to keep clean; show light grid
+    axes[0].grid(True, alpha=GRID_ALPHA)
+    # Per-axes legend inside with light translucent frame
+    axes[0].legend(
+        frameon=True,
+        fancybox=True,
+        framealpha=0.35,
+        edgecolor='#888888',
+        loc='lower left',
+    )
 
-    # Right: grouped histogram (bar chart) of hit-rate vs entropy bins
-    width = (centers[1] - centers[0]) * 0.4 if len(centers) > 1 else 0.05
-    axes[1].bar(centers - width/2, rates_T, width=width, label='Text', color='tab:blue', alpha=0.8)
-    axes[1].bar(centers + width/2, rates_I, width=width, label='Visual', color='tab:orange', alpha=0.8)
-    axes[1].set_xlabel('Entropy (top-k bins, shared)')
-    axes[1].set_ylabel('Event-Hit@1(pair)')
-    axes[1].set_title('Event-Hit@1 vs Entropy (Histogram)')
+    # Right: line curves of hit-rate vs entropy bins (Text and Visual)
+    axes[1].plot(centers, rates_T, color=COLOR_T, lw=1.8, marker='o', ms=3.5, label='Text')
+    axes[1].plot(centers, rates_I, color=COLOR_V, lw=1.8, marker='o', ms=3.5, label='Visual')
+    axes[1].set_xlabel('Entropy')
+    axes[1].set_ylabel('Hit@1')
     axes[1].set_xlim(edges[0], edges[-1])
-    axes[1].grid(True, axis='y', alpha=0.3)
-    axes[1].legend()
+    axes[1].set_ylim(0.0, max(0.001, float(max(rates_T.max(initial=0.0), rates_I.max(initial=0.0))) * 1.05))
+    axes[1].grid(True, alpha=GRID_ALPHA)
+    # Per-axes legend inside with light translucent frame
+    axes[1].legend(
+        frameon=True,
+        fancybox=True,
+        framealpha=0.35,
+        edgecolor='#888888',
+        loc='best',
+    )
 
     plt.tight_layout()
-    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.savefig(out_path, bbox_inches='tight')
     plt.close()
     print(f"Saved figure: {out_path}")
 
 
 if __name__ == '__main__':
     main()
-
