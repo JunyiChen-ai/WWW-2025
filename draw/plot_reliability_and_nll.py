@@ -56,6 +56,14 @@ def load_all_eval_arrays(project_root: Path, dataset: str):
     return models
 
 
+def try_load_models(project_root: Path, dataset: str):
+    """Try to load models for a dataset, return dict or None if missing."""
+    try:
+        return load_all_eval_arrays(project_root, dataset)
+    except FileNotFoundError:
+        return None
+
+
 def compute_bins(confidence: np.ndarray, y_true: np.ndarray, y_hat: np.ndarray, M: int = 10, mode: str = 'freq'):
     """Compute per-bin x (center) and accuracy for reliability diagram.
     - For non-empty bins: x is mean confidence in the bin.
@@ -200,7 +208,7 @@ def _plot_reliability_on_ax(ax, models: dict, dataset: str, M: int, add_legend: 
     # Legend removed per request (no legend on subplots)
 
 
-def plot_reliability_triple(models: dict, out_path: Path, M: int):
+def plot_reliability_triple(models_by_ds: dict, out_path: Path, M: int):
     # Global bigger fonts
     import matplotlib as mpl
     mpl.rcParams.update({
@@ -215,11 +223,13 @@ def plot_reliability_triple(models: dict, out_path: Path, M: int):
     fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.0), sharey=True)
     # Titles
     titles = ['FakeSV', 'FakeTT', 'FVC']
-    datasets = ['fakesv', 'fakett', 'fvc']
+    datasets = ['FakeSV', 'FakeTT', 'FVC']
 
     # Plot three panels; use the same models as placeholders
     for i, ax in enumerate(axes):
-        _plot_reliability_on_ax(ax, models, datasets[i], M, add_legend=False)
+        ds = datasets[i]
+        models = models_by_ds[ds]
+        _plot_reliability_on_ax(ax, models, ds, M, add_legend=False)
         ax.set_title(titles[i])
         # Remove per-axes labels; we'll set shared labels below
         ax.set_xlabel('')
@@ -238,23 +248,40 @@ def plot_reliability_triple(models: dict, out_path: Path, M: int):
     plt.close(fig)
 
 
-def plot_nll_multi(nll_by_model: dict, out_path: Path, dataset: str):
-    labels = list(nll_by_model.keys())
-    means = [float(np.asarray(nll_by_model[k]).mean()) for k in labels]
-    x = np.arange(len(labels))
-    plt.figure(figsize=(1.6 + 0.9 * len(labels), 4))
-    bars = plt.bar(x, means, color="#F58518", alpha=0.85, edgecolor="white")
-    plt.ylabel('Mean NLL (nats)')
-    plt.title(f"NLL ({dataset})")
-    plt.xticks(x, labels, rotation=20)
-    # Annotate values
-    for rect, val in zip(bars, means):
-        height = rect.get_height()
-        plt.text(rect.get_x() + rect.get_width() / 2.0, height, f"{val:.4f}", ha='center', va='bottom', fontsize=9)
-    plt.tight_layout()
+def plot_nll_triple(nll_by_ds: dict, out_path: Path):
+    import matplotlib as mpl
+    mpl.rcParams.update({
+        'font.size': 14,
+        'axes.titlesize': 18,
+        'axes.labelsize': 16,
+        'legend.fontsize': 13,
+        'xtick.labelsize': 12,
+        'ytick.labelsize': 12,
+    })
+
+    titles = ['FakeSV', 'FakeTT', 'FVC']
+    datasets = ['FakeSV', 'FakeTT', 'FVC']
+    fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.0), sharey=True)
+    for i, ax in enumerate(axes):
+        ds = datasets[i]
+        nll_by_model = nll_by_ds[ds]
+        labels = list(nll_by_model.keys())
+        means = [float(np.asarray(nll_by_model[k]).mean()) for k in labels]
+        x = np.arange(len(labels))
+        bars = ax.bar(x, means, color="#F58518", alpha=0.85, edgecolor="white")
+        if i == 0:
+            ax.set_ylabel('Mean NLL (nats)')
+        ax.set_title(titles[i])
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, rotation=20)
+        for rect, val in zip(bars, means):
+            height = rect.get_height()
+            ax.text(rect.get_x() + rect.get_width() / 2.0, height, f"{val:.3f}", ha='center', va='bottom', fontsize=9)
+    fig.tight_layout(pad=0.2, w_pad=0.05)
+    fig.subplots_adjust(wspace=0.06)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    plt.savefig(out_path, dpi=200)
-    plt.close()
+    fig.savefig(out_path)
+    plt.close(fig)
 
 
 def gaussian_kde_1d(samples: np.ndarray, grid: np.ndarray):
@@ -451,37 +478,58 @@ def plot_error_detection_roc_multi(models: dict, out_path: Path, dataset: str, s
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Plot reliability diagram and NLL from saved arrays (multi-model)')
-    parser.add_argument('--dataset', required=True, type=str, help='Dataset name (matches draw/<dataset>)')
+    parser = argparse.ArgumentParser(description='Plot reliability diagram and NLL for three datasets with fallback to FakeTT if missing')
     parser.add_argument('--bins', type=int, default=10, help='Number of bins (M)')
-    parser.add_argument('--binning', type=str, default='freq', choices=['freq', 'width'], help='Binning strategy: equal-frequency or equal-width')
+    parser.add_argument('--binning', type=str, default='freq', choices=['freq', 'width'], help='Binning strategy (reserved)')
     parser.add_argument('--output-dir', type=str, default=None, help='Optional override for output directory')
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parent.parent
-    analysis_dir = Path(args.output_dir) if args.output_dir else (project_root / 'analysis' / args.dataset / 'draw')
+    analysis_dir = Path(args.output_dir) if args.output_dir else (project_root / 'analysis' / 'draw')
 
-    # Load all models' arrays
-    models = load_all_eval_arrays(project_root, args.dataset)
+    # Target datasets (folder names under draw/)
+    datasets = ['FakeSV', 'FakeTT', 'FVC']
 
-    # Compute NLL per model (reliability bins are computed inside the plotting function now)
-    nll_by_model = {}
-    for label, arrays in models.items():
-        eps = 1e-12
-        nll = -np.log(np.clip(arrays['p_true'], eps, 1.0))
-        nll_by_model[label] = nll
+    # Try load each; collect models or None
+    models_by_ds = {ds: try_load_models(project_root, ds) for ds in datasets}
 
-    # Reliability diagram (multi-model)
-    rel_out = analysis_dir / 'reliability_diagram.pdf'
-    # Create a 3-panel reliability figure; for now, reuse FakeTT as placeholder in all panels
-    plot_reliability_triple(models, rel_out, args.bins)
+    # Determine fallback source (prefer FakeTT)
+    fallback = models_by_ds.get('FakeTT')
+    if fallback is None:
+        # Use the first available dataset as fallback
+        for ds in datasets:
+            if models_by_ds[ds] is not None:
+                fallback = models_by_ds[ds]
+                break
+    if fallback is None:
+        raise FileNotFoundError('No evaluation arrays found in draw/FakeSV, draw/FakeTT, or draw/FVC.')
 
-    # NLL bars (multi-model)
-    nll_out = analysis_dir / 'nll.pdf'
-    plot_nll_multi(nll_by_model, nll_out, args.dataset)
+    # Fill missing datasets with fallback (placeholder)
+    for ds in datasets:
+        if models_by_ds[ds] is None:
+            models_by_ds[ds] = fallback
+
+    # Compute NLL per dataset per model
+    nll_by_ds = {}
+    for ds in datasets:
+        mm = models_by_ds[ds]
+        nll_by_model = {}
+        for label, arrays in mm.items():
+            eps = 1e-12
+            nll = -np.log(np.clip(arrays['p_true'], eps, 1.0))
+            nll_by_model[label] = nll
+        nll_by_ds[ds] = nll_by_model
+
+    # Reliability: 3-panel
+    rel_out = analysis_dir / 'reliability_diagram_triple.pdf'
+    plot_reliability_triple(models_by_ds, rel_out, args.bins)
+
+    # NLL: 3-panel
+    nll_out = analysis_dir / 'nll_triple.pdf'
+    plot_nll_triple(nll_by_ds, nll_out)
 
     print(f"Saved reliability diagram to: {rel_out}")
-    print(f"Saved NLL bar chart to: {nll_out}")
+    print(f"Saved NLL triple to: {nll_out}")
     
 
 

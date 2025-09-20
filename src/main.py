@@ -83,6 +83,10 @@ class Trainer():
         self.batch_size = cfg.batch_size
         self.num_epoch = cfg.num_epoch
         self.generator = torch.Generator().manual_seed(cfg.seed)
+        # Base save path; per-fold subfolders will be set in run()
+        # Root path for this run; do NOT mutate across folds
+        self.run_root = log_path
+        # Current save path (may point to per-fold dir during training/eval)
         self.save_path = log_path
         self.global_step = 0  # Add global step counter that persists across epochs
         
@@ -193,6 +197,16 @@ class Trainer():
         rec_real_list, rec_fake_list = [], []
         
         for fold in self.dataset_range:
+            # Always derive from immutable run_root to avoid nested cv/fold_* repetition
+            if self.type == '5-fold':
+                fold_dir = Path(self.run_root) / 'cv' / f'fold_{fold}'
+            else:
+                fold_dir = Path(self.run_root) / 'temporal'
+            fold_dir.mkdir(parents=True, exist_ok=True)
+            self.save_path = fold_dir
+            # Reinitialize early stopper with fold-specific path
+            self.earlystopping = EarlyStopping(patience=self.cfg.patience, path=self.save_path / 'best_model.pth')
+
             self._reset(self.cfg, fold, self.type)
             logger.info(f'Current fold: {fold}')
             for epoch in range(self.num_epoch):
@@ -242,32 +256,121 @@ class Trainer():
         - p_true: probability assigned to the true class
         """
         logger.info(f"{Fore.GREEN}=== EVALUATION ONLY MODE ===")
+        # Find best_model.pth according to split type and provided checkpoint path
+        eval_targets = []  # list of tuples: (fold_id, best_model_path)
+        base = self.save_path
+        if self.type == '5-fold':
+            # Case 1: checkpoint points directly to a fold directory
+            if base.name.startswith('fold_') and (base / 'best_model.pth').exists():
+                try:
+                    fold_id = int(base.name.split('_')[-1])
+                except Exception:
+                    fold_id = base.name
+                eval_targets.append((fold_id, base / 'best_model.pth'))
+            else:
+                # Case 2: checkpoint is run root -> scan cv/fold_*/best_model.pth
+                cv_dir = base / 'cv'
+                if cv_dir.exists():
+                    for fd in sorted(cv_dir.glob('fold_*')):
+                        bmp = fd / 'best_model.pth'
+                        if bmp.exists():
+                            try:
+                                fid = int(fd.name.split('_')[-1])
+                            except Exception:
+                                fid = fd.name
+                            eval_targets.append((fid, bmp))
+                # Recursive fallback for previously nested structure
+                if not eval_targets:
+                    for bmp in sorted(base.rglob('fold_*/best_model.pth')):
+                        fd = bmp.parent
+                        try:
+                            fid = int(fd.name.split('_')[-1])
+                        except Exception:
+                            fid = fd.name
+                        eval_targets.append((fid, bmp))
+        else:
+            # temporal split
+            if (base / 'temporal' / 'best_model.pth').exists():
+                eval_targets.append(('temporal', base / 'temporal' / 'best_model.pth'))
+            elif (base / 'best_model.pth').exists():
+                eval_targets.append(('temporal', base / 'best_model.pth'))
+
+        if not eval_targets:
+            # Last resort: direct best_model under provided path
+            direct_bmp = base / 'best_model.pth'
+            if direct_bmp.exists():
+                eval_targets.append((self.dataset_range[0], direct_bmp))
+        if not eval_targets:
+            raise ValueError(f"Best model not found under {base}. Expected one of: {base/'cv/fold_*/best_model.pth'} or {base/'temporal/best_model.pth'}")
+
+        # Evaluate one or multiple folds; aggregate outputs into single files (no fold suffix)
+        all_metrics = []
+        combined_predictions = []
+        combined_prob_list = []
+        combined_y_list = []
+        for fold_id, best_model_path in eval_targets:
+            # Prepare loaders for this fold
+            fold_to_use = fold_id if fold_id != 'temporal' else 'temporal'
+            self._reset(self.cfg, fold_to_use, self.type)
+            logger.info(f"Loading model from: {best_model_path}")
+            self.model.load_state_dict(torch.load(best_model_path, weights_only=False))
+            # Run evaluation on test set with detailed predictions and arrays
+            predictions, prob, y = self._eval_with_predictions()
+            combined_predictions.extend(predictions)
+            combined_prob_list.append(np.asarray(prob))
+            combined_y_list.append(np.asarray(y))
+            # Also compute and store metrics via _valid for consistency
+            m = self._valid(split='test', final=True)
+            all_metrics.append((fold_id, m))
+        # Save aggregated outputs once (no fold suffix)
+        result_dir = Path(f"result/{self.dataset_name}")
+        result_dir.mkdir(parents=True, exist_ok=True)
+        model_mark = f"_{getattr(self, 'model_name', 'ExMRD')}"
+        if hasattr(self.model, 'name') and self.model.name == 'ExMRD_Defer':
+            predictions_file = result_dir / f"defer_predictions{model_mark}.json"
+        else:
+            predictions_file = result_dir / f"slm_prediction{model_mark}.json"
+        with open(predictions_file, 'w', encoding='utf-8') as f:
+            json.dump(combined_predictions, f, ensure_ascii=False, indent=2)
+        logger.info(f"{Fore.GREEN}Aggregated predictions saved to: {predictions_file}")
+
+        try:
+            project_root = Path(__file__).resolve().parent.parent
+            draw_dir = project_root / 'draw' / self.dataset_name
+            draw_dir.mkdir(parents=True, exist_ok=True)
+            if combined_prob_list:
+                prob_all = np.concatenate(combined_prob_list, axis=0)
+                y_all = np.concatenate(combined_y_list, axis=0)
+            else:
+                prob_all = np.empty((0, 2))
+                y_all = np.empty((0,))
+            np.save(draw_dir / 'prob.npy', prob_all)
+            np.save(draw_dir / 'y.npy', y_all)
+            if prob_all.size:
+                conf = prob_all.max(axis=1)
+                y_hat = prob_all.argmax(axis=1)
+                p_true = prob_all[np.arange(len(y_all)), y_all]
+            else:
+                conf = np.array([])
+                y_hat = np.array([])
+                p_true = np.array([])
+            np.save(draw_dir / 'confidence.npy', conf)
+            np.save(draw_dir / 'y_hat.npy', y_hat)
+            np.save(draw_dir / 'p_true.npy', p_true)
+            logger.info(f"{Fore.GREEN}Aggregated eval arrays saved to: {draw_dir}")
+        except Exception as e:
+            logger.warning(f"{Fore.YELLOW}Failed to save aggregated eval arrays: {e}")
         
-        # Check if checkpoint exists
-        best_model_path = self.save_path / 'best_model.pth'
-        if not best_model_path.exists():
-            raise ValueError(f"Best model not found: {best_model_path}")
-        
-        # Initialize with first fold/temporal to get data loaders
-        fold = self.dataset_range[0]
-        self._reset(self.cfg, fold, self.type)
-        
-        # Load the best model
-        logger.info(f"Loading model from: {best_model_path}")
-        self.model.load_state_dict(torch.load(best_model_path, weights_only=False))
-        
-        # Run evaluation on test set with detailed predictions and arrays
-        predictions, prob, y = self._eval_with_predictions()
-        
-        # Save predictions to result folder
+        # Save predictions to result folder (include model mark for clarity)
         result_dir = Path(f"result/{self.dataset_name}")
         result_dir.mkdir(parents=True, exist_ok=True)
         
         # Determine filename based on model type
+        model_mark = f"_{getattr(self, 'model_name', 'ExMRD')}"
         if hasattr(self.model, 'name') and self.model.name == 'ExMRD_Defer':
-            predictions_file = result_dir / "defer_predictions.json"
+            predictions_file = result_dir / f"defer_predictions{model_mark}.json"
         else:
-            predictions_file = result_dir / "slm_prediction.json"
+            predictions_file = result_dir / f"slm_prediction{model_mark}.json"
             
         with open(predictions_file, 'w', encoding='utf-8') as f:
             json.dump(predictions, f, ensure_ascii=False, indent=2)
@@ -1003,10 +1106,11 @@ def main(cfg: DictConfig):
     else:
         # Normal training mode
         dataset_name = cfg.dataset if 'dataset' in cfg else 'unknown'
+        split_suffix = '_cv' if cfg.type == '5-fold' else '_temporal'
         piyao_suffix = '_with_piyao' if cfg.data.get('include_piyao', False) else ''
         ablation_suffix = '_no_cot' if cfg.data.get('ablation_no_cot', False) else ''
         filter_k_suffix = f'_k{cfg.data.filter_k}' if cfg.data.get('filter_k') is not None else ''
-        log_path = Path(f'log/{dataset_name}{piyao_suffix}{ablation_suffix}{filter_k_suffix}_{datetime.now().strftime("%m%d-%H%M%S")}')
+        log_path = Path(f'log/{dataset_name}{split_suffix}{piyao_suffix}{ablation_suffix}{filter_k_suffix}_{datetime.now().strftime("%m%d-%H%M%S")}')
         log_path.mkdir(parents=True, exist_ok=True)
         
         logger.remove()
