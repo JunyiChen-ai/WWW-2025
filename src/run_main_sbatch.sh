@@ -8,15 +8,14 @@
 #SBATCH --cpus-per-task=4
 
 # Usage:
-#   sbatch src/run_main_sbatch.sh [Dataset] [ConfigName]
+#   sbatch src/run_main_sbatch.sh [ConfigName]
 # Examples:
-#   sbatch src/run_main_sbatch.sh FakeSV ExMRD_FakeSV
-#   sbatch src/run_main_sbatch.sh FakeSV ExMRD_Retrieval_FakeSV
+#   sbatch src/run_main_sbatch.sh ExMRD_FakeSV
+#   sbatch src/run_main_sbatch.sh ExMRD_Retrieval_FakeSV
 
-DATASET=${1:-FakeSV}
-CONF_NAME=${2:-ExMRD_FakeSV}
+CONF_NAME=${1:-ExMRD_FakeSV}
 
-echo "Starting ExMRD main run: dataset=${DATASET}, config=${CONF_NAME}"
+echo "Starting ExMRD main run: config=${CONF_NAME}"
 echo "Job ID: $SLURM_JOB_ID | Node: $SLURMD_NODENAME | Time: $(date)"
 
 # Project root
@@ -33,8 +32,8 @@ conda activate ExMRD
 nvidia-smi || true
 
 # Run
-echo "python src/main.py dataset=${DATASET} +override hydra.run.dir=train_results/${DATASET}_$(date +%Y%m%d_%H%M%S)"
-python src/main.py dataset=${DATASET} hydra.run.dir="train_results/${DATASET}_$(date +%Y%m%d_%H%M%S)" --config-name "${CONF_NAME}"
+RUN_DIR="train_results/${CONF_NAME}_$(date +%Y%m%d_%H%M%S)"
+echo "python src/main.py hydra.run.dir=${RUN_DIR} --config-name ${CONF_NAME}"
+python src/main.py hydra.run.dir="${RUN_DIR}" --config-name "${CONF_NAME}"
 
 echo "Main run finished at $(date)"
-
