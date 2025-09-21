@@ -46,7 +46,7 @@ logger = logging.getLogger(__name__)
 # Global plot parameters
 # =====================
 # Figure size kept very small while fonts are large
-FIGSIZE = (4.0, 1.4)  # width, height in inches (narrow and small)
+FIGSIZE = (2.0, 1.4)  # width, height in inches (narrow and small)
 
 # Font sizes (use large values given tiny figure)
 FONT_SIZE = 6
