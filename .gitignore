@@ -61,3 +61,6 @@ Thumbs.db
 # Generated figures in draw
 draw/**/*.png
 draw/**/*.pdf
+
+# Local cluster submit scripts (do not track)
+src/run_main_sbatch.sh
