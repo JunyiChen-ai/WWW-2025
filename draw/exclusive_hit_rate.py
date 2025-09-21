@@ -29,6 +29,7 @@ import numpy as np
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import logging
 
 # Make project root importable when running as a standalone script
@@ -191,6 +192,9 @@ def plot_bar(df: pd.DataFrame, out_path: Path):
     # Tight headroom, keep visible margin
     ymax = max(0.001, max(values) * 1.1)
     ax.set_ylim(0, ymax)
+    # Force exactly 4 y-ticks with two decimal places
+    ax.yaxis.set_major_locator(LinearLocator(4))
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
     # No title per request
     # Grid only on Y for readability
     ax.grid(axis='y', alpha=GRID_ALPHA)
@@ -220,6 +224,11 @@ def main():
                         help='Output dir (default: analysis/{dataset}/draw)')
     parser.add_argument('--denominator', type=str, default='any_hit', choices=['any_hit','all'],
                         help='Denominator for rates: any_hit (default) or all queries')
+    # Cache control: default to using cache; allow explicit disable via --no-cache
+    parser.add_argument('--use-cache', dest='use_cache', action='store_true', default=True,
+                        help='Use cached prepared data if available (default: True)')
+    parser.add_argument('--no-cache', dest='use_cache', action='store_false',
+                        help='Disable cache and recompute all intermediates')
 
     args = parser.parse_args()
 
@@ -235,9 +244,26 @@ def main():
                                         audio_model=args.audio_model,
                                         text_model=args.text_model,
                                         output_dir=str(out_dir),
-                                        top_k=args.top_k)
-    analyzer.load_data()
-    analyzer.prepare_analysis_data()
+                                        top_k=args.top_k,
+                                        use_cache=args.use_cache)
+
+    loaded_from_cache = False
+    if args.use_cache:
+        try:
+            # Attempt to load prepared matrices directly from cache without heavy loading
+            analyzer.prepare_analysis_data()
+            # Heuristic check: cache should populate probs for T/I/A
+            if isinstance(analyzer.probs, dict) and all(k in analyzer.probs for k in ['T', 'I', 'A']):
+                loaded_from_cache = True
+                logger.info('Prepared analysis data loaded from cache successfully.')
+        except Exception as e:
+            logger.warning(f'Failed to load prepared data from cache: {e}')
+
+    if not loaded_from_cache:
+        # Fall back to full data load and preparation
+        logger.info('Cache disabled or missing; loading data and recomputing prepared matrices...')
+        analyzer.load_data()
+        analyzer.prepare_analysis_data()
 
     df = compute_exclusive_rates(analyzer, denominator=args.denominator)
     csv_path = out_dir / 'exclusive_hit_rate.csv'

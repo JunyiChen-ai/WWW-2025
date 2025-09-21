@@ -152,19 +152,8 @@ class FakeSVCollator_ExMRD:
         logger.info(f"[{self.__class__.__name__}] tokenizer={self.tokenizer_name} max_text_len={self.max_text_len}")
 
     def _infer_max_len(self, name):
-        max_len = None
-        try:
-            cfg = AutoConfig.from_pretrained(name)
-            max_len = getattr(cfg, 'max_position_embeddings', None)
-        except Exception:
-            pass
-        if max_len is None:
-            max_len = getattr(self.tokenizer, 'model_max_length', None)
-        # Handle undefined or sentinel huge values
-        if not isinstance(max_len, int) or max_len <= 0 or max_len > 100000:
-            nm = str(name).lower()
-            max_len = 77 if 'clip' in nm else 512
-        return max_len
+        # Keep FakeSV setting: force max_len to 512
+        return 512
     
     def __call__(self, batch):
         vids = [item['vid'] for item in batch]
