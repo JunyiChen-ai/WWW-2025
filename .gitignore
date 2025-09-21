@@ -14,3 +14,50 @@ log/*/
 
 # Other large files
 *.tensor_backup
+
+# =============================
+# General ignores (non-.py)
+# =============================
+
+# Python build/cache artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment files
+.env
+
+# Node.js
+node_modules/
+package-lock.json
+
+# Outputs / experiments / logs
+outputs/
+result/
+optuna_results/
+analysis/
+log/
+logs/
+*.log
+
+# Datasets and large media (keep tracked files unaffected)
+data/
+
+# Jupyter / cache
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+.cache/
+*.cache
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated figures in draw
+draw/**/*.png
+draw/**/*.pdf
