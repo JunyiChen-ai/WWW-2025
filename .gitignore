@@ -64,3 +64,4 @@ draw/**/*.pdf
 
 # Local cluster submit scripts (do not track)
 src/run_main_sbatch.sh
+preprocess/run_generate_full_retrieval_sbatch.sh
