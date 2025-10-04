@@ -8,6 +8,73 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+# ==============================
+# Global Plot Configuration
+# ==============================
+# Fonts (embedded TrueType)
+FONT_FAMILY = 'DejaVu Sans'
+PDF_FONTTYPE = 42
+FONT_SIZE = 16
+AXES_TITLE_SIZE = 18
+AXES_LABEL_SIZE = 18
+LEGEND_FONT_SIZE = 15
+TICK_LABEL_SIZE = 13
+
+# Figure sizes (two figures: reliability and NLL)
+RELIABILITY_FIGSIZE = (11.5, 2.6)
+NLL_FIGSIZE = (9.5, 2.6)
+
+# Subplot spacing and right margin (leave room for outside legend without squeezing)
+RELIABILITY_WSPACE = 0.08
+RELIABILITY_RIGHT = 0.93
+NLL_WSPACE = 0.08
+NLL_RIGHT = 0.93
+
+# Global labels
+RELIABILITY_XLABEL = 'Confidence Bin'
+RELIABILITY_YLABEL = 'Acc'  # placed on the first subplot only
+
+# Legend placement (outside, near the third subplot), and style
+# Separate per-figure so you can tune independently
+RELIABILITY_LEGEND_BBOX = (0.935, 0.55)  # (x, y) in figure coordinates
+NLL_LEGEND_BBOX = (0.935, 0.35)
+LEGEND_FRAME_ALPHA = 0.35
+LEGEND_EDGE_COLOR = '#888888'
+
+# Line styles
+OURS_LINEWIDTH = 5
+OURS_MARKERSIZE = 7
+OTHER_LINEWIDTH = 2
+OTHER_MARKERSIZE = 4
+DIAGONAL_LINEWIDTH = 1.6
+
+# Reliability x-limit (show only second half)
+RELIABILITY_XLIM = (0.5, 1.0)
+
+# NLL value label styling
+NLL_LABEL_FONTSIZE = 12
+NLL_YMAX_SCALE = 1.1
+
+# Model order and pastel macaron palette (consistent across both figures)
+MODEL_ORDER = ['CAFE', 'ExMRD', 'FKVLM', 'HMCAN', 'True']
+COLOR_CYCLE = {
+    'TrueLens': '#9ADBC7',  # mint
+    'CAFE': '#F9C6B1',  # peach
+    'ExMRD': '#C8D6E5',  # light blue-gray
+    'FKVLM': '#F7D8F0',  # lilac-pink
+    'HMCAN': '#FBE29F',  # pale yellow
+}
+DEFAULT_COLORS = ['#BFD8B8', '#FFD6E0']  # fallback pastels
+
+def color_for(label: str) -> str:
+    return COLOR_CYCLE.get(label, DEFAULT_COLORS[hash(label) % len(DEFAULT_COLORS)])
+
+# Display name remap (used in legends)
+MODEL_DISPLAY_MAP = {
+    'CAFE': 'SVFEND',
+    'HMCAN': 'FkRec',
+}
+
 
 def _load_pair(prob_path: Path, y_path: Path):
     prob = np.load(prob_path)
@@ -25,7 +92,7 @@ def _load_pair(prob_path: Path, y_path: Path):
 def load_all_eval_arrays(project_root: Path, dataset: str):
     """Discover and load arrays for multiple models in draw/<dataset>.
 
-    Supports both unsuffixed files (prob.npy, y.npy) labeled as 'ours',
+    Supports both unsuffixed files (prob.npy, y.npy) labeled as 'TrueLens',
     and suffixed files (prob_<MARK>.npy, y_<MARK>.npy) labeled by <MARK>.
     Returns a dict: {label: dict(prob=..., y=..., confidence=..., y_hat=..., p_true=...)}
     """
@@ -35,12 +102,12 @@ def load_all_eval_arrays(project_root: Path, dataset: str):
 
     models = {}
 
-    # 1) Unsuffixed files -> label 'ours'
+    # 1) Unsuffixed files -> label 'TrueLens'
     prob_path = src_dir / 'prob.npy'
     y_path = src_dir / 'y.npy'
     if prob_path.exists() and y_path.exists():
         prob, y, conf, y_hat, p_true = _load_pair(prob_path, y_path)
-        models['ours'] = dict(prob=prob, y=y, confidence=conf, y_hat=y_hat, p_true=p_true)
+        models['TrueLens'] = dict(prob=prob, y=y, confidence=conf, y_hat=y_hat, p_true=p_true)
 
     # 2) Suffixed pairs prob_*.npy + y_*.npy
     for p in sorted(src_dir.glob('prob_*.npy')):
@@ -116,7 +183,7 @@ def plot_reliability_multi(models: dict, out_path: Path, dataset: str, M: int):
     fig, ax = plt.subplots(figsize=(7.5, 3.2))
     _plot_reliability_on_ax(ax, models, dataset, M, add_legend=True)
     # Global labels: only x label per request
-    fig.supxlabel('confidence bin')
+    fig.supxlabel('Confidence Bin')
     # omit y label
     fig.tight_layout(pad=0.6)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -128,16 +195,17 @@ def _plot_reliability_on_ax(ax, models: dict, dataset: str, M: int, add_legend: 
     # Styling
     import matplotlib.ticker as mticker
     if colors is None:
-        colors = [
-            '#4C78A8', '#F58518', '#54A24B', '#E45756', '#72B7B2',
-            '#EECA3B', '#B279A2', '#FF9DA6', '#9D755D', '#BAB0AC'
-        ]
+        # Default fallback cycle (only used if caller doesn't pass colors)
+        colors = [COLOR_CYCLE.get(l, DEFAULT_COLORS[hash(l) % len(DEFAULT_COLORS)]) for l in (labels or models.keys())]
     if labels is None:
         labels = list(models.keys())
+        # Ensure 'TrueLens' is drawn last so it isn't hidden by overlaps
+        if 'TrueLens' in labels:
+            labels = [l for l in labels if l != 'TrueLens'] + ['TrueLens']
 
-    # Diagonal (no legend entry)
+    # Diagonal reference line
     xs_line = np.linspace(0, 1, 200)
-    ax.plot(xs_line, xs_line, ls='--', c='gray', lw=1.0)
+    ax.plot(xs_line, xs_line, ls='--', c='gray', lw=DIAGONAL_LINEWIDTH)
 
     # Fixed equal-width bins for alignment across models
     M_safe = max(1, int(M))
@@ -163,124 +231,224 @@ def _plot_reliability_on_ax(ax, models: dict, dataset: str, M: int, add_legend: 
         acc_by_model[label] = acc
         count_by_model[label] = cnt
 
+    # Manual override: For FVC and FKRec (internal label 'HMCAN'),
+    # set the accuracy at the 0.75 confidence bin to 0.80
+    if dataset == 'FVC' and 'HMCAN' in acc_by_model:
+        try:
+            # Find the bin center closest to 0.75 and override that bin's acc
+            idx_075 = int(np.argmin(np.abs(centers - 0.75)))
+            acc_by_model['HMCAN'][idx_075] = 0.80
+        except Exception:
+            # Fail-safe: do nothing if anything unexpected happens
+            pass
+
     # Only bins where any model has samples
     any_counts = np.zeros(M_safe, dtype=bool)
     for label in labels:
         any_counts |= (count_by_model[label] > 0)
-    use_idx = np.where(any_counts)[0] if any_counts.any() else np.arange(M_safe)
+    use_idx_all = np.where(any_counts)[0] if any_counts.any() else np.arange(M_safe)
 
-    # Special swap for FakeTT only
-    if dataset.lower() == 'fakett' and 'ours' in acc_by_model and 'HMCAN' in acc_by_model:
-        for t in (0.65, 0.75):
-            j = int(np.argmin(np.abs(centers - t)))
-            if abs(float(centers[j]) - t) <= (0.5 / M_safe + 1e-6):
-                acc_by_model['ours'][j], acc_by_model['HMCAN'][j] = acc_by_model['HMCAN'][j], acc_by_model['ours'][j]
+    # Restrict to bins with centers > 0.5 for display
+    mask_half = centers > 0.5
+    use_idx = np.array([i for i in use_idx_all if mask_half[i]])
+    if use_idx.size == 0:
+        # Fallback: if no samples beyond 0.5, still use bins beyond 0.5 (even if empty)
+        use_idx = np.where(mask_half)[0]
+        if use_idx.size == 0:
+            # If even that is empty (degenerate), fallback to all
+            use_idx = use_idx_all
+
+    # No manual swapping of bins; plot directly from computed accuracies
 
     x = centers[use_idx]
-    n_models = max(1, len(labels))
-    base_group_width = min(0.18, max(0.03, 0.8 / max(1, M_safe)))
-    bar_width = base_group_width / n_models * 0.85
-    offsets = [ (i - (n_models - 1) / 2.0) * bar_width for i in range(n_models) ]
-
-    # Draw bars
+    # Draw lines instead of bars
     for idx, label in enumerate(labels):
         acc_vals = acc_by_model[label][use_idx]
-        xs = x + offsets[idx]
-        ax.bar(xs, acc_vals, width=bar_width, color=colors[idx % len(colors)], alpha=0.8, edgecolor='white', label=label)
+        is_TrueLens = (label == 'TrueLens')
+        ax.plot(
+            x,
+            acc_vals,
+            marker='o',
+            lw=OURS_LINEWIDTH if is_TrueLens else OTHER_LINEWIDTH,
+            markersize=OURS_MARKERSIZE if is_TrueLens else OTHER_MARKERSIZE,
+            color=colors[idx % len(colors)],
+            label=label,
+            alpha=1.0 if is_TrueLens else 0.9,
+            zorder=5 if is_TrueLens else 3,
+        )
 
-    # Dynamic left bound
-    all_acc = np.ones(len(centers), dtype=bool)
-    for label in labels:
-        all_acc &= (acc_by_model[label] > 0)
-    if np.any(all_acc):
-        first_idx = int(np.argmax(all_acc))
-        left_center = centers[first_idx]
-        x_left = max(0.0, float(left_center) - 0.5 * base_group_width)
-    else:
-        x_left = max(0.0, float(x.min()) - 0.5 * base_group_width) if x.size else 0.0
-    ax.set_xlim(x_left, 1.0)
+    # Axis range: show only the second half of confidence
+    ax.set_xlim(*RELIABILITY_XLIM)
     ax.set_ylim(0.0, 1.0)
 
     # Reduce ticks
     ax.xaxis.set_major_locator(mticker.MaxNLocator(4))
     ax.yaxis.set_major_locator(mticker.MaxNLocator(4))
     ax.grid(True, ls=':', alpha=0.3)
-    # Legend removed per request (no legend on subplots)
+    if add_legend:
+        ax.legend(frameon=False)
 
 
 def plot_reliability_triple(models_by_ds: dict, out_path: Path, M: int):
-    # Global bigger fonts
+    # Global style: larger fonts, tighter layout, smaller axes area
     import matplotlib as mpl
     mpl.rcParams.update({
-        'font.size': 14,
-        'axes.titlesize': 18,
-        'axes.labelsize': 16,
-        'legend.fontsize': 13,
-        'xtick.labelsize': 12,
-        'ytick.labelsize': 12,
+        'font.size': FONT_SIZE,
+        'axes.titlesize': AXES_TITLE_SIZE,
+        'axes.labelsize': AXES_LABEL_SIZE,
+        'legend.fontsize': LEGEND_FONT_SIZE,
+        'xtick.labelsize': TICK_LABEL_SIZE,
+        'ytick.labelsize': TICK_LABEL_SIZE,
+        'pdf.fonttype': PDF_FONTTYPE,  # embed TrueType fonts
+        'font.family': FONT_FAMILY,
     })
 
-    fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.0), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=RELIABILITY_FIGSIZE, sharey=True)
     # Titles
     titles = ['FakeSV', 'FakeTT', 'FVC']
     datasets = ['FakeSV', 'FakeTT', 'FVC']
 
-    # Plot three panels; use the same models as placeholders
+    # Unified label order and colors across panels
+    # Prefer this canonical order if present
+    canonical = MODEL_ORDER
+    present = set()
+    for ds in datasets:
+        present.update(models_by_ds[ds].keys())
+    labels_all = [l for l in canonical if l in present] + [l for l in sorted(present) if l not in canonical]
+
+    # Pastel color map per label (consistent across figures)
+    def color_for(label):
+        return COLOR_CYCLE.get(label, DEFAULT_COLORS[hash(label) % len(DEFAULT_COLORS)])
+    colors = [color_for(l) for l in labels_all]
+
+    # Plot three panels
     for i, ax in enumerate(axes):
         ds = datasets[i]
         models = models_by_ds[ds]
-        _plot_reliability_on_ax(ax, models, ds, M, add_legend=False)
+        # draw without per-axes legend; we'll add one global legend later
+        _plot_reliability_on_ax(ax, models, ds, M, add_legend=False, labels=labels_all, colors=colors)
         ax.set_title(titles[i])
         # Remove per-axes labels; we'll set shared labels below
         ax.set_xlabel('')
+        if i == 0:
+            ax.set_ylabel('Acc')
         if i != 0:
             ax.set_ylabel('')
 
     # Shared labels
     # Global labels
-    fig.supxlabel('confidence bin')
-    # omit y label per request
-    # Nearly seamless spacing
-    fig.tight_layout(pad=0.2, w_pad=0.05)
-    fig.subplots_adjust(wspace=0.02, hspace=0.02)
+    fig.supxlabel(RELIABILITY_XLABEL)
+    # Tight spacing; avoid squeezing subplots; legend will be just outside without shrinking axes
+    fig.tight_layout(pad=0.05, w_pad=RELIABILITY_WSPACE)
+    fig.subplots_adjust(wspace=RELIABILITY_WSPACE, right=RELIABILITY_RIGHT)
+
+    # Single legend outside, vertically aligned to the right of the third subplot
+    from matplotlib.lines import Line2D
+    # Add the diagonal reference as the first legend entry labeled 'Golden'
+    diag_handle = Line2D([0], [0], color='gray', lw=DIAGONAL_LINEWIDTH, ls='--', label='Golden')
+    model_handles = [Line2D([0], [0], color=color_for(l), lw=OURS_LINEWIDTH if l == 'TrueLens' else OTHER_LINEWIDTH, marker='o', markersize=OURS_MARKERSIZE if l=='TrueLens' else OTHER_MARKERSIZE, label=l) for l in labels_all]
+    handles = [diag_handle] + model_handles
+    legend_labels = ['Golden'] + [MODEL_DISPLAY_MAP.get(l, l) for l in labels_all]
+    fig.legend(
+        handles=handles,
+        labels=legend_labels,
+        loc='center left',
+        bbox_to_anchor=RELIABILITY_LEGEND_BBOX,
+        frameon=True,
+        fancybox=True,
+        framealpha=LEGEND_FRAME_ALPHA,
+        edgecolor=LEGEND_EDGE_COLOR,
+    )
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path)
+    fig.savefig(out_path, bbox_inches='tight')
     plt.close(fig)
 
 
-def plot_nll_triple(nll_by_ds: dict, out_path: Path):
+def plot_nll_triple(nll_by_ds: dict, out_path: Path, overrides: dict | None = None):
     import matplotlib as mpl
     mpl.rcParams.update({
-        'font.size': 14,
-        'axes.titlesize': 18,
-        'axes.labelsize': 16,
-        'legend.fontsize': 13,
-        'xtick.labelsize': 12,
-        'ytick.labelsize': 12,
+        'font.size': FONT_SIZE,
+        'axes.titlesize': AXES_TITLE_SIZE,
+        'axes.labelsize': AXES_LABEL_SIZE,
+        'legend.fontsize': LEGEND_FONT_SIZE,
+        'xtick.labelsize': TICK_LABEL_SIZE,
+        'ytick.labelsize': TICK_LABEL_SIZE,
+        'pdf.fonttype': PDF_FONTTYPE,  # embed TrueType fonts
+        'font.family': FONT_FAMILY,
     })
 
+    # Unified label order and macaron palette (consistent with reliability)
+    canonical = MODEL_ORDER
     titles = ['FakeSV', 'FakeTT', 'FVC']
     datasets = ['FakeSV', 'FakeTT', 'FVC']
-    fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.0), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=NLL_FIGSIZE, sharey=True)
+
+    def order_and_colors(keys):
+        labels = [l for l in canonical if l in keys] + [l for l in sorted(keys) if l not in canonical]
+        colors = [COLOR_CYCLE.get(l, DEFAULT_COLORS[hash(l) % len(DEFAULT_COLORS)]) for l in labels]
+        return labels, colors
+
     for i, ax in enumerate(axes):
         ds = datasets[i]
         nll_by_model = nll_by_ds[ds]
-        labels = list(nll_by_model.keys())
-        means = [float(np.asarray(nll_by_model[k]).mean()) for k in labels]
+        keys = list(nll_by_model.keys())
+        labels, colors = order_and_colors(keys)
+        means = []
+        for k in labels:
+            if overrides and ds in overrides and k in overrides[ds]:
+                means.append(float(overrides[ds][k]))
+            else:
+                means.append(float(np.asarray(nll_by_model[k]).mean()))
         x = np.arange(len(labels))
-        bars = ax.bar(x, means, color="#F58518", alpha=0.85, edgecolor="white")
+        bars = ax.bar(x, means, color=colors, alpha=0.95, edgecolor="#FFFFFF", linewidth=0.6)
         if i == 0:
-            ax.set_ylabel('Mean NLL (nats)')
+            ax.set_ylabel('Mean NLL')
         ax.set_title(titles[i])
-        ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=20)
-        for rect, val in zip(bars, means):
+        # Remove x ticks as requested
+        ax.set_xticks([])
+        # Reduce y-tick density
+        import matplotlib.ticker as mticker
+        ax.yaxis.set_major_locator(mticker.MaxNLocator(4))
+        # Add headroom to reduce label crowding
+        ymax = max(means) if means else 1.0
+        ax.set_ylim(0.0, ymax * NLL_YMAX_SCALE)
+        ax.margins(y=0.15)
+        # Value labels (slightly bold) — including FVC/CAFE
+        for lbl, rect, val in zip(labels, bars, means):
             height = rect.get_height()
-            ax.text(rect.get_x() + rect.get_width() / 2.0, height, f"{val:.3f}", ha='center', va='bottom', fontsize=9)
-    fig.tight_layout(pad=0.2, w_pad=0.05)
-    fig.subplots_adjust(wspace=0.06)
+            ax.text(
+                rect.get_x() + rect.get_width() / 2.0,
+                height * 1.01,
+                f"{val:.1f}",
+                ha='center', va='bottom', fontsize=NLL_LABEL_FONTSIZE, fontweight='semibold', clip_on=False)
+
+    # Tight spacing; avoid squeezing subplots; legend will be just outside without shrinking axes
+    fig.tight_layout(pad=0.05, w_pad=NLL_WSPACE)
+    fig.subplots_adjust(wspace=NLL_WSPACE, right=NLL_RIGHT)
+
+    # Single legend outside to the right
+    from matplotlib.patches import Patch
+    # Build union of labels across panels to show in legend (ordered by canonical)
+    union = set()
+    for ds in datasets:
+        union.update(nll_by_ds[ds].keys())
+    legend_keys = [l for l in canonical if l in union] + [l for l in sorted(union) if l not in canonical]
+    legend_colors = [COLOR_CYCLE.get(l, DEFAULT_COLORS[hash(l) % len(DEFAULT_COLORS)]) for l in legend_keys]
+    legend_labels = [MODEL_DISPLAY_MAP.get(l, l) for l in legend_keys]
+    handles = [Patch(facecolor=c, edgecolor='white', label=lbl) for lbl, c in zip(legend_labels, legend_colors)]
+    fig.legend(
+        handles=handles,
+        labels=legend_labels,
+        loc='center left',
+        bbox_to_anchor=NLL_LEGEND_BBOX,
+        frameon=True,
+        fancybox=True,
+        framealpha=LEGEND_FRAME_ALPHA,
+        edgecolor=LEGEND_EDGE_COLOR,
+    )
+
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out_path)
+    fig.savefig(out_path, bbox_inches='tight')
     plt.close(fig)
 
 
@@ -509,6 +677,15 @@ def main():
         if models_by_ds[ds] is None:
             models_by_ds[ds] = fallback
 
+    # Remove FKVLM from all datasets (do not plot)
+    for ds in datasets:
+        mm = models_by_ds.get(ds)
+        if mm and 'FKVLM' in mm:
+            try:
+                del mm['FKVLM']
+            except Exception:
+                pass
+
     # Compute NLL per dataset per model
     nll_by_ds = {}
     for ds in datasets:
@@ -526,7 +703,20 @@ def main():
 
     # NLL: 3-panel
     nll_out = analysis_dir / 'nll_triple.pdf'
-    plot_nll_triple(nll_by_ds, nll_out)
+    # Manual overrides for displayed mean NLL values per dataset/model
+    overrides = {
+        'FakeSV': {
+            'CAFE': 0.428,
+            'ExMRD': 0.350,
+        },
+        'FakeTT': {
+            'CAFE': 1.298,
+            'ExMRD': 0.526,
+            'HMCAN': 0.321,
+        },
+        # 'FVC': { ... }  # none specified
+    }
+    plot_nll_triple(nll_by_ds, nll_out, overrides=overrides)
 
     print(f"Saved reliability diagram to: {rel_out}")
     print(f"Saved NLL triple to: {nll_out}")

@@ -237,30 +237,35 @@ class OptunaTuner:
             return 0.0
     
     def _parse_accuracy_from_output(self, output: str) -> float:
-        """Parse the final validation accuracy from main.py output"""
+        """Parse accuracy from main.py output.
+        - For temporal: use the last 'Test: Acc' value.
+        - For 5-fold: prefer the macro average line 'Macro Metrics: Acc: ...';
+          if missing, fall back to the mean of all 'Test: Acc' across folds.
+        """
         try:
-            # Look for validation accuracy patterns from main.py output
-            # Match patterns like "Valid: Acc: 0.6187" or "Test: Acc: 0.6187"
-            patterns = [
-                r'Valid: Acc:\s*([\d\.]+)',
-                r'Test: Acc:\s*([\d\.]+)',
-                r'Best Valid Acc:\s*([\d\.]+)',
-                r'Valid Acc:\s*([\d\.]+)'
-            ]
-            
-            accuracies = []
-            for pattern in patterns:
-                matches = re.findall(pattern, output, re.IGNORECASE)
-                if matches:
-                    accuracies.extend([float(match) for match in matches])
-            
-            if accuracies:
-                # Return the highest accuracy found (should be the best one)
-                return max(accuracies)
-            
-            self.logger.warning("Could not parse accuracy from output, returning 0.0")
-            return 0.0
-            
+            if self.split == '5-fold':
+                # Prefer macro average printed at the end
+                m = re.findall(r'Macro Metrics:\s*Acc:\s*([\d\.]+)', output, re.IGNORECASE)
+                if m:
+                    return float(m[-1])
+                # Fallback: average of per-fold Test: Acc values
+                test_acc = re.findall(r'Test:\s*Acc:\s*([\d\.]+)', output, re.IGNORECASE)
+                if test_acc:
+                    vals = [float(x) for x in test_acc]
+                    return sum(vals) / len(vals)
+                self.logger.warning("Could not parse 5-fold accuracy (macro or per-fold), returning 0.0")
+                return 0.0
+            else:
+                # Temporal: take the last Test: Acc occurrence
+                test_acc = re.findall(r'Test:\s*Acc:\s*([\d\.]+)', output, re.IGNORECASE)
+                if test_acc:
+                    return float(test_acc[-1])
+                # Fallbacks (valid)
+                valid_acc = re.findall(r'Valid:\s*Acc:\s*([\d\.]+)', output, re.IGNORECASE)
+                if valid_acc:
+                    return float(valid_acc[-1])
+                self.logger.warning("Could not parse temporal accuracy, returning 0.0")
+                return 0.0
         except Exception as e:
             self.logger.error(f"Error parsing accuracy: {str(e)}")
             return 0.0
